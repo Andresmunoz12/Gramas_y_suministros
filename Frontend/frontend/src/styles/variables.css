@@ -1,0 +1,49 @@
+:root {
+    /* Primary Colors */
+    --primary-green: #6ac05a;
+    --primary-green-hover: #5ab04a;
+    --primary-green-light: #e9f8e6;
+    --primary-green-dark: #355e3b;
+
+    /* Accent Colors */
+    --accent-soft-green: #a7e3a3;
+    --accent-glass-bg: rgba(255, 255, 255, 0.7);
+    --accent-glass-border: rgba(255, 255, 255, 0.3);
+
+    /* Neutrals */
+    --white: #ffffff;
+    --off-white: #f8fdf8;
+    --text-main: #2c3e50;
+    --text-muted: #576574;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 999px;
+
+    /* Typography */
+    --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-main);
+    background: linear-gradient(135deg, var(--off-white) 0%, var(--accent-soft-green) 100%);
+    background-attachment: fixed;
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+/* Common Glassmorphism utility */
+.glass-effect {
+    background: var(--accent-glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--accent-glass-border);
+    box-shadow: var(--shadow-md);
+}

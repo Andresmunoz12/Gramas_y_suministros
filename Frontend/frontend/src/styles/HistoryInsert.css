@@ -1,0 +1,213 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+main h1 {
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+/* TABLA */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 700px;
+}
+
+th {
+  background-color: #6bb46b;
+  color: #fff;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #fff;
+}
+
+td {
+  background-color: #e9f5e9;
+  padding: 10px;
+  text-align: center;
+  font-size: 14px;
+  border: 1px solid #fff;
+  border-radius: 8px;
+}
+
+/* BOTONES */
+.button-group {
+  margin-top: 55px;
+  display: flex;
+  gap: 20px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 20px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.regresar {
+  background-color: #5ea05e;
+  padding: 10px 25px;
+  max-width: 200px; /* 🔥 tamaño real del botón */
+  display: inline-block; /* evita que se estire */
+}
+
+.agregar {
+  background-color: #5ea05e;
+  color: white;
+  padding: 10px 25px;
+  max-width: 200px; /* 🔥 tamaño real del botón */
+  display: inline-block; /* evita que se estire */
+}
+
+.agregar:hover {
+  background-color: #5ea05e;
+}
+
+/* MODAL */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modal-content {
+  background-color: #d7f1d7;
+  padding: 25px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  animation: aparecer 0.3s ease;
+}
+
+@keyframes aparecer {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-content h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+/* FORMULARIO */
+form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  width: 48%;
+}
+
+.form-group.full {
+  width: 100%;
+}
+
+label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.descartar,
+.guardar {
+  width: 48%;
+  padding: 10px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.descartar {
+  background-color: #a9e3a9;
+}
+
+.descartar:hover {
+  background-color: #8fd68f;
+}
+
+.guardar {
+  background-color: #6bb46b;
+  color: white;
+}
+
+.guardar:hover {
+  background-color: #5ea05e;
+}
+
+@media (max-width: 600px) {
+  th,
+  td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .form-group {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 20px;
+  }
+}
+a {
+  color: black;
+  text-decoration: none;
+}
