@@ -3,42 +3,48 @@ import { useNavigate } from "react-router-dom";
 import "../styles/LoginAndRegister.css";
 import GlobalButton from "../components/GlobalButton";
 import NavComponent from "../components/GlobalNav";
+import api from "../api/axios";
 
 export default function Login() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminCode, setAdminCode] = useState("");
   const [msg, setMsg] = useState("");
 
   const handleLogin = async () => {
-    const res = await fetch("http://localhost:3001/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    // Validamos que no envíen campos vacíos antes de llamar a la API
+    if (!email || !password) {
+      setMsg("error: Por favor completa todos los campos.");
+      return;
+    }
 
-    const data = await res.json();
-    setMsg(data.message);
+    try {
+      const res = await api.post("/auth/login", {
+        email: email,
+        password_hash: password // <--- Enviamos 'password' pero con el nombre 'password_hash' que pide NestJS
+      });
 
-    if (!res.ok) return;
+      const data = res.data;
 
-    // GUARDAR TOKEN Y DATOS DEL USUARIO
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("id_rol", data.user.id_rol);
+      // GUARDAR DATOS EN LOCALSTORAGE
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("usuario", JSON.stringify(data.user));
 
-    // 🔥 CLAVE para que funcione Dashboard
-    localStorage.setItem("usuario", JSON.stringify(data.user));
+      setMsg("¡Bienvenido!");
 
-    // REDIRECCIÓN SEGÚN ROL
+      // REDIRECCIÓN SEGÚN ROL
+      // Asumiendo que id_rol 1 es Admin y 2 es Cliente
+      if (data.user.id_rol === 1) {
+        navigate("/perfil");
+      } else {
+        navigate("/");
+      }
 
-    if (data.user.id_rol === 1) {
-      navigate("/perfil");   // Admin
-    } else if (data.user.id_rol === 2) {
-      navigate("/");    // Cliente
-    } else {
-      navigate("/login");
+    } catch (error) {
+      // Manejo de errores profesional
+      const errorMsg = error.response?.data?.message || "Error: Credenciales inválidas";
+      setMsg(`error: ${errorMsg}`);
     }
   };
 
@@ -46,38 +52,49 @@ export default function Login() {
     <>
       <NavComponent />
       <div className="auth-container">
-
         <div className="auth-card">
-
           <h1 className="auth-title">Iniciar sesión</h1>
 
-          {/* Correo */}
           <label className="auth-label">Dirección de correo <span>(Correo electrónico)</span></label>
           <div className="input-wrapper">
-            <img src="Backend/uploads/icons/email.png" alt="correo" />
-            <input type="email" className="input-field" onChange={(e) => setEmail(e.target.value)} />
+            {/* Asegúrate que la ruta de la imagen sea correcta respecto a tu carpeta public */}
+            <img src="/icons/email.png" alt="correo" />
+            <input
+              type="email"
+              className="input-field"
+              placeholder="ejemplo@correo.com"
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
 
-          {/* Contraseña */}
           <label className="auth-label">Contraseña</label>
           <div className="input-wrapper">
-            <img src="Backend/uploads/icons/contraseña.png" alt="password" />
-            <input type="password" className="input-field" onChange={(e) => setPassword(e.target.value)} />
+            <img src="/icons/contraseña.png" alt="password" />
+            <input
+              type="password"
+              className="input-field"
+              placeholder="********"
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
 
-          <GlobalButton onClick={handleLogin} style={{ width: "100%", marginBottom: "15px" }}>Continuar</GlobalButton>
+          <GlobalButton onClick={handleLogin} style={{ width: "100%", marginBottom: "15px" }}>
+            Continuar
+          </GlobalButton>
 
           <p className="auth-link" onClick={() => navigate("/forgot-password")}>
             ¿Olvidaste tu contraseña?
           </p>
-
           <br />
-
           <p className="auth-link" onClick={() => navigate("/register")}>
             ¿No tienes cuenta? Regístrate aquí
           </p>
 
-          <p className={`auth-message ${msg.toLowerCase().includes("error") ? "error" : "success"}`}>{msg}</p>
+          {msg && (
+            <p className={`auth-message ${msg.toLowerCase().includes("error") ? "error" : "success"}`}>
+              {msg.replace("error: ", "")}
+            </p>
+          )}
         </div>
       </div>
     </>
