@@ -1,193 +1,68 @@
-* {
-    box-sizing: border-box;
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f4f6f9;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #fff;
-    margin: 0;
-    height: 100vh;
+.admin-card {
+    background: white;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.05);
 }
 
-/* Contenedor */
-.container {
+.admin-table {
     width: 100%;
-    /* Ocupa el 100% del ancho del body */
-    max-width: none;
-    /* Eliminar la restricción de ancho */
-    height: 100vh;
-    /* Ocupa el 100% del alto de la ventana */
-    background-color: #fff;
-    border-radius: 0;
-    /* Eliminar esquinas redondeadas si es a pantalla completa */
-    box-shadow: none;
-    /* Eliminar la sombra para que se vea integrado al fondo */
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    border-collapse: collapse;
 }
 
-/* Encabezado */
-header {
-    background-color: #cbe0ce;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 20px;
+.admin-table th {
+    background: #111827;
+    color: white;
+    padding: 12px;
+    text-align: left;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
 }
 
-.logo-placeholder {
-    width: 40px;
-    height: 40px;
-    background-color: #6bb46b;
-    border-radius: 50%;
+.admin-table tr:hover {
+    background: #f9fafb;
 }
 
-.logo p {
-    font-weight: bold;
-    font-size: 14px;
-    color: #355e3b;
+.btn-delete {
+    background: #ef4444;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-.user-icon {
-    width: 30px;
-    height: 30px;
-    border: 2px solid #355e3b;
-    border-radius: 50%;
+.btn-delete:hover {
+    background: #dc2626;
 }
 
-header h2 {
-    margin: 0;
-    font-size: 16px;
+.btn-delete:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
-/* Contenido */
-main {
-    flex: 1;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow-y: auto;
-}
-
-main h1 {
-    font-size: 22px;
+.alert {
+    padding: 12px;
+    border-radius: 8px;
     margin-bottom: 20px;
 }
 
-/* Tabla */
-.table-wrapper {
-    width: 100%;
-    overflow-x: auto;
+.alert.success {
+    background: #d1fae5;
+    color: #065f46;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
-}
-
-th {
-    background-color: #6bb46b;
-    color: white;
-    padding: 10px;
-    font-size: 14px;
-    border: 1px solid #fff;
-    border-radius: 8px;
-}
-
-td {
-    background-color: #e9f5e9;
-    padding: 10px;
-    text-align: center;
-    font-size: 14px;
-    border: 1px solid #fff;
-    border-radius: 8px;
-}
-
-/* Botón eliminar */
-.eliminar {
-    background-color: #e46b6b;
-    border: none;
-    border-radius: 12px;
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: white;
-    font-size: 16px;
-}
-
-.eliminar:hover:not(:disabled) {
-    background-color: #d05353;
-    transform: scale(1.05);
-}
-
-.eliminar:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-/* Animación al borrar */
-.ocultar {
-    animation: desaparecer 0.4s ease forwards;
-}
-
-@keyframes desaparecer {
-    from {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    to {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-}
-
-/* Botón regresar */
-.regresar {
-    background-color: #6bb46b;
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 12px 35px;
-    cursor: pointer;
-    font-weight: bold;
-    margin-top: 25px;
-    font-size: 14px;
-}
-
-.regresar:hover {
-    background-color: #5ea05e;
-}
-
-/* Responsivo */
-@media (max-width: 700px) {
-
-    th,
-    td {
-        font-size: 12px;
-        padding: 8px;
-    }
-
-    main h1 {
-        font-size: 18px;
-    }
-
-    .regresar {
-        padding: 10px 25px;
-    }
-}
-
-a {
-    color: white;
-    text-decoration: none;
+.alert.error {
+    background: #fee2e2;
+    color: #7f1d1d;
 }

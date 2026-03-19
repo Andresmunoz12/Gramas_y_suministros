@@ -3,6 +3,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import './reportes.css'; // Estilos específicos de reportes
+import NavComponent from "../../components/GlobalNav";
 
 export default function Reportes() {
   const navigate = useNavigate();
@@ -17,16 +18,9 @@ export default function Reportes() {
   ];
 
   return (
-    <div className="reportes-container">
-      <header className="reportes-header">
-        <div className="header-content">
-          <h1>Reportes y Estadísticas</h1>
-          <p>Visualiza el rendimiento de tu negocio</p>
-        </div>
-        <button onClick={() => navigate(-1)} className="btn-volver">
-          Volver al Panel
-        </button>
-      </header>
+    <>
+      
+      <NavComponent />
 
       <main className="reportes-content">
         <div className="reportes-grid">
@@ -51,6 +45,6 @@ export default function Reportes() {
           </div>
         </div>
       </main>
-    </div>
+    </>
   );
 }

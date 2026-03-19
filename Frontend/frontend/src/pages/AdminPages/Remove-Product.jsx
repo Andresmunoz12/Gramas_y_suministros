@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../../styles/Remove-Product.css";
+import "../../styles/Remove-Product.css"; // usamos los mismos estilos del panel
+import Footer from "../../components/Footer";
 
 export default function EliminarProducto() {
+
     const navigate = useNavigate();
 
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [mensaje, setMensaje] = useState({ tipo: "", texto: "" });
-    const [eliminando, setEliminando] = useState(null); // ID del producto que se está eliminando
+    const [eliminando, setEliminando] = useState(null);
 
-    // Cargar productos al montar el componente
     useEffect(() => {
         cargarProductos();
     }, []);
@@ -18,75 +19,66 @@ export default function EliminarProducto() {
     const cargarProductos = async () => {
         try {
             setLoading(true);
-            const response = await fetch("http://localhost:3001/api/productos");
-
-            if (!response.ok) {
-                throw new Error("Error al cargar productos");
-            }
-
+            const response = await fetch("http://localhost:3001/api/inventario");
             const data = await response.json();
             setProductos(data);
-            setMensaje({ tipo: "", texto: "" });
         } catch (error) {
-            console.error("Error cargando productos:", error);
             setMensaje({
                 tipo: "error",
-                texto: "Error al cargar los productos desde la base de datos"
+                texto: "Error al cargar productos"
             });
         } finally {
             setLoading(false);
         }
     };
 
-    const eliminarProducto = async (id, nombre) => {
-        // Confirmar eliminación
-        const confirmar = window.confirm(
-            `¿Estás seguro de que deseas eliminar el producto "${nombre}"?\n\nEsta acción no se puede deshacer.`
-        );
+const eliminarProducto = async (id, nombre) => {
+    const confirmar = window.confirm(
+        `¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`
+    );
 
-        if (!confirmar) return;
+    if (!confirmar) return;
 
-        try {
-            setEliminando(id);
-            setMensaje({ tipo: "", texto: "" });
+    try {
+        setEliminando(id);
 
-            const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:3001/api/productos/${id}`, {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(
+            `http://localhost:3001/api/inventario/${id}`,
+            {
                 method: "DELETE",
                 headers: {
                     "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json"
                 }
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                // Eliminar el producto del estado local
-                setProductos((prev) => prev.filter((producto) => producto.id_producto !== id));
-
-                setMensaje({
-                    tipo: "success",
-                    texto: `Producto "${nombre}" eliminado exitosamente`
-                });
-
-                // Limpiar mensaje después de 3 segundos
-                setTimeout(() => {
-                    setMensaje({ tipo: "", texto: "" });
-                }, 3000);
-            } else {
-                throw new Error(result.error || "Error al eliminar el producto");
             }
-        } catch (error) {
-            console.error("Error eliminando producto:", error);
-            setMensaje({
-                tipo: "error",
-                texto: error.message || "Error al eliminar el producto"
-            });
-        } finally {
-            setEliminando(null);
-        }
-    };
+        );
+
+        if (!response.ok) throw new Error("Error al eliminar");
+
+        setProductos(prev =>
+            prev.filter(p => p.id_producto !== id)
+        );
+
+        setMensaje({
+            tipo: "success",
+            texto: `Producto "${nombre}" eliminado correctamente`
+        });
+
+        setTimeout(() => {
+            setMensaje({ tipo: "", texto: "" });
+        }, 3000);
+
+    } catch (error) {
+        setMensaje({
+            tipo: "error",
+            texto: error.message
+        });
+    } finally {
+        setEliminando(null);
+    }
+};
 
     const formatearPrecio = (precio) => {
         if (!precio) return "N/A";
@@ -98,108 +90,104 @@ export default function EliminarProducto() {
     };
 
     return (
-        <div className="eliminar-producto-page">
-            <header>
-                <div className="logo">
-                    <div className="logo-placeholder"></div>
-                </div>
+        <>
 
-                <h2>Administrar Inventarios</h2>
+        <div className="admin-layout">
 
-                <div className="user-icon"></div>
-            </header>
+            {/* SIDEBAR EXACTO COMO EL PANEL */}
+            <aside className="sidebar">
+                <h2>Dashboard</h2>
 
-            <main>
-                <h1>Eliminar Productos - Inventario de Grama Sintética</h1>
+                <nav>
+                    <button onClick={() => navigate("/panel")}>Inventario</button>
+                    <button onClick={() => navigate("/usuarios")}>Usuarios</button>
+                    <button onClick={() => navigate("/stock")}>Stock</button>
+                    <button onClick={() => navigate("/reportes")}>Reportes</button>
+                    <button onClick={() => navigate("/")}>Catalogo</button>
+                </nav>
+            </aside>
 
-                {/* Mensaje de éxito o error */}
-                {mensaje.texto && (
-                    <div style={{
-                        padding: "15px",
-                        marginBottom: "20px",
-                        borderRadius: "10px",
-                        textAlign: "center",
-                        backgroundColor: mensaje.tipo === "success" ? "#d4edda" : "#f8d7da",
-                        color: mensaje.tipo === "success" ? "#155724" : "#721c24",
-                        border: `1px solid ${mensaje.tipo === "success" ? "#c3e6cb" : "#f5c6cb"}`,
-                        maxWidth: "800px",
-                        margin: "0 auto 20px"
-                    }}>
-                        {mensaje.texto}
+            {/* MAIN AREA */}
+            <div className="main-area">
+
+                <section className="table-section">
+                    <div className="table-card">
+
+                        <div className="table-header">
+                            <h3>Eliminar Productos</h3>
+                            <div className="table-actions">
+                                <button 
+                                    className="btn-secondary"
+                                    onClick={() => navigate("/panel")}
+                                >
+                                    Volver
+                                </button>
+                            </div>
+                        </div>
+
+                        {mensaje.texto && (
+                            <div className={`alert ${mensaje.tipo}`}>
+                                {mensaje.texto}
+                            </div>
+                        )}
+    
+                        <div className="table-container">
+
+                            {loading ? (
+                                <p>Cargando productos...</p>
+                            ) : (
+                                <table className="admin-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Producto</th>
+                                            <th>Altura</th>
+                                            <th>Peso</th>
+                                            <th>Precio</th>
+                                            <th>Eliminar</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {productos.map(p => (
+                                            <tr key={p.id_producto}>
+                                                <td>{p.id_producto}</td>
+                                                <td>{p.nombre}</td>
+                                                <td>{p.altura ?? "N/A"} mm</td>
+                                                <td>{p.peso ?? "N/A"} kg</td>
+                                                <td>{formatearPrecio(p.precio)}</td>
+                                                <td>
+                                                    <button
+                                                        className="btn-danger"
+                                                        onClick={() =>
+                                                            eliminarProducto(
+                                                                p.id_producto,
+                                                                p.nombre
+                                                            )
+                                                        }
+                                                        disabled={eliminando === p.id_producto}
+                                                    >
+                                                        {eliminando === p.id_producto
+                                                            ? "Eliminando..."
+                                                            : "Eliminar"}
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+
+                                </table>
+                            )}
+
+                        </div>
                     </div>
-                )}
+                </section>
 
-                {loading ? (
-                    <div style={{
-                        textAlign: "center",
-                        padding: "40px",
-                        fontSize: "18px",
-                        color: "#6bb46b"
-                    }}>
-                        Cargando productos...
-                    </div>
-                ) : productos.length === 0 ? (
-                    <div style={{
-                        textAlign: "center",
-                        padding: "40px",
-                        fontSize: "16px",
-                        color: "#666"
-                    }}>
-                        No hay productos en el inventario
-                    </div>
-                ) : (
-                    <div className="table-wrapper">
-                        <table id="tablaInventario">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Producto</th>
-                                    <th>Altura</th>
-                                    <th>Peso</th>
-                                    <th>Stock</th>
-                                    <th>Precio x m²</th>
-                                    <th>Eliminar</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {productos.map((producto) => (
-                                    <tr key={producto.id_producto}>
-                                        <td>{producto.id_producto}</td>
-                                        <td>{producto.nombre}</td>
-                                        <td>{producto.altura || "N/A"}</td>
-                                        <td>{producto.peso || "N/A"}</td>
-                                        <td>{producto.stock || 0}</td>
-                                        <td>{formatearPrecio(producto.precio)}</td>
-                                        <td>
-                                            <button
-                                                className="eliminar"
-                                                onClick={() => eliminarProducto(producto.id_producto, producto.nombre)}
-                                                disabled={eliminando === producto.id_producto}
-                                            >
-                                                {eliminando === producto.id_producto ? (
-                                                    <span>⏳</span>
-                                                ) : (
-                                                    <span>🗑️</span>
-                                                )}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                <button
-                    className="regresar"
-                    onClick={() => {
-                        navigate("/Dashboard");
-                    }}
-                >
-                    Regresar
-                </button>
-            </main>
+            </div>
         </div>
+
+        <Footer />
+        </>
     );
 }

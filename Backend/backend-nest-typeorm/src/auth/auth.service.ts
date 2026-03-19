@@ -35,7 +35,8 @@ export class AuthService {
             user: {
                 id: user.id_usuario,
                 nombre: user.nombre,
-                email: user.email
+                email: user.email,
+                id_rol: user.id_rol
             }
         };
     }

@@ -35,7 +35,7 @@ export default function HistorialEntradas() {
 
   const cargarProductos = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/productos");
+      const response = await fetch("http://localhost:3001/api/inventario");
       if (response.ok) {
         const data = await response.json();
         setProductos(data);
@@ -166,45 +166,28 @@ export default function HistorialEntradas() {
   };
 
   return (
-    <>
-      <NavComponent />
+  <>
+    <NavComponent />
 
-      <main>
-        {/* Mensaje de éxito o error */}
-        {mensaje.texto && (
-          <div style={{
-            padding: "15px",
-            marginBottom: "20px",
-            borderRadius: "10px",
-            textAlign: "center",
-            backgroundColor: mensaje.tipo === "success" ? "#d4edda" : "#f8d7da",
-            color: mensaje.tipo === "success" ? "#155724" : "#721c24",
-            border: `1px solid ${mensaje.tipo === "success" ? "#c3e6cb" : "#f5c6cb"}`,
-            maxWidth: "800px",
-            margin: "0 auto 20px"
-          }}>
-            {mensaje.texto}
-          </div>
-        )}
+    <main className="stock-container">
 
-        {/* Selector de producto */}
-        <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          <label htmlFor="producto-select" style={{ marginRight: "10px", fontWeight: "bold" }}>
-            Seleccionar Producto:
-          </label>
+      {mensaje.texto && (
+        <div className={`alert ${mensaje.tipo}`}>
+          {mensaje.texto}
+        </div>
+      )}
+
+      <div className="stock-header">
+        <div className="selector">
+          <label htmlFor="producto-select">Seleccionar Producto</label>
           <select
             id="producto-select"
             value={productoSeleccionado?.id_producto || ""}
             onChange={(e) => {
-              const producto = productos.find(p => p.id_producto === parseInt(e.target.value));
+              const producto = productos.find(
+                p => p.id_producto === parseInt(e.target.value)
+              );
               setProductoSeleccionado(producto);
-            }}
-            style={{
-              padding: "8px 12px",
-              borderRadius: "8px",
-              border: "2px solid #6bb46b",
-              fontSize: "14px",
-              minWidth: "250px"
             }}
           >
             {productos.map(prod => (
@@ -215,124 +198,125 @@ export default function HistorialEntradas() {
           </select>
         </div>
 
-        <h1>Historial de entradas - {productoSeleccionado?.nombre || "Cargando..."}</h1>
+        <h1>
+          Historial de entradas -{" "}
+          <span>{productoSeleccionado?.nombre || "Cargando..."}</span>
+        </h1>
+      </div>
 
-        <div className="table-wrapper">
-          <table>
-            <thead>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Proveedor</th>
+              <th>Cantidad</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
               <tr>
-                <th>Fecha</th>
-                <th>Proveedor</th>
-                <th>Cantidad Entrada</th>
-                <th>Observaciones</th>
+                <td colSpan="4" className="empty">
+                  Cargando...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
-                    Cargando...
-                  </td>
+            ) : entradas.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="empty">
+                  No hay entradas registradas
+                </td>
+              </tr>
+            ) : (
+              entradas.map((entrada, index) => (
+                <tr key={index}>
+                  <td>{formatearFecha(entrada.fecha)}</td>
+                  <td>{entrada.proveedor || "N/A"}</td>
+                  <td>{entrada.cantidad}</td>
+                  <td>{entrada.observaciones || "-"}</td>
                 </tr>
-              ) : entradas.length === 0 ? (
-                <tr>
-                  <td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>
-                    No hay entradas registradas para este producto
-                  </td>
-                </tr>
-              ) : (
-                entradas.map((entrada, index) => (
-                  <tr key={index}>
-                    <td>{formatearFecha(entrada.fecha)}</td>
-                    <td>{entrada.proveedor || "N/A"}</td>
-                    <td>{entrada.cantidad}</td>
-                    <td>{entrada.observaciones || "-"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="button-group">
+        <button className="btn-secondary" onClick={() => navigate("/Stock")}>
+          Regresar
+        </button>
+
+        <button className="btn-primary" onClick={abrirModal}>
+          Agregar
+        </button>
+      </div>
+    </main>
+
+    {modalOpen && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h2>Nueva entrada</h2>
+
+          <form onSubmit={handleSubmit}>
+
+            <div className="form-group">
+              <label>Fecha</label>
+              <input
+                type="date"
+                name="fecha"
+                value={formData.fecha}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Cantidad</label>
+              <input
+                type="number"
+                name="cantidad"
+                value={formData.cantidad}
+                onChange={handleChange}
+                min="1"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Proveedor</label>
+              <select
+                name="id_proveedor"
+                value={formData.id_proveedor}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Seleccione un proveedor</option>
+                {proveedores.map(prov => (
+                  <option key={prov.id_proveedor} value={prov.id_proveedor}>
+                    {prov.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="modal-buttons">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={cerrarModal}
+              >
+                Cancelar
+              </button>
+
+              <button type="submit" className="btn-primary">
+                Guardar
+              </button>
+            </div>
+
+          </form>
         </div>
-
-        <div className="button-group">
-          <button className="regresar" onClick={() => navigate("/Stock")}>
-            Regresar
-          </button>
-
-          <button className="agregar" onClick={abrirModal}>
-            Agregar
-          </button>
-        </div>
-      </main>
-
-      {/* MODAL */}
-      {modalOpen && (
-        <div className="modal show">
-          <div className="modal-content">
-            <h2>Nueva entrada para "{productoSeleccionado?.nombre}"</h2>
-
-            <form onSubmit={handleSubmit}>
-              <div className="form-group full">
-                <label htmlFor="fecha">Fecha de entrada</label>
-                <input
-                  type="date"
-                  id="fecha"
-                  name="fecha"
-                  value={formData.fecha}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group full">
-                <label htmlFor="cantidad">Cantidad</label>
-                <input
-                  type="number"
-                  id="cantidad"
-                  name="cantidad"
-                  placeholder="Ingrese la cantidad de entrada"
-                  value={formData.cantidad}
-                  onChange={handleChange}
-                  min="1"
-                  required
-                />
-              </div>
-
-              <div className="form-group full">
-                <label htmlFor="id_proveedor">Proveedor</label>
-                <select
-                  id="id_proveedor"
-                  name="id_proveedor"
-                  value={formData.id_proveedor}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccione un proveedor</option>
-                  {proveedores.map(prov => (
-                    <option key={prov.id_proveedor} value={prov.id_proveedor}>
-                      {prov.nombre}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="modal-buttons">
-                <button
-                  type="button"
-                  className="descartar"
-                  onClick={cerrarModal}
-                >
-                  Descartar
-                </button>
-
-                <button type="submit" className="guardar">
-                  Guardar cambios
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </>
-  );
+      </div>
+    )}
+  </>
+);
 }

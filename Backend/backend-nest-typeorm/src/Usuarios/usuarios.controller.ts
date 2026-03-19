@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Put,
   Query,
+  Patch, // 👈 IMPORTAR PATCH
 } from '@nestjs/common';
 import { Public } from '../auth/decorators/public.decorator';
 import { UsuariosService } from './usuarios.service';
@@ -22,15 +23,18 @@ export class UsuariosController {
   crearUsuario(@Body() nuevousuario: CreateUsuarioDto) {
     return this.usuariosService.crearUsuario(nuevousuario);
   }
+
   @Get()
   listarTodos() {
     return this.usuariosService.obtenerUsuarios();
   }
+
   // No olvides importar 'Delete', 'Param' y 'ParseIntPipe' de @nestjs/common
   @Delete(':id')
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.eliminarUsuario(id);
   }
+
   // Importa 'Put' de @nestjs/common
   @Put(':id')
   actualizar(
@@ -39,6 +43,7 @@ export class UsuariosController {
   ) {
     return this.usuariosService.actualizarUsuario(id, datos);
   }
+
   // Importa 'Query' de @nestjs/common
   @Get('buscar')
   buscarUno(
@@ -53,5 +58,20 @@ export class UsuariosController {
       email,
       id,
     });
+  }
+
+  // 👇 NUEVO ENDPOINT PARA CAMBIAR ESTADO
+  @Patch(':id/estado')
+  cambiarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('estado') estado: string,
+  ) {
+    // Validar que el estado sea válido
+    const estadosValidos = ['activo', 'inactivo', 'suspendido'];
+    if (!estadosValidos.includes(estado)) {
+      throw new Error(`Estado no válido. Debe ser: ${estadosValidos.join(', ')}`);
+    }
+
+    return this.usuariosService.cambiarEstado(id, estado);
   }
 }

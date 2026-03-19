@@ -1,39 +1,37 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react"; // 👈 Importar useMemo
 import NavComponent from "../components/GlobalNav";
+import ProductCard from "../components/ProductCard";
 import "../styles/Catalogo.css";
-import GlobalButton from "../components/GlobalButton";
+import Footer from "../components/Footer";
+import ProductosService from "../api/services/productos.service";
 
 export default function Index() {
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [search, setSearch] = useState("");
-  const [categoriaActiva, setCategoriaActiva] = useState("TODAS");
+  const [categoriaActiva, setCategoriaActiva] = useState("Todas");
 
   const categorias = [
-    "TODAS",
-    "GRAMA SINTÉTICA",
-    "GRAMA NATURAL",
-    "ABONOS",
-    "HERRAMIENTAS",
-    "ACCESORIOS"
+    "Todas",
+    "Deportiva",
+    "Residencial",
+    "Comercial",
+    "Decorativa",
+    "Eventos",
+    "Suministro",
+    "Mascotas"
   ];
 
   useEffect(() => {
     const fetchProductos = async () => {
       try {
-        let data = [];
-
-        try {
-          const res = await fetch("http://localhost:3001/api/productos");
-
-          if (res.ok) {
-            data = await res.json();
-          }
-        } catch (err) {
-          console.error("Error al obtener productos:", err);
-        }
-
+        setCargando(true);
+        const data = await ProductosService.getAll();
+        console.log("✅ Productos cargados:", data);
         setProductos(data);
+      } catch (err) {
+        console.error("❌ Error al obtener productos:", err);
+        setProductos([]);
       } finally {
         setCargando(false);
       }
@@ -50,135 +48,87 @@ export default function Index() {
       .replace(/_/g, " ")
       .toUpperCase();
 
-  const productosFiltrados = productos.filter((p) => {
-    const coincideBusqueda = p.nombre
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  // 👈 Usar useMemo para evitar recalcular en cada render
+  const productosFiltrados = useMemo(() => {
+    return productos.filter((p) => {
+      const coincideBusqueda = p.nombre
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-    const coincideCategoria =
-      categoriaActiva === "TODAS" ||
-      normalizar(p.categoria) === normalizar(categoriaActiva);
+      // 👈 CORREGIDO: Acceder a categoria.nombre para la comparación
+      const nombreCategoria = p.categoria?.nombre || "";
+      const coincideCategoria =
+        categoriaActiva === "Todas" ||
+        normalizar(nombreCategoria) === normalizar(categoriaActiva);
 
-    return coincideBusqueda && coincideCategoria;
-  });
-
-  const rawUsuario = localStorage.getItem("usuario");
-  const isLoggedIn = !!rawUsuario;
-
-  const handleComprar = async (id_producto) => {
-    if (!isLoggedIn) {
-      alert("Debes iniciar sesión para comprar");
-      return;
-    }
-
-    const usuario = JSON.parse(rawUsuario);
-    try {
-      const res = await fetch("http://localhost:3001/api/usuarios/comprar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id_usuario: usuario.id_usuario,
-          id_producto: id_producto,
-          cantidad: 1
-        })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("✅ " + data.message);
-        window.location.reload(); // Recargar para ver el descuento en stock
-      } else {
-        alert("❌ " + data.message);
-      }
-    } catch (err) {
-      alert("❌ Error al conectar con el servidor.");
-    }
-  };
-
-
-
-
+      return coincideBusqueda && coincideCategoria;
+    });
+  }, [productos, search, categoriaActiva]);
 
   return (
-    <div className="app">
+    <>
       <NavComponent />
 
-      <main className="catalog-main">
+      <div className="filtros-container">
+        <div className="filtros-buttons">
+          <div className="search-box">
+            <img src="http://localhost:3000/uploads/icons/search.png" alt="buscar" />
+            <input
+              type="text"
+              placeholder="Buscar productos..."
+              onChange={(e) => setSearch(e.target.value)}
+              value={search}
+            />
+          </div>
+
+          {categorias.map((cat) => (
+            <button
+              key={cat}
+              className={`filtro-btn ${categoriaActiva === cat ? "active" : ""}`}
+              onClick={() => setCategoriaActiva(cat)}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="catalogo-container">
         {cargando ? (
-          <h2 className="catalog-title">Cargando productos...</h2>
+          <div className="loading-container">
+            <div className="loader"></div> {/* 👈 Spinner agregado */}
+            <p>Cargando productos...</p>
+          </div>
         ) : (
           <>
-            <h2 className="catalog-title"> {categoriaActiva === "TODAS" ? "Todos los Productos" : categoriaActiva}{" "} <span>({productosFiltrados.length})</span> </h2>
+            <section className="productos-section">
+              <h2>
+                {categoriaActiva === "Todas"
+                  ? "Todos los Productos"
+                  : categoriaActiva}
+                <span className="product-count"> ({productosFiltrados.length})</span>
+              </h2>
 
-            <div className="category-tabs">
-              {categorias.map((cat) => (
-                <button
-                  key={cat}
-                  className={`category-btn ${categoriaActiva === cat ? "active" : ""
-                    }`}
-                  onClick={() => setCategoriaActiva(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="search-filter-container">
-              <div className="search-box">
-                <img src="http://localhost:3001/uploads/icons/search.png" alt="buscar" />
-                <input
-                  type="text"
-                  placeholder="Buscar productos..."
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-              <button className="filter-btn">Filtrar por</button>
-            </div>
-
-            <div className="product-grid">
-              {productosFiltrados.length > 0 ? (
-                productosFiltrados.map((prod) => (
-                  <div key={prod.id_producto} className="product-card">
-                    <img
-                      src={`http://localhost:3001/uploads/${prod.imagen}`}
-                      alt={prod.nombre}
+              <div className="productos-grid">
+                {productosFiltrados.length > 0 ? (
+                  productosFiltrados.map((prod) => (
+                    <ProductCard
+                      key={`prod-${prod.id_producto}`} // 👈 Key más específica
+                      producto={prod}
                     />
-                    <div className="card-content">
-                      <h3>{prod.nombre}</h3>
-                      <p>{prod.descripcion}</p>
-                      <p className="price">
-                        $
-                        {new Intl.NumberFormat("es-CO").format(prod.precio)}
-                      </p>
-                    </div>
-                    {isLoggedIn && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center', marginBottom: '20px' }}>
-                        <GlobalButton
-                          style={{ width: "80%" }}
-                          onClick={() => handleComprar(prod.id_producto)}
-                        >
-                          Comprar Ahora
-                        </GlobalButton>
-                      </div>
-                    )}
-                    {!isLoggedIn && (
-                      <center style={{ padding: '0 0 20px 0' }}>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Inicia sesión para comprar</p>
-                      </center>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p>No hay productos disponibles.</p>
-              )}
-            </div>
+                  ))
+                ) : (
+                  <p className="no-products">No hay productos disponibles</p>
+                )}
+              </div>
+            </section>
+
+            <br /><br />
           </>
         )}
-      </main>
 
-      <footer>
-        © {new Date().getFullYear()} Gramas y Suministros — Todos los derechos reservados.
-      </footer>
-    </div>
+        <Footer />
+      </div>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { usuario } from './usuarios.entity';
@@ -11,6 +11,7 @@ export class UsuariosService {
     @InjectRepository(usuario)
     private readonly userRepository: Repository<usuario>,
   ) { }
+
   async crearUsuario(datos: CreateUsuarioDto) {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(datos.password_hash, salt);
@@ -32,7 +33,6 @@ export class UsuariosService {
       relations: ['rol'],
     });
   }
-  // src/Usuarios/usuarios.service.ts
 
   async buscarUsuarioFiltro(query: {
     nombre?: string;
@@ -61,7 +61,6 @@ export class UsuariosService {
     return usuarioEncontrado;
   }
 
-  // Añade esto al final de tu clase UsuariosService
   async eliminarUsuario(id: number) {
     // El método delete es el más directo para borrar por ID
     const resultado = await this.userRepository.delete(id);
@@ -76,6 +75,7 @@ export class UsuariosService {
       borrado: true,
     };
   }
+
   async actualizarUsuario(id: number, datos: Partial<CreateUsuarioDto>) {
     // Si el usuario envía una nueva contraseña, hay que hashearla de nuevo
     if (datos.password_hash) {
@@ -105,5 +105,29 @@ export class UsuariosService {
       where: { email },
       select: ['id_usuario', 'nombre', 'email', 'passwordHash', 'id_rol'],
     });
+  }
+
+  // 👇 NUEVO MÉTODO AGREGADO - CAMBIAR ESTADO
+  async cambiarEstado(id: number, estado: string) {
+    // Buscar el usuario primero para verificar que existe
+    const usuario = await this.userRepository.findOne({
+      where: { id_usuario: id }
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+
+    // Validar que el estado sea válido (opcional pero recomendado)
+    const estadosValidos = ['activo', 'inactivo', 'suspendido'];
+    if (!estadosValidos.includes(estado)) {
+      throw new Error(`Estado no válido. Debe ser: ${estadosValidos.join(', ')}`);
+    }
+
+    // Actualizar solo el estado
+    usuario.estado = estado;
+
+    // Guardar los cambios
+    return await this.userRepository.save(usuario);
   }
 }

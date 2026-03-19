@@ -1,0 +1,35 @@
+/* BADGES */
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-admin {
+  background: #e8f4ff;
+  color: #2980b9;
+}
+
+.badge-client {
+  background: #f0f0f0;
+  color: #555;
+}
+
+/* BOTÓN ELIMINAR */
+
+.btn-danger {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}

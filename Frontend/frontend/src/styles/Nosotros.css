@@ -1,0 +1,211 @@
+.app-nosotros {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #e9f5e5 0%, #ffffff 100%);
+    color: #333;
+}
+
+.nosotros-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.outlined-text {
+    color: #7cd36d;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.outlined-text-p {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #333;
+    background: rgba(255, 255, 255, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #7cd36d;
+    box-shadow: 5px 5px 0px rgba(124, 211, 109, 0.3);
+}
+
+/* Sección Historia */
+.historia {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    margin-bottom: 60px;
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 3px solid #7cd36d;
+    transition: 0.35s ease;
+}
+
+.historia:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    
+}
+
+
+.historia-text {
+    flex: 1;
+}
+
+.historia-image {
+    flex: 1;
+    height: 300px;
+    background: #f0f0f0;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.placeholder-img-large {
+    font-size: 5rem;
+}
+
+/* Misión y Visión */
+.mission-vision {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 60px;
+}
+
+.mv-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    border: 3px solid #7cd36d;
+    transition: 0.35s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.mv-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.mv-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+/* Valores */
+.nosotros-values {
+    text-align: center;
+}
+
+.section-center {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+}
+
+.values-grid {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.value-item {
+    background: #2e7d32;
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    width: 250px;
+    transition: 0.35s ease;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.value-item:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.value-item h3 {
+    margin-top: 0;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 10px;
+}
+
+/* HERO */
+
+.nosotros-hero {
+  height: 55vh;
+  background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+              url("https://performancelandscape.org/wp-content/uploads/2021/04/BANNER2.jpg") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  padding: 40px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: auto;
+}
+
+/* ESTADÍSTICAS */
+
+.nosotros-stats {
+  display: flex;
+  justify-content: space-around;
+  background: #2e7d32;
+  color: white;
+  padding: 40px 20px;
+  border-radius: 20px;
+  margin: 60px 0;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.stat h3 {
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.stat p {
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+/* POR QUÉ ELEGIRNOS */
+
+.por-que {
+  margin: 60px 0;
+  text-align: center;
+}
+
+.por-que-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 30px;
+  margin-top: 40px;
+}
+
+.por-que-grid div {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  transition: 0.3s;
+}
+
+.por-que-grid div:hover {
+  transform: translateY(-8px);
+}

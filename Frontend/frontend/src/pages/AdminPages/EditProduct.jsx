@@ -11,16 +11,10 @@ const EditarProducto = () => {
         nombre: "",
         altura: "",
         peso: "",
-        stock: 0,
-        color: "",
-        aplicacion: "",
         material: "",
         marca: "",
-        garantia: "",
         precio: "",
-        descuento: "",
         descripcion: "",
-        campoAdicional: "",
         imagen: null,
     });
 
@@ -35,51 +29,37 @@ const EditarProducto = () => {
     }, [id]);
 
     const cargarProducto = async () => {
-        try {
-            const response = await fetch(`http://localhost:3001/api/productos`);
-            if (response.ok) {
-                const productos = await response.json();
-                const producto = productos.find(p => p.id_producto === parseInt(id));
+    try {
+        const response = await fetch(`http://localhost:3001/api/inventario/${id}`);
 
-                if (producto) {
-                    // Parsear la descripción para extraer campos
-                    const desc = producto.descripcion || "";
-                    const colorMatch = desc.match(/Color: ([^\n]+)/);
-                    const aplicacionMatch = desc.match(/Aplicación: ([^\n]+)/);
-                    const garantiaMatch = desc.match(/Garantía: ([^\n]+)/);
-                    const descuentoMatch = desc.match(/Descuento: ([^\n]+)/);
-
-                    setFormData({
-                        nombre: producto.nombre || "",
-                        altura: producto.altura || "",
-                        peso: producto.peso || "",
-                        stock: producto.stock || 0,
-                        color: colorMatch ? colorMatch[1] : "",
-                        aplicacion: aplicacionMatch ? aplicacionMatch[1] : "",
-                        material: producto.material || "",
-                        marca: producto.marca || "",
-                        garantia: garantiaMatch ? garantiaMatch[1] : "",
-                        precio: producto.precio || "",
-                        descuento: descuentoMatch ? descuentoMatch[1] : "",
-                        descripcion: desc.split('\n')[0] || "",
-                        campoAdicional: "",
-                        imagen: null,
-                    });
-
-                    if (producto.imagen) {
-                        setPreviewImage(`http://localhost:3001/${producto.imagen}`);
-                    }
-                } else {
-                    setMensaje({ tipo: "error", texto: "Producto no encontrado" });
-                }
-            }
-        } catch (error) {
-            console.error("Error cargando producto:", error);
-            setMensaje({ tipo: "error", texto: "Error al cargar el producto" });
-        } finally {
-            setLoading(false);
+        if (!response.ok) {
+            throw new Error("Producto no encontrado");
         }
-    };
+
+        const producto = await response.json();
+
+        setFormData({
+            nombre: producto.nombre || "",
+            altura: producto.altura || "",
+            peso: producto.peso || "",
+            material: producto.material || "",
+            marca: producto.marca || "",
+            precio: producto.precio || "",
+            descripcion: producto.descripcion || "",
+            imagen: null,
+        });
+
+        if (producto.imagen) {
+            setPreviewImage(`http://localhost:3001/${producto.imagen}`);
+        }
+
+    } catch (error) {
+        console.error("Error cargando producto:", error);
+        setMensaje({ tipo: "error", texto: "Error al cargar el producto" });
+    } finally {
+        setLoading(false);
+    }
+};
 
     const handleChange = (e) => {
         const { name, value, type, files } = e.target;
@@ -114,20 +94,10 @@ const EditarProducto = () => {
             data.append("nombre", formData.nombre);
             data.append("altura", formData.altura);
             data.append("peso", formData.peso);
-            data.append("stock", formData.stock);
             data.append("material", formData.material);
             data.append("marca", formData.marca);
             data.append("precio", formData.precio);
-
-            // Combinar descripción con otros campos
-            let descripcionCompleta = formData.descripcion;
-            if (formData.color) descripcionCompleta += `\nColor: ${formData.color}`;
-            if (formData.aplicacion) descripcionCompleta += `\nAplicación: ${formData.aplicacion}`;
-            if (formData.garantia) descripcionCompleta += `\nGarantía: ${formData.garantia}`;
-            if (formData.descuento) descripcionCompleta += `\nDescuento: ${formData.descuento}`;
-            if (formData.campoAdicional) descripcionCompleta += `\n${formData.campoAdicional}`;
-
-            data.append("descripcion", descripcionCompleta);
+            data.append("descripcion", formData.descripcion);
 
             // Agregar imagen solo si se seleccionó una nueva
             if (formData.imagen) {
@@ -135,7 +105,7 @@ const EditarProducto = () => {
             }
 
             const token = localStorage.getItem("token");
-            const response = await fetch(`http://localhost:3001/api/productos/${id}`, {
+            const response = await fetch(`http://localhost:3001/api/inventario/${id}`, {
                 method: "PUT",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -152,7 +122,7 @@ const EditarProducto = () => {
                 });
 
                 setTimeout(() => {
-                    navigate("/dashboard");
+                    navigate("/panel");
                 }, 2000);
             } else {
                 const errorMsg = result.error || "Error al actualizar el producto";
@@ -194,319 +164,157 @@ const EditarProducto = () => {
     }
 
     return (
-        <>
-            <NavComponent />
+    <>
+        <NavComponent />
 
-            <div className="container">
+        <div className="insert-container">
+
+            <div className="insert-header">
                 <h2>Editar producto</h2>
+                <p>Modifica la información del producto seleccionado</p>
+            </div>
 
-                {mensaje.texto && (
-                    <div style={{
-                        padding: "15px",
-                        marginBottom: "20px",
-                        borderRadius: "10px",
-                        textAlign: "center",
-                        backgroundColor: mensaje.tipo === "success" ? "#d4edda" : "#f8d7da",
-                        color: mensaje.tipo === "success" ? "#155724" : "#721c24",
-                        border: `1px solid ${mensaje.tipo === "success" ? "#c3e6cb" : "#f5c6cb"}`
-                    }}>
-                        {mensaje.texto}
+            {mensaje.texto && (
+                <div className={`alert ${mensaje.tipo}`}>
+                    {mensaje.texto}
+                </div>
+            )}
+
+            <form className="insert-grid" onSubmit={handleSubmit}>
+
+                {/* COLUMNA IMAGEN */}
+                <div className="image-column">
+                    <div
+                        className="image-box"
+                        onClick={handleImageClick}
+                    >
+                        {previewImage ? (
+                            <img src={previewImage} alt="Preview" />
+                        ) : (
+                            <span>Haz click para subir imagen</span>
+                        )}
                     </div>
-                )}
 
-                <form className="form-grid" onSubmit={handleSubmit}>
-                    {/* COLUMNA IZQUIERDA */}
-                    <div className="left-column">
-                        {/* Campo 01 - Nombre del producto */}
-                        <div className="nombre-section">
-                            <label>01</label>
+                    <input
+                        type="file"
+                        id="inputImagen"
+                        name="imagen"
+                        accept="image/*"
+                        hidden
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* COLUMNA DATOS 1 */}
+                <div className="data-column">
+
+                    <div className="field">
+                        <label>Nombre</label>
+                        <input
+                            type="text"
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleChange}
+                            required
+                        />
+                    </div>
+
+                    <div className="row">
+                        <div className="field">
+                            <label>Altura</label>
                             <input
                                 type="text"
-                                name="nombre"
-                                placeholder="..."
-                                value={formData.nombre}
+                                name="altura"
+                                value={formData.altura}
                                 onChange={handleChange}
                                 required
                             />
                         </div>
 
-                        {/* Sección de imagen */}
-                        <div className="image-section">
-                            <div
-                                className="image-box"
-                                id="preview"
-                                onClick={handleImageClick}
-                                style={{ cursor: "pointer" }}
-                            >
-                                {previewImage ? (
-                                    <img
-                                        src={previewImage}
-                                        alt="Preview"
-                                        style={{
-                                            width: "100%",
-                                            height: "100%",
-                                            objectFit: "cover",
-                                            borderRadius: "15px",
-                                        }}
-                                    />
-                                ) : (
-                                    "png/jpg/jpeg"
-                                )}
-                            </div>
-                            <input
-                                type="file"
-                                id="inputImagen"
-                                name="imagen"
-                                accept="image/*"
-                                style={{ display: "none" }}
-                                onChange={handleChange}
-                            />
-                        </div>
-
-                        {/* Campo adicional con lápiz */}
-                        <div className="campo-adicional">
+                        <div className="field">
+                            <label>Peso</label>
                             <input
                                 type="text"
-                                name="campoAdicional"
-                                placeholder="..."
-                                value={formData.campoAdicional}
+                                name="peso"
+                                value={formData.peso}
                                 onChange={handleChange}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="row">
+                        <div className="field">
+                            <label>Material</label>
+                            <input
+                                type="text"
+                                name="material"
+                                value={formData.material}
+                                onChange={handleChange}
+                                required
                             />
                         </div>
 
-                        {/* Botones de acción */}
-                        <div className="actions">
-                            <button className="btn" type="button" onClick={handleGoBack} disabled={saving}>
-                                Regresar
-                            </button>
-                            <button className="btn" type="submit" disabled={saving}>
-                                {saving ? "Guardando..." : "Guardar"}
-                            </button>
+                        <div className="field">
+                            <label>Marca</label>
+                            <input
+                                type="text"
+                                name="marca"
+                                value={formData.marca}
+                                onChange={handleChange}
+                                required
+                            />
                         </div>
                     </div>
 
-                    {/* COLUMNA DERECHA */}
-                    <div className="right-column">
-                        {/* Fila 1: Altura, Peso, Stock, Color */}
-                        <div className="fields-row">
-                            <div className="field-compact">
-                                <label>Altura</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="altura"
-                                        placeholder="..."
-                                        value={formData.altura}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Peso</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="peso"
-                                        placeholder="..."
-                                        value={formData.peso}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Stock</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="number"
-                                        name="stock"
-                                        value={formData.stock}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Color</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="color"
-                                        placeholder="..."
-                                        value={formData.color}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Fila 2: Aplicación, Material, Marca */}
-                        <div className="fields-row">
-                            <div className="field-compact">
-                                <label>Aplicación</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="aplicacion"
-                                        placeholder="..."
-                                        value={formData.aplicacion}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Material</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="material"
-                                        placeholder="..."
-                                        value={formData.material}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Marca</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="marca"
-                                        placeholder="..."
-                                        value={formData.marca}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Fila 3: Garantía, Precio x m2, Descuento */}
-                        <div className="fields-row">
-                            <div className="field-compact">
-                                <label>Garantía</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="garantia"
-                                        placeholder="..."
-                                        value={formData.garantia}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Precio x m2</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="precio"
-                                        placeholder="..."
-                                        value={formData.precio}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="field-compact">
-                                <label>Descuento</label>
-                                <div className="input-with-icon">
-                                    <span className="edit-icon">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                        </svg>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        name="descuento"
-                                        placeholder="..."
-                                        value={formData.descuento}
-                                        onChange={handleChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Descripción del producto */}
-                        <div className="description">
-                            <label>Descripción del producto</label>
-                            <div className="textarea-with-icon">
-                                <textarea
-                                    name="descripcion"
-                                    placeholder="..."
-                                    value={formData.descripcion}
-                                    onChange={handleChange}
-                                ></textarea>
-                                <span className="edit-icon-textarea">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                                    </svg>
-                                </span>
-                            </div>
-                        </div>
+                    <div className="field">
+                        <label>Precio x m²</label>
+                        <input
+                            type="text"
+                            name="precio"
+                            value={formData.precio}
+                            onChange={handleChange}
+                            required
+                        />
                     </div>
-                </form>
-            </div>
-        </>
-    );
+
+                </div>
+
+                {/* COLUMNA DATOS 2 (DESCRIPCIÓN + BOTONES) */}
+                <div className="data-column">
+
+                    <div className="field grow">
+                        <label>Descripción</label>
+                        <textarea
+                            name="descripcion"
+                            value={formData.descripcion}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div className="actions">
+                        <button
+                            type="button"
+                            onClick={handleGoBack}
+                            disabled={saving}
+                        >
+                            Regresar
+                        </button>
+
+                        <button
+                            type="submit"
+                            disabled={saving}
+                        >
+                            {saving ? "Guardando..." : "Guardar cambios"}
+                        </button>
+                    </div>
+
+                </div>
+
+            </form>
+        </div>
+    </>
+);
 };
 
 export default EditarProducto;

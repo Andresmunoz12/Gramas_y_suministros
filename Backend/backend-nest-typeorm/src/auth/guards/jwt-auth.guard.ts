@@ -1,10 +1,6 @@
-import {
-    ExecutionContext,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
@@ -18,16 +14,17 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             context.getHandler(),
             context.getClass(),
         ]);
+
         if (isPublic) {
             return true;
         }
+
         return super.canActivate(context);
     }
 
     handleRequest(err, user, info) {
-        // Puedes personalizar el error aquí
         if (err || !user) {
-            throw err || new UnauthorizedException('No tienes permiso para acceder a este recurso. Debes iniciar sesión.');
+            throw err || new UnauthorizedException('No autorizado');
         }
         return user;
     }

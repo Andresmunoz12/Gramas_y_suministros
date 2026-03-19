@@ -1,50 +1,51 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../styles/LoginAndRegister.css";
 import GlobalButton from "../components/GlobalButton";
 import NavComponent from "../components/GlobalNav";
-import api from "../api/axios";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminCode, setAdminCode] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    // Validamos que no envíen campos vacíos antes de llamar a la API
-    if (!email || !password) {
-      setMsg("error: Por favor completa todos los campos.");
-      return;
-    }
+    setLoading(true);
+    setMsg("");
 
     try {
-      const res = await api.post("/auth/login", {
-        email: email,
-        password_hash: password // <--- Enviamos 'password' pero con el nombre 'password_hash' que pide NestJS
-      });
+      console.log("1. Intentando login con:", { email });
+      const data = await login({ email, password_hash: password });
 
-      const data = res.data;
+      console.log("2. Respuesta completa:", data);
+      console.log("3. User recibido:", data.user);
+      console.log("4. Rol del usuario:", data.user?.id_rol);
 
-      // GUARDAR DATOS EN LOCALSTORAGE
-      localStorage.setItem("token", data.access_token);
-      localStorage.setItem("usuario", JSON.stringify(data.user));
-
-      setMsg("¡Bienvenido!");
+      setMsg("Inicio de sesión exitoso");
 
       // REDIRECCIÓN SEGÚN ROL
-      // Asumiendo que id_rol 1 es Admin y 2 es Cliente
-      if (data.user.id_rol === 1) {
-        navigate("/perfil");
-      } else {
+      if (data.user?.id_rol === 1) {
+        console.log("👉 Redirigiendo a /panel (Admin)");
+        navigate("/panel");
+      } else if (data.user?.id_rol === 2) {
+        console.log("👉 Redirigiendo a / (Cliente)");
         navigate("/");
+      } else {
+        console.log("❌ Rol no reconocido:", data.user?.id_rol);
+        setMsg("Rol de usuario no reconocido");
       }
 
     } catch (error) {
-      // Manejo de errores profesional
-      const errorMsg = error.response?.data?.message || "Error: Credenciales inválidas";
-      setMsg(`error: ${errorMsg}`);
+      console.error("❌ Error completo:", error);
+      setMsg(error.message || "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,49 +53,58 @@ export default function Login() {
     <>
       <NavComponent />
       <div className="auth-container">
+
         <div className="auth-card">
+
           <h1 className="auth-title">Iniciar sesión</h1>
 
+          {/* Correo */}
           <label className="auth-label">Dirección de correo <span>(Correo electrónico)</span></label>
           <div className="input-wrapper">
-            {/* Asegúrate que la ruta de la imagen sea correcta respecto a tu carpeta public */}
-            <img src="/icons/email.png" alt="correo" />
+            <img src="Backend/uploads/icons/email.png" alt="correo" />
             <input
               type="email"
               className="input-field"
-              placeholder="ejemplo@correo.com"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
             />
           </div>
 
+          {/* Contraseña */}
           <label className="auth-label">Contraseña</label>
           <div className="input-wrapper">
-            <img src="/icons/contraseña.png" alt="password" />
+            <img src="Backend/uploads/icons/contraseña.png" alt="password" />
             <input
               type="password"
               className="input-field"
-              placeholder="********"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={loading}
             />
           </div>
 
-          <GlobalButton onClick={handleLogin} style={{ width: "100%", marginBottom: "15px" }}>
-            Continuar
+          <GlobalButton
+            onClick={handleLogin}
+            style={{ width: "100%", marginBottom: "15px" }}
+            disabled={loading}
+          >
+            {loading ? "Iniciando sesión..." : "Continuar"}
           </GlobalButton>
 
-          <p className="auth-link" onClick={() => navigate("/forgot-password")}>
+          <p className="auth-link" onClick={() => !loading && navigate("/forgot-password")}>
             ¿Olvidaste tu contraseña?
           </p>
+
           <br />
-          <p className="auth-link" onClick={() => navigate("/register")}>
+
+          <p className="auth-link" onClick={() => !loading && navigate("/register")}>
             ¿No tienes cuenta? Regístrate aquí
           </p>
 
-          {msg && (
-            <p className={`auth-message ${msg.toLowerCase().includes("error") ? "error" : "success"}`}>
-              {msg.replace("error: ", "")}
-            </p>
-          )}
+          <p className={`auth-message ${msg.toLowerCase().includes("error") ? "error" : "success"}`}>
+            {msg}
+          </p>
         </div>
       </div>
     </>

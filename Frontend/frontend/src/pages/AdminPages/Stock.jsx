@@ -85,72 +85,105 @@ const StockGrama = () => {
     );
   }
 
-  return (
-    <>
-        <NavComponent />
-        
-      <main>
-        <h2>Stock de Grama Sintética</h2>
+return (
+  <>
+    <div className="admin-layout">
 
-        {/* Mostrar mensaje de error si existe */}
-        {msg && <p style={{ color: "red", textAlign: "center" }}>{msg}</p>}
+      {/* SIDEBAR */}
+      <aside className="sidebar">
+        <h2>Dashboard</h2>
 
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Producto</th>
-              <th>Stock</th>
-              <th>Nivel Mínimo</th>
-              <th>Estado</th>
-              <th>Última Actualización</th>
-              <th>Historial de entradas y salidas</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.length === 0 ? (
-              <tr>
-                <td colSpan="7" style={{ textAlign: "center" }}>
-                  No hay productos en stock
-                </td>
-              </tr>
-            ) : (
-              productos.map((producto) => (
-                <tr key={producto.id_producto}>
-                  <td>{producto.id_producto}</td>
-                  <td>
-                    {producto.nombre || `Producto ${producto.id_producto}`}
-                  </td>
-                  <td>{producto.cantidad_actual}</td>
-                  <td>{producto.nivel_minimo}</td>
-                  <td className={producto.claseEstado}>{producto.estado}</td>
-                  <td>
-                    {new Date(
-                      producto.ultima_actualizacion
-                    ).toLocaleDateString()}
-                  </td>
-                  <td>
-                    <button
-                      className="btn"
-                      onClick={() => handleVerHistorial(producto.id_producto)}
-                    >
-                      Ver y agregar nueva entrada
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <nav>
+          <button onClick={() => navigate("/panel")}>Inventario</button>
+          <button onClick={() => navigate("/usuarios")}>Usuarios</button>
+          <button onClick={() => navigate("/stock")}>Stock</button>
+          <button onClick={() => navigate("/reportes")}>Reportes</button>
+          <button onClick={() => navigate("/")}>Catalogo</button>
+        </nav>
+      </aside>
 
-        <div className="bottom-button">
-          <button className="btn1" onClick={() => navigate("/dashboard")}>
-            Regresar
-          </button>
-        </div>
-      </main>
-    </>
-  );
+      {/* MAIN */}
+      <div className="main-area">
+
+        <section className="table-section">
+          <div className="table-card">
+
+            <div className="table-header">
+              <h3>Stock de Productos</h3>
+              <div className="table-actions">
+                <button
+                  className="btn-primary"
+                  onClick={() => navigate("/entradasProductos")}
+                >
+                  Nueva Entrada
+                </button>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>Stock</th>
+                    <th>Nivel Mínimo</th>
+                    <th>Estado</th>
+                    <th>Última Actualización</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {productos.length === 0 ? (
+                    <tr>
+                      <td colSpan="7">No hay productos en stock</td>
+                    </tr>
+                  ) : (
+                    productos.map((producto) => (
+                      <tr key={producto.id_producto}>
+                        <td>{producto.id_producto}</td>
+                        <td>{producto.nombre}</td>
+                        <td>{producto.cantidad_actual}</td>
+                        <td>{producto.nivel_minimo}</td>
+
+                        <td>
+                          <span className={`status ${producto.claseEstado}`}>
+                            {producto.estado}
+                          </span>
+                        </td>
+
+                        <td>
+                          {new Date(
+                            producto.ultima_actualizacion
+                          ).toLocaleDateString()}
+                        </td>
+
+                        <td>
+                          <button
+                            className="btn-extra"
+                            onClick={() =>
+                              handleVerHistorial(producto.id_producto)
+                            }
+                          >
+                            Ver Historial
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </>
+);
+
 };
 
 export default StockGrama;
