@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common'; // 👈 Agregados NestModule, MiddlewareConsumer, RequestMethod
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsuariosModule } from './Usuarios/usuarios.module';
@@ -16,11 +21,12 @@ import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { LoggerMiddleware } from './auth/middleware/logger/logger.middleware'; // Tu import ya estaba bien
 import { join } from 'path';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
-
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
@@ -53,6 +59,18 @@ import { join } from 'path';
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
   ],
 })
-export class AppModule { }
+// 👈 Implementamos NestModule para poder usar el Middleware
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      // Indicamos que se aplique a todas las rutas (*) y a todos los métodos (GET, POST, etc.)
+      .forRoutes({ path: '*', method: RequestMethod.ALL });
+  }
+}

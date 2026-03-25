@@ -16,10 +16,20 @@ async function bootstrap() {
   });
 
   const options = new DocumentBuilder()
-    .setTitle('Documentación de API´s en Swagger.')
+    .setTitle('Gramas Y suministros.')
     .setDescription('Mostrando todas las API´s.')
     .setVersion('1.0')
-    .addBearerAuth() // Añadir autenticación Bearer a Swagger
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: 'Ingresa tu token JWT',
+        in: 'header',
+      },
+      'access-token',
+    ) // Añadir autenticación Bearer a Swagger
     .build();
 
   const document = SwaggerModule.createDocument(app, options);
@@ -29,14 +39,16 @@ async function bootstrap() {
     swaggerOptions: {
       filter: true,
       showRequestDuration: true,
-    }
+    },
   });
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
