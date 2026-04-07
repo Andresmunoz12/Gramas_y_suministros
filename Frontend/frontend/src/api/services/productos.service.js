@@ -2,10 +2,9 @@
 import api from '../axios';
 
 const ProductosService = {
-    // Obtener todos los productos
     getAll: async () => {
         try {
-            const response = await api.get('/producto');
+            const response = await api.get('/productos');
             return response.data;
         } catch (error) {
             console.error('Error en getAll:', error);
@@ -13,10 +12,20 @@ const ProductosService = {
         }
     },
 
-    // Obtener un producto por ID
+    // ✅ AGREGADO: Obtener todos (admin)
+    getAllAdmin: async () => {
+        try {
+            const response = await api.get('/productos/admin/all');
+            return response.data;
+        } catch (error) {
+            console.error('Error en getAllAdmin:', error);
+            throw error;
+        }
+    },
+
     getById: async (id) => {
         try {
-            const response = await api.get(`/producto/${id}`);
+            const response = await api.get(`/productos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error en getById:', error);
@@ -24,10 +33,13 @@ const ProductosService = {
         }
     },
 
-    // Crear un producto
     create: async (productoData) => {
         try {
-            const response = await api.post('/producto', productoData);
+            const config = productoData instanceof FormData 
+                ? { headers: { 'Content-Type': 'multipart/form-data' } }
+                : {};
+            
+            const response = await api.post('/productos', productoData, config);
             return response.data;
         } catch (error) {
             console.error('Error en create:', error);
@@ -35,10 +47,13 @@ const ProductosService = {
         }
     },
 
-    // Actualizar un producto
     update: async (id, productoData) => {
         try {
-            const response = await api.put(`/producto/${id}`, productoData);
+            const config = productoData instanceof FormData 
+                ? { headers: { 'Content-Type': 'multipart/form-data' } }
+                : {};
+            
+            const response = await api.put(`/productos/${id}`, productoData, config);
             return response.data;
         } catch (error) {
             console.error('Error en update:', error);
@@ -46,10 +61,31 @@ const ProductosService = {
         }
     },
 
-    // Eliminar un producto
+    // ✅ AGREGADO: Desactivar producto
+    desactivar: async (id) => {
+        try {
+            const response = await api.patch(`/productos/${id}/desactivar`);
+            return response.data;
+        } catch (error) {
+            console.error('Error en desactivar:', error);
+            throw error;
+        }
+    },
+
+    // ✅ AGREGADO: Activar producto
+    activar: async (id) => {
+        try {
+            const response = await api.patch(`/productos/${id}/activar`);
+            return response.data;
+        } catch (error) {
+            console.error('Error en activar:', error);
+            throw error;
+        }
+    },
+
     delete: async (id) => {
         try {
-            const response = await api.delete(`/producto/${id}`);
+            const response = await api.delete(`/productos/${id}`);
             return response.data;
         } catch (error) {
             console.error('Error en delete:', error);

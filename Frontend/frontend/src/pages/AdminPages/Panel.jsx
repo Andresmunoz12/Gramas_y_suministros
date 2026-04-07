@@ -3,13 +3,17 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/Panel.css";
 import Footer from "../../components/Footer";
 import NavComponent from "../../components/GlobalNav";
-import { useAuth } from "../../context/AuthContext"; // 👈 Importar useAuth
+import { useAuth } from "../../context/AuthContext";
+import ProductosService from "../../api/services/productos.service";
+import api from "../../api/axios"; // ✅ Importar axios para usuarios y stock
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { logout, user } = useAuth(); // 👈 Obtener logout y user
+  const { logout, user } = useAuth();
 
   const [productos, setProductos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [accionando, setAccionando] = useState(null);
   const [stats, setStats] = useState({
     usuarios: 0,
     productos: 0,
@@ -23,18 +27,19 @@ export default function AdminDashboard() {
 
   const obtenerDatos = async () => {
     try {
-      // 🔹 Productos
-      const productosRes = await fetch("http://localhost:3001/api/inventario");
-      const productosData = await productosRes.json();
+      setLoading(true);
+      
+      // 🔹 Productos - Usando el servicio (todos, incluyendo inactivos)
+      const productosData = await ProductosService.getAllAdmin();
       setProductos(productosData);
 
-      // 🔹 Usuarios
-      const usuariosRes = await fetch("http://localhost:3001/api/usuarios");
-      const usuariosData = await usuariosRes.json();
+      // 🔹 Usuarios - Usando axios con token automático
+      const usuariosRes = await api.get("/usuarios");
+      const usuariosData = usuariosRes.data;
 
-      // 🔹 Stock
-      const stockRes = await fetch("http://localhost:3001/api/stock");
-      const stockData = await stockRes.json();
+      // 🔹 Stock - Usando axios con token automático
+      const stockRes = await api.get("/stock");
+      const stockData = stockRes.data;
 
       const totalStock = stockData.reduce(
         (sum, item) => sum + (item.cantidad_actual || 0),
@@ -53,15 +58,69 @@ export default function AdminDashboard() {
       });
 
     } catch (err) {
-      console.log(err);
+      console.error("❌ Error al obtener datos:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 👇 Manejador de logout
+  const handleDesactivar = async (id, nombre) => {
+    if (accionando) return;
+    
+    const confirmar = window.confirm(`¿Estás seguro de que quieres DESACTIVAR el producto "${nombre}"?\n\nLos productos desactivados NO se mostrarán en el catálogo.`);
+    
+    if (!confirmar) return;
+    
+    try {
+      setAccionando(id);
+      await ProductosService.desactivar(id);
+      alert(`✅ Producto "${nombre}" desactivado correctamente`);
+      await obtenerDatos();
+    } catch (error) {
+      console.error("Error al desactivar:", error);
+      alert(`❌ Error al desactivar: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setAccionando(null);
+    }
+  };
+
+  const handleActivar = async (id, nombre) => {
+    if (accionando) return;
+    
+    const confirmar = window.confirm(`¿Estás seguro de que quieres ACTIVAR el producto "${nombre}"?\n\nLos productos activados se mostrarán en el catálogo.`);
+    
+    if (!confirmar) return;
+    
+    try {
+      setAccionando(id);
+      await ProductosService.activar(id);
+      alert(`✅ Producto "${nombre}" activado correctamente`);
+      await obtenerDatos();
+    } catch (error) {
+      console.error("Error al activar:", error);
+      alert(`❌ Error al activar: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setAccionando(null);
+    }
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/");
   };
+
+  if (loading) {
+    return (
+      <>
+        <NavComponent />
+        <div className="loading-container">
+          <div className="loader"></div>
+          <p>Cargando datos...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -70,7 +129,6 @@ export default function AdminDashboard() {
         <aside className="sidebar">
           <h2>Dashboard</h2>
 
-          {/* 👇 Mostrar información del usuario (opcional) */}
           <div className="user-info">
             <p>Bienvenido, {user?.nombre}</p>
           </div>
@@ -81,7 +139,6 @@ export default function AdminDashboard() {
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
-            {/* 👇 Botón de logout */}
             <button onClick={handleLogout} className="logout-btn">
               Cerrar Sesión
             </button>
@@ -110,53 +167,131 @@ export default function AdminDashboard() {
             </div>
           </section>
 
-          {/* TABLA */}
+          {/* TABLA DE PRODUCTOS */}
           <section className="table-section">
             <div className="table-card">
               <div className="table-header">
                 <h3>Inventario</h3>
                 <div className="table-actions">
-                  <button className="btn-secondary" onClick={() => navigate("/eliminarProducto")}>Eliminar</button>
-                  <button className="btn-primary" onClick={() => navigate("/insertarProducto")}>Agregar</button>
+                  {/* <button 
+                    className="btn-secondary" 
+                    onClick={() => navigate("/eliminarProducto")}
+                  >
+                    Eliminar
+                  </button> */}
+                  
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => navigate("/insertarProducto")}
+                  >
+                    Agregar
+                  </button>
                 </div>
               </div>
 
               <div className="table-container">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Producto</th>
-                      <th>Altura</th>
-                      <th>Peso</th>
-                      <th>Material</th>
-                      <th>Marca</th>
-                      <th>Precio</th>
-                      <th>Extras</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {productos.map(p => (
-                      <tr key={p.id_producto}>
-                        <td>{p.id_producto}</td>
-                        <td>{p.nombre}</td>
-                        <td>{p.altura ? `${p.altura} mm` : "N/A"}</td>
-                        <td>{p.peso ? `${p.peso} kg` : "N/A"}</td>
-                        <td>{p.material || "N/A"}</td>
-                        <td>{p.marca || "N/A"}</td>
-                        <td>${p.precio}</td>
-                        <td>
-                          <button
-                            className="btn-extra"
-                            onClick={() => navigate(`/editar-producto/${p.id_producto}`)}
-                          >
-                            Modificar
-                          </button>
-                        </td>
+                {productos.length === 0 ? (
+                  <p className="no-data">No hay productos registrados</p>
+                ) : (
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Estado</th>
+                        <th>Producto</th>
+                        <th>Altura</th>
+                        <th>Peso</th>
+                        <th>Material</th>
+                        <th>Marca</th>
+                        <th>Precio</th>
+                        <th>Categoría</th>
+                        <th>Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {productos.map(p => (
+                        <tr key={p.id_producto} style={{
+                          backgroundColor: p.estado === 0 ? '#fff3f3' : 'transparent',
+                          opacity: p.estado === 0 ? 0.7 : 1
+                        }}>
+                          <td>{p.id_producto}</td>
+                          <td>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 'bold',
+                              backgroundColor: p.estado === 1 ? '#d4edda' : '#f8d7da',
+                              color: p.estado === 1 ? '#155724' : '#721c24'
+                            }}>
+                              {p.estado === 1 ? 'ACTIVO' : 'INACTIVO'}
+                            </span>
+                          </td>
+                          <td>{p.nombre}</td>
+                          <td>{p.altura ? `${p.altura} m²` : "N/A"}</td>
+                          <td>{p.peso ? `${p.peso} kg` : "N/A"}</td>
+                          <td>{p.material || "N/A"}</td>
+                          <td>{p.marca || "N/A"}</td>
+                          <td>${p.precio}</td>
+                          <td>{p.categoria?.nombre || "Sin categoría"}</td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              <button
+                                className="btn-extra"
+                                onClick={() => navigate(`/editar-producto/${p.id_producto}`)}
+                                style={{
+                                  padding: '5px 10px',
+                                  backgroundColor: '#007bff',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Modificar
+                              </button>
+                              
+                              {p.estado === 1 ? (
+                                <button
+                                  onClick={() => handleDesactivar(p.id_producto, p.nombre)}
+                                  disabled={accionando === p.id_producto}
+                                  style={{
+                                    padding: '5px 10px',
+                                    backgroundColor: '#ffc107',
+                                    color: '#856404',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: accionando === p.id_producto ? 'not-allowed' : 'pointer',
+                                    opacity: accionando === p.id_producto ? 0.6 : 1
+                                  }}
+                                >
+                                  {accionando === p.id_producto ? 'Procesando...' : 'Desactivar'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleActivar(p.id_producto, p.nombre)}
+                                  disabled={accionando === p.id_producto}
+                                  style={{
+                                    padding: '5px 10px',
+                                    backgroundColor: '#28a745',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: accionando === p.id_producto ? 'not-allowed' : 'pointer',
+                                    opacity: accionando === p.id_producto ? 0.6 : 1
+                                  }}
+                                >
+                                  {accionando === p.id_producto ? 'Procesando...' : 'Activar'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </section>

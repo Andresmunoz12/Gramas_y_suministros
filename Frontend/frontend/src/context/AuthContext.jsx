@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
     const login = async (credentials) => {
         try {
             const data = await AuthService.login(credentials);
-            setUser(data.user);
+            // Recargar el usuario después del login
+            const currentUser = AuthService.getCurrentUser();
+            setUser(currentUser);
             return data;
         } catch (error) {
             throw error;
@@ -35,15 +37,18 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        AuthService.logout(); // 👈 Usar el método del servicio
-        setUser(null);
+        AuthService.logout();
+        setUser(null); // 👈 Esto actualiza el estado
     };
+
+    // 👈 IMPORTANTE: isAuthenticated debe basarse en el estado, no en localStorage
+    const isAuthenticated = !!user;
 
     const value = {
         user,
         login,
         logout,
-        isAuthenticated: AuthService.isAuthenticated,
+        isAuthenticated, // 👈 Ahora es un booleano, no una función
         loading,
     };
 

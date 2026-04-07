@@ -1,3 +1,4 @@
+// src/productos/productos.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,10 +12,13 @@ import { categoria } from '../categoria/categoria.entity';
 export class productos {
   @PrimaryGeneratedColumn({ name: 'id_producto' })
   id_producto: number;
+  
   @Column({ name: 'nombre', type: 'varchar', length: 150 })
   nombre: string;
+  
   @Column({ name: 'marca', type: 'varchar', length: 100 })
   marca: string;
+  
   @Column({
     name: 'peso',
     type: 'decimal',
@@ -23,10 +27,13 @@ export class productos {
     nullable: true,
   })
   peso: number;
+  
   @Column({ name: 'material', type: 'varchar', length: 100 })
   material: string;
+  
   @Column({ name: 'descripcion', type: 'text', nullable: true })
   descripcion: string;
+  
   @Column({
     name: 'precio',
     type: 'decimal',
@@ -35,6 +42,7 @@ export class productos {
     default: 0,
   })
   precio: number;
+  
   @Column({
     name: 'altura',
     type: 'decimal',
@@ -43,18 +51,30 @@ export class productos {
     nullable: true,
   })
   altura: number;
+  
   @ManyToOne(() => categoria, (c) => c.productos)
   @JoinColumn({ name: 'id_categoria' })
   categoria: categoria;
 
   @Column({ name: 'imagen', type: 'varchar', length: 255, nullable: true })
   imagen: string;
+  
+  // ✅ AGREGADO: Campo para estado del producto
+  @Column({
+    name: 'estado',
+    type: 'tinyint',
+    default: 1,
+    comment: '1 = Activo, 0 = Inactivo/Desactivado',
+  })
+  estado: number;
+  
   @Column({
     name: 'created_at',
     type: 'datetime',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
+  
   @Column({
     name: 'updated_at',
     type: 'datetime',

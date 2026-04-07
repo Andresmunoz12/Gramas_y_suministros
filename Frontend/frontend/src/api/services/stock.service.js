@@ -1,47 +1,48 @@
 import api from '../axios';
 
 const StockService = {
+    // Obtener todo el stock
     getAll: async () => {
         try {
             const response = await api.get('/stock');
             return response.data;
         } catch (error) {
+            console.error('Error en getAll stock:', error);
             throw error;
         }
     },
 
-    getByProducto: async (productoId) => {
+    // Obtener historial de movimientos de un producto
+    getHistorialByProducto: async (id_producto) => {
         try {
-            const response = await api.get(`/stock/producto/${productoId}`);
-            return response.data;
+            const response = await api.get(`/movimientos`);
+            const allMovements = response.data;
+            // Filtrar por producto
+            return allMovements.filter(mov => mov.id_producto === parseInt(id_producto));
         } catch (error) {
+            console.error('Error en getHistorialByProducto:', error);
             throw error;
         }
     },
 
-    updateStock: async (id, cantidad) => {
+    // Registrar entrada
+    registrarEntrada: async (data) => {
         try {
-            const response = await api.patch(`/stock/${id}`, { cantidad });
+            const response = await api.post('/movimientos/entrada', data);
             return response.data;
         } catch (error) {
+            console.error('Error en registrarEntrada:', error);
             throw error;
         }
     },
 
-    registrarMovimiento: async (data) => {
+    // Registrar salida
+    registrarSalida: async (data) => {
         try {
-            const response = await api.post('/movimiento', data);
+            const response = await api.post('/movimientos/salida', data);
             return response.data;
         } catch (error) {
-            throw error;
-        }
-    },
-
-    getMovimientos: async () => {
-        try {
-            const response = await api.get('/movimiento');
-            return response.data;
-        } catch (error) {
+            console.error('Error en registrarSalida:', error);
             throw error;
         }
     },

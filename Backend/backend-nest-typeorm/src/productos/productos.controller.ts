@@ -1,3 +1,4 @@
+// src/productos/productos.controller.ts
 import {
   Controller,
   Get,
@@ -7,18 +8,36 @@ import {
   Param,
   Delete,
   ParseIntPipe,
+  UseInterceptors, 
+  UploadedFile,
+  Patch,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer'; 
+import { extname } from 'path'; 
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiConsumes, 
 } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto-dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+
+// Configuración de almacenamiento para multer
+const storage = diskStorage({
+  destination: './uploads/img_products',
+  filename: (req, file, callback) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = extname(file.originalname);
+    const cleanName = file.originalname.replace(/\s/g, '_').replace(/[^a-zA-Z0-9._-]/g, '');
+    callback(null, `${uniqueSuffix}-${cleanName}`);
+  },
+});
 
 @ApiTags('Productos e Inventario')
 @Controller('productos')
@@ -29,6 +48,8 @@ export class ProductosController {
   @ApiBearerAuth('access-token')
   @Roles(1)
   @Post()
+  @ApiConsumes('multipart/form-data') 
+  @UseInterceptors(FileInterceptor('imagen', { storage })) 
   @ApiOperation({ summary: 'Registrar un nuevo producto' })
   @ApiResponse({
     status: 201,
@@ -63,7 +84,14 @@ export class ProductosController {
       },
     },
   })
-  create(@Body() createProductoDto: CreateProductoDto) {
+  async create( 
+    @Body() createProductoDto: CreateProductoDto,
+    @UploadedFile() file?: Express.Multer.File, 
+  ) {
+    
+    if (file) {
+      createProductoDto.imagen = file.filename; 
+}
     return this.productosService.create(createProductoDto);
   }
 
@@ -81,6 +109,16 @@ export class ProductosController {
   findAll() {
     return this.productosService.findAll();
   }
+
+    // GET: LISTAR TODOS (admin - incluye inactivos)
+  @ApiBearerAuth('access-token')
+  @Roles(1)
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Obtener todos los productos (incluyendo inactivos) para administración' })
+  findAllAdmin() {
+    return this.productosService.findAllAdmin();
+  }
+
 
   // --- GET: BUSCAR UNO ---
   @Public()
@@ -121,10 +159,30 @@ export class ProductosController {
     return this.productosService.findOne(id);
   }
 
+ // PATCH: DESACTIVAR PRODUCTO
+  @ApiBearerAuth('access-token')
+  @Roles(1)
+  @Patch(':id/desactivar')
+  @ApiOperation({ summary: 'Desactivar un producto (no se muestra en catálogo)' })
+  async desactivar(@Param('id', ParseIntPipe) id: number) {
+    return this.productosService.desactivar(id);
+  }
+
+  // PATCH: ACTIVAR PRODUCTO
+  @ApiBearerAuth('access-token')
+  @Roles(1)
+  @Patch(':id/activar')
+  @ApiOperation({ summary: 'Activar un producto (se muestra en catálogo)' })
+  async activar(@Param('id', ParseIntPipe) id: number) {
+    return this.productosService.activar(id);
+  }
+
   // --- PUT: ACTUALIZAR ---
   @ApiBearerAuth('access-token')
   @Roles(1)
   @Put(':id')
+  @ApiConsumes('multipart/form-data') 
+  @UseInterceptors(FileInterceptor('imagen', { storage })) 
   @ApiOperation({ summary: 'Actualizar datos de un producto existente' })
   @ApiResponse({
     status: 200,
@@ -170,10 +228,15 @@ export class ProductosController {
       },
     },
   })
-  update(
+  async update( 
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductoDto: UpdateProductoDto,
+    @UploadedFile() file?: Express.Multer.File, 
   ) {
+    
+    if (file) {
+      updateProductoDto.imagen = file.filename; 
+}
     return this.productosService.update(id, updateProductoDto);
   }
 

@@ -1,11 +1,13 @@
+// src/productos/productos.service.ts
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { productos } from './productos.entity'; // Asegúrate que el nombre de la clase sea Producto
+import { join } from 'path';
+import * as fs from 'fs-extra';
+import { productos } from './productos.entity';
 import { CreateProductoDto } from './dto/create-producto-dto';
 import { categoria } from '../categoria/categoria.entity';
 import { UpdateProductoDto } from './dto/update-producto.dto';
@@ -19,9 +21,7 @@ export class ProductosService {
     private readonly categoriaRepository: Repository<categoria>,
   ) {}
 
-  // 1. CREAR PRODUCTO
   async create(createProductoDto: CreateProductoDto) {
-    // Validar si la categoría existe
     const categoria = await this.categoriaRepository.findOne({
       where: { id_categoria: createProductoDto.id_categoria },
     });
@@ -32,23 +32,31 @@ export class ProductosService {
       );
     }
 
-    // Crear la instancia del producto
     const nuevoProducto = this.productoRepository.create({
       ...createProductoDto,
-      categoria: categoria, // Asignamos el objeto categoría completo
+      categoria: categoria,
+      estado: createProductoDto.estado ?? 1, // Por defecto activo
     });
 
     return await this.productoRepository.save(nuevoProducto);
   }
 
-  // 2. OBTENER TODOS LOS PRODUCTOS
+  // ✅ MODIFICADO: Obtener SOLO productos activos para el catálogo público
   async findAll() {
     return await this.productoRepository.find({
-      relations: ['categoria'], // Trae los datos de la categoría unida
+      where: { estado: 1 }, // Solo activos
+      relations: ['categoria'],
     });
   }
 
-  // 3. OBTENER UN PRODUCTO POR ID
+  // ✅ AGREGADO: Obtener TODOS los productos (incluyendo inactivos) para el panel de administración
+  async findAllAdmin() {
+    return await this.productoRepository.find({
+      relations: ['categoria'],
+      order: { estado: 'DESC', id_producto: 'ASC' }, // Activos primero
+    });
+  }
+
   async findOne(id: number) {
     const producto = await this.productoRepository.findOne({
       where: { id_producto: id },
@@ -61,12 +69,18 @@ export class ProductosService {
     return producto;
   }
 
-  // 4. ACTUALIZAR PRODUCTO
   async update(id: number, updateProductoDto: UpdateProductoDto) {
-    // Buscar si el producto existe
     const producto = await this.findOne(id);
 
-    // Si viene una nueva categoría, validar que exista
+    // Eliminar imagen anterior si se está actualizando
+    if (updateProductoDto.imagen && producto.imagen) {
+      const oldImagePath = join(process.cwd(), 'uploads', 'img_products', producto.imagen);
+      if (await fs.pathExists(oldImagePath)) {
+        await fs.remove(oldImagePath);
+        console.log(`✅ Imagen anterior eliminada: ${producto.imagen}`);
+      }
+    }
+
     if (updateProductoDto.id_categoria) {
       const categoria = await this.categoriaRepository.findOne({
         where: { id_categoria: updateProductoDto.id_categoria },
@@ -76,18 +90,38 @@ export class ProductosService {
           `Categoría con ID ${updateProductoDto.id_categoria} no encontrada`,
         );
       }
-      producto.categoria = categoria; // Asignar nueva categoría
+      producto.categoria = categoria;
     }
 
-    // Fusionar cambios (solo actualiza los campos enviados en el DTO)
     this.productoRepository.merge(producto, updateProductoDto);
-
     return await this.productoRepository.save(producto);
   }
 
-  // 5. ELIMINAR PRODUCTO
+  // ✅ AGREGADO: Método para desactivar producto
+  async desactivar(id: number) {
+    const producto = await this.findOne(id);
+    producto.estado = 0;
+    return await this.productoRepository.save(producto);
+  }
+
+  // ✅ AGREGADO: Método para activar producto
+  async activar(id: number) {
+    const producto = await this.findOne(id);
+    producto.estado = 1;
+    return await this.productoRepository.save(producto);
+  }
+
   async remove(id: number) {
     const producto = await this.findOne(id);
+    
+    if (producto.imagen) {
+      const imagePath = join(process.cwd(), 'uploads', 'img_products', producto.imagen);
+      if (await fs.pathExists(imagePath)) {
+        await fs.remove(imagePath);
+        console.log(`✅ Imagen eliminada: ${producto.imagen}`);
+      }
+    }
+    
     await this.productoRepository.remove(producto);
     return { mensaje: `Producto ${id} eliminado con éxito` };
   }

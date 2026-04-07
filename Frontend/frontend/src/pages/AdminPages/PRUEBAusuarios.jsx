@@ -114,12 +114,13 @@ export default function Usuarios() {
                             <h3>Gestión de Usuarios</h3>
 
                             <div className="table-actions">
-                                <button
+                                
+                                {/* <button
                                     className="btn-primary"
                                     onClick={() => navigate("/crear-usuario")}
                                 >
                                     Nuevo Usuario
-                                </button>
+                                </button> */}
                             </div>
                         </div>
 
@@ -183,7 +184,7 @@ export default function Usuarios() {
                                                     </button>
 
                                                     <button
-                                                        className="btn-toggle"
+                                                        className="btn-danger"
                                                         onClick={() =>
                                                             handleToggleStatus(user.id_usuario, user.estado)
                                                         }

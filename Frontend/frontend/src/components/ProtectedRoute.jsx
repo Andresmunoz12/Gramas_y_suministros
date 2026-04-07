@@ -4,15 +4,15 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const ProtectedRoute = ({ children, requiredRole = null }) => {
-    const { isAuthenticated, user, loading } = useAuth();
+    const { isAuthenticated, user, loading } = useAuth(); // isAuthenticated es booleano ahora
     const location = useLocation();
 
     if (loading) {
         return <div className="loading">Cargando...</div>;
     }
 
-    // 👇 Verificar autenticación en CADA render
-    if (!isAuthenticated()) {
+    // 👇 Verificar autenticación - YA NO es función
+    if (!isAuthenticated) { // 👈 Quitamos los paréntesis ()
         console.log('🔒 No autenticado, redirigiendo a login');
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
