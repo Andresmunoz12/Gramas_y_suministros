@@ -9,9 +9,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule); // ✅ MODIFICADO (agregado <NestExpressApplication>)
 
-  // Configuración CORS más específica
+  // Configuración CORS más específica y permisiva
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // URL de Vite
+    origin: true, // true permite que el origen sea dinámico (cualquier frontend local o externo)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: 'Content-Type, Accept, Authorization',

@@ -22,11 +22,10 @@ import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Asegúrate de que la ruta sea correcta
 
 @ApiTags('Proveedores')
-@ApiBearerAuth() // Indica que requiere Bearer Token
-@UseGuards(JwtAuthGuard) // Protege todo el controlador
+@ApiBearerAuth('access-token') // Indica que requiere Bearer Token
 @Controller('proveedores')
 export class ProveedoresController {
-  constructor(private readonly proveedoresService: ProveedoresService) {}
+  constructor(private readonly proveedoresService: ProveedoresService) { }
 
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo proveedor' })

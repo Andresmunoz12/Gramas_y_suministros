@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import "../../styles/AdminGlobal.css";
 import "../../styles/Panel.css";
 import Footer from "../../components/Footer";
 import NavComponent from "../../components/GlobalNav";
@@ -28,7 +29,7 @@ export default function AdminDashboard() {
   const obtenerDatos = async () => {
     try {
       setLoading(true);
-      
+
       // 🔹 Productos - Usando el servicio (todos, incluyendo inactivos)
       const productosData = await ProductosService.getAllAdmin();
       setProductos(productosData);
@@ -66,11 +67,11 @@ export default function AdminDashboard() {
 
   const handleDesactivar = async (id, nombre) => {
     if (accionando) return;
-    
+
     const confirmar = window.confirm(`¿Estás seguro de que quieres DESACTIVAR el producto "${nombre}"?\n\nLos productos desactivados NO se mostrarán en el catálogo.`);
-    
+
     if (!confirmar) return;
-    
+
     try {
       setAccionando(id);
       await ProductosService.desactivar(id);
@@ -86,11 +87,11 @@ export default function AdminDashboard() {
 
   const handleActivar = async (id, nombre) => {
     if (accionando) return;
-    
+
     const confirmar = window.confirm(`¿Estás seguro de que quieres ACTIVAR el producto "${nombre}"?\n\nLos productos activados se mostrarán en el catálogo.`);
-    
+
     if (!confirmar) return;
-    
+
     try {
       setAccionando(id);
       await ProductosService.activar(id);
@@ -139,7 +140,7 @@ export default function AdminDashboard() {
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
-            <button onClick={handleLogout} className="logout-btn">
+            <button onClick={handleLogout}>
               Cerrar Sesión
             </button>
           </nav>
@@ -179,9 +180,9 @@ export default function AdminDashboard() {
                   >
                     Eliminar
                   </button> */}
-                  
-                  <button 
-                    className="btn-primary" 
+
+                  <button
+                    className="btn-primary"
                     onClick={() => navigate("/insertarProducto")}
                   >
                     Agregar
@@ -236,50 +237,39 @@ export default function AdminDashboard() {
                           <td>${p.precio}</td>
                           <td>{p.categoria?.nombre || "Sin categoría"}</td>
                           <td>
-                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'nowrap' }}>
                               <button
                                 className="btn-extra"
                                 onClick={() => navigate(`/editar-producto/${p.id_producto}`)}
-                                style={{
-                                  padding: '5px 10px',
-                                  backgroundColor: '#007bff',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '4px',
-                                  cursor: 'pointer'
-                                }}
+                                style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                               >
                                 Modificar
                               </button>
-                              
+
                               {p.estado === 1 ? (
                                 <button
+                                  className="btn-delete"
                                   onClick={() => handleDesactivar(p.id_producto, p.nombre)}
                                   disabled={accionando === p.id_producto}
                                   style={{
-                                    padding: '5px 10px',
-                                    backgroundColor: '#ffc107',
-                                    color: '#856404',
-                                    border: 'none',
-                                    borderRadius: '4px',
                                     cursor: accionando === p.id_producto ? 'not-allowed' : 'pointer',
-                                    opacity: accionando === p.id_producto ? 0.6 : 1
+                                    opacity: accionando === p.id_producto ? 0.6 : 1,
+                                    padding: '6px 12px',
+                                    fontSize: '0.85rem'
                                   }}
                                 >
                                   {accionando === p.id_producto ? 'Procesando...' : 'Desactivar'}
                                 </button>
                               ) : (
                                 <button
+                                  className="btn-extra"
                                   onClick={() => handleActivar(p.id_producto, p.nombre)}
                                   disabled={accionando === p.id_producto}
                                   style={{
-                                    padding: '5px 10px',
-                                    backgroundColor: '#28a745',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
                                     cursor: accionando === p.id_producto ? 'not-allowed' : 'pointer',
-                                    opacity: accionando === p.id_producto ? 0.6 : 1
+                                    opacity: accionando === p.id_producto ? 0.6 : 1,
+                                    padding: '6px 12px',
+                                    fontSize: '0.85rem'
                                   }}
                                 >
                                   {accionando === p.id_producto ? 'Procesando...' : 'Activar'}

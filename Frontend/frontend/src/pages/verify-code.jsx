@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import GlobalButton from "../components/GlobalButton";
 
 export default function VerifyCode() {
   const navigate = useNavigate();
@@ -10,17 +11,12 @@ export default function VerifyCode() {
   const [msg, setMsg] = useState("");
 
   const verificar = async () => {
-    const res = await fetch("http://localhost:3001/api/auth/verify-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code })
-    });
-
-    const data = await res.json();
-    setMsg(data.message);
-
-    if (res.ok) {
-      navigate("/reset-password?email=" + email);
+    // Como el backend verifica el código al cambiar la contraseña, 
+    // pasamos el código a la siguiente página.
+    if (code.length === 6) {
+      navigate(`/reset-password?email=${email}&code=${code}`);
+    } else {
+      setMsg("El código debe tener 6 dígitos");
     }
   };
 
@@ -31,6 +27,7 @@ export default function VerifyCode() {
 
         <label className="auth-label">Correo</label>
         <div className="input-wrapper">
+          <img src="http://localhost:3000/uploads/icons/email.png" alt="correo" style={{ width: "20px", marginRight: "12px", opacity: 0.6 }} />
           <input
             type="email"
             className="input-field"
@@ -48,9 +45,15 @@ export default function VerifyCode() {
           />
         </div>
 
-        <button onClick={verificar}>Verificar</button>
+        <GlobalButton onClick={verificar} style={{ width: "100%", marginBottom: "15px" }}>
+          Verificar
+        </GlobalButton>
 
-        <p style={{ marginTop: "10px", color: "red" }}>{msg}</p>
+        <p className="auth-link" onClick={() => navigate("/login")} style={{ textAlign: "center", marginTop: "10px" }}>
+          Volver a Iniciar Sesión
+        </p>
+
+        <p style={{ marginTop: "10px", color: "red", textAlign: "center" }}>{msg}</p>
       </div>
     </div>
   );

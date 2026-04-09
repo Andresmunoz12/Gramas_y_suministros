@@ -1,11 +1,14 @@
 // components/GlobalNav.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCart } from "../context/CartContext";
 import "../styles/GlobalNav.css";
+import "../styles/CartDrawer.css";
 
 export default function NavComponent() {
   const navigate = useNavigate();
-  const { user, logout, isAuthenticated } = useAuth(); // isAuthenticated es booleano
+  const { user, logout, isAuthenticated } = useAuth();
+  const { totalItems, setCartOpen } = useCart();
 
   const handleLogout = () => {
     logout();
@@ -36,23 +39,35 @@ export default function NavComponent() {
             ) : (
               <Link to="/perfil" className="option">Mi Perfil</Link>
             )}
-            
-            <span className="option" style={{ color: "#ffffff" }}>
-              Hola, {user?.nombre || "Usuario"}
-            </span>
-            
-            <button 
-              onClick={handleLogout} 
-              className="option logout-btn"
+
+            <button
+              onClick={handleLogout}
+              className="option"
               style={{
-                background: "none",
+                background: "transparent",
                 border: "none",
                 cursor: "pointer",
-                color: "#ffffff"
+                padding: "0",
+                fontSize: "16px",
+                fontFamily: "inherit"
               }}
             >
               Cerrar Sesión
             </button>
+
+            {/* Cart icon — only for non-admin users */}
+            {!isAdmin && (
+              <button
+                className="cart-nav-btn"
+                onClick={() => setCartOpen(true)}
+                title="Ver carrito"
+              >
+                🛒
+                {totalItems > 0 && (
+                  <span className="cart-badge">{totalItems}</span>
+                )}
+              </button>
+            )}
           </>
         )}
       </nav>

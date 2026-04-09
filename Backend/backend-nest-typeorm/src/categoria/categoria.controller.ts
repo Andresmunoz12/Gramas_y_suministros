@@ -8,12 +8,17 @@ import {
   Delete,
   ParseIntPipe,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoriaService } from './categoria.service';
 import { CreateCategoriaDto } from './dto/create-categoria-dto';
+import { Roles } from '../auth/decorators/roles.decorator';
 
+@ApiTags('Categorias')
+@ApiBearerAuth('access-token')
+@Roles(1)
 @Controller('categorias') // URL: http://localhost:3000/categorias
 export class CategoriaController {
-  constructor(private readonly categoriaService: CategoriaService) {}
+  constructor(private readonly categoriaService: CategoriaService) { }
 
   @Post()
   create(@Body() createCategoriaDto: CreateCategoriaDto) {

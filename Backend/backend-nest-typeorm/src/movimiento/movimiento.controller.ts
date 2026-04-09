@@ -11,11 +11,10 @@ import { CreateMovimientoEntradaDto } from './dto/create-movimiento-entrada.dto'
 import { CreateMovimientoSalidaDto } from './dto/create-movimiento-salida.dto';
 
 @ApiTags('Movimientos')
-@ApiBearerAuth() // Indica a Swagger que estos endpoints requieren Token
-@UseGuards(JwtAuthGuard) // Protege TODOS los métodos del controller
+@ApiBearerAuth('access-token') // Indica a Swagger que estos endpoints requieren Token
 @Controller('movimientos')
 export class MovimientoController {
-  constructor(private readonly movimientosService: MovimientosService) {}
+  constructor(private readonly movimientosService: MovimientosService) { }
 
   @Post('entrada')
   @ApiOperation({ summary: 'Registrar entrada (Requiere Token)' })

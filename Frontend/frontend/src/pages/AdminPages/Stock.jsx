@@ -1,9 +1,11 @@
 // frontend/src/views/StockGrama.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import "../../styles/AdminGlobal.css";
 import "../../styles/Stock.css";
 import NavComponent from "../../components/GlobalNav";
 import StockService from "../../api/services/stock.service";
+import { secureStorage } from "../../utils/secureStorage";
 
 const StockGrama = () => {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const StockGrama = () => {
   };
 
   const handleVerHistorial = (id) => {
-    localStorage.setItem("producto_seleccionado", id);
+    secureStorage.setItem("producto_seleccionado", id);
     navigate("/entradasProductos");
   };
 
@@ -88,7 +90,13 @@ const StockGrama = () => {
             <div className="table-card">
               <div className="table-header">
                 <h3>Stock de Productos</h3>
-                <div className="table-actions">
+                <div className="table-actions" style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    className="btn-delete"
+                    onClick={() => navigate("/salidasProductos")}
+                  >
+                    Nueva Salida
+                  </button>
                   <button
                     className="btn-primary"
                     onClick={() => navigate("/entradasProductos")}

@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # --- BASE DE DATOS ---
+  db_gramas:
+    image: mysql:8.0
+    container_name: mysql_container
+    restart: always
+    environment:
+      MYSQL_DATABASE: gramas_db
+      MYSQL_ROOT_PASSWORD: admin_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  # --- BACKEND ---
+  api_gramas:
+    build: ./Backend/backend-nest-typeorm
+    container_name: nestjs_container
+    command: npm run start:dev # 👈 Comando agregado para habilitar el hot-reload automático
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Backend/backend-nest-typeorm:/app # 👈 ESTO: Conecta tu carpeta real con Docker
+      - /app/node_modules # 👈 Y ESTO: Protege tus librerías
+    depends_on:
+      - db_gramas
+    environment:
+      DATABASE_HOST: db_gramas
+      DATABASE_PORT: 3306
+      DATABASE_USER: root
+      DATABASE_PASSWORD: admin_password
+      DATABASE_NAME: gramas_db
+      JWT_SECRET: tu_clave_secreta_aqui
+
+volumes:
+  mysql_data:

@@ -33,11 +33,11 @@ export default function Register() {
     setLoading(true);
     setMsg({ texto: "", tipo: "" });
 
-    // Validar que la contraseña tenga al menos 6 caracteres
-    if (form.password_hash.length < 6) {
-      setMsg({ 
-        texto: "La contraseña debe tener al menos 6 caracteres", 
-        tipo: "error" 
+    // Validar que la contraseña tenga al menos 8 caracteres
+    if (form.password_hash.length < 8) {
+      setMsg({
+        texto: "La contraseña debe tener al menos 8 caracteres",
+        tipo: "error"
       });
       setLoading(false);
       return;
@@ -54,10 +54,10 @@ export default function Register() {
       };
 
       const response = await UsuariosService.create(datosEnvio);
-      
-      setMsg({ 
-        texto: response.mensaje || "Registro exitoso. Ahora inicia sesión.", 
-        tipo: "success" 
+
+      setMsg({
+        texto: response.mensaje || "Registro exitoso. Ahora inicia sesión.",
+        tipo: "success"
       });
 
       // Limpiar formulario
@@ -73,12 +73,12 @@ export default function Register() {
       setTimeout(() => {
         navigate("/login");
       }, 2000);
-      
+
     } catch (error) {
       console.error("Error en registro:", error);
-      
+
       let errorMsg = "Error al registrarse";
-      
+
       if (error.response?.data?.message) {
         if (Array.isArray(error.response.data.message)) {
           errorMsg = error.response.data.message.join(", ");
@@ -88,7 +88,7 @@ export default function Register() {
       } else if (error.message) {
         errorMsg = error.message;
       }
-      
+
       setMsg({ texto: errorMsg, tipo: "error" });
     } finally {
       setLoading(false);
@@ -119,61 +119,61 @@ export default function Register() {
 
           <label className="auth-label">Nombre *</label>
           <div className="input-wrapper">
-            <img src="/Backend/uploads/icons/user.webp" alt="usuario" />
-            <input 
-              className="input-field" 
-              type="text" 
-              name="nombre" 
+            <img src="http://localhost:3000/uploads/icons/user.webp" alt="usuario" />
+            <input
+              className="input-field"
+              type="text"
+              name="nombre"
               value={form.nombre}
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
             />
           </div>
 
           <label className="auth-label">Apellido</label>
           <div className="input-wrapper">
-            <img src="/Backend/uploads/icons/apellido.png" alt="ape" />
-            <input 
-              className="input-field" 
-              type="text" 
-              name="apellido" 
+            <img src="http://localhost:3000/uploads/icons/apellido.png" alt="ape" />
+            <input
+              className="input-field"
+              type="text"
+              name="apellido"
               value={form.apellido}
-              onChange={handleChange} 
+              onChange={handleChange}
             />
           </div>
 
           <label className="auth-label">Correo electrónico *</label>
           <div className="input-wrapper">
-            <img src="/Backend/uploads/icons/email.png" alt="correo" />
-            <input 
-              className="input-field" 
-              type="email" 
-              name="email" 
+            <img src="http://localhost:3000/uploads/icons/email.png" alt="correo" />
+            <input
+              className="input-field"
+              type="email"
+              name="email"
               value={form.email}
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
             />
           </div>
 
           <label className="auth-label">Contraseña *</label>
           <div className="input-wrapper">
-            <img src="/Backend/uploads/icons/contraseña.png" alt="cont" />
-            <input 
-              className="input-field" 
-              type="password" 
-              name="password" 
-              value={form.password}
-              onChange={handleChange} 
-              required 
-              minLength={6}
+            <img src="http://localhost:3000/uploads/icons/contraseña.png" alt="cont" />
+            <input
+              className="input-field"
+              type="password"
+              name="password"
+              value={form.password_hash}
+              onChange={handleChange}
+              required
+              minLength={8}
             />
           </div>
 
-          <GlobalButton 
-            type="submit" 
+          <GlobalButton
+            type="submit"
             disabled={loading}
-            style={{ 
-              width: "100%", 
+            style={{
+              width: "100%",
               marginBottom: "15px",
               opacity: loading ? 0.7 : 1,
               cursor: loading ? "not-allowed" : "pointer"

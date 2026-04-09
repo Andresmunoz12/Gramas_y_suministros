@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import UsuariosService from "../api/services/usuarios.service";
 import NavComponent from "../components/GlobalNav";
+import { secureStorage } from "../utils/secureStorage";
 import "../styles/EditarPerfil.css";
 import "../styles/Perfil.css";
 
@@ -22,12 +23,6 @@ export default function EditarPerfil() {
     // Verificar autenticación
     if (!isAuthenticated) {
       navigate("/login");
-      return;
-    }
-
-    // Si es admin, redirigir al panel
-    if (user?.id_rol === 1) {
-      navigate("/panel");
       return;
     }
 
@@ -69,20 +64,20 @@ export default function EditarPerfil() {
           apellido: formData.apellido,
           email: formData.email,
         };
-        
+
         // Actualizar localStorage directamente (el contexto se actualizará al recargar)
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        
+        secureStorage.setItem("user", JSON.stringify(updatedUser));
+
         // Opcional: Emitir evento para que el contexto se actualice sin recargar
         window.dispatchEvent(new Event("storage"));
-        
+
         setTimeout(() => navigate("/perfil"), 2000);
       } else {
         setMessage("❌ " + (response.mensaje || "Error al actualizar el perfil"));
       }
     } catch (error) {
       console.error("Error al actualizar perfil:", error);
-      
+
       let errorMsg = "❌ Error al conectar con el servidor";
       if (error.response?.data?.message) {
         if (Array.isArray(error.response.data.message)) {
@@ -93,7 +88,7 @@ export default function EditarPerfil() {
       } else if (error.message) {
         errorMsg = "❌ " + error.message;
       }
-      
+
       setMessage(errorMsg);
     } finally {
       setLoading(false);
@@ -101,7 +96,7 @@ export default function EditarPerfil() {
   };
 
   // Mostrar nada mientras verifica autenticación
-  if (!isAuthenticated || user?.id_rol === 1) {
+  if (!isAuthenticated) {
     return null;
   }
 

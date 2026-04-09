@@ -1,15 +1,17 @@
 header {
-  background: linear-gradient(135deg, #4a7c59 0%, #5a9367 100%);
+  background: linear-gradient(135deg, rgba(124, 211, 109, 0.95) 0%, rgba(106, 192, 90, 0.95) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 40px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   flex-wrap: wrap;
   position: sticky;
   top: 0px;
-  z-index: 100;
-
+  z-index: 101;
+  /* Ensure above filters */
 }
 
 .title-app {
@@ -31,7 +33,7 @@ header {
   width: auto;
 }
 
-.option{
+.option {
   color: #fff;
   font-weight: bold;
   text-decoration: none;

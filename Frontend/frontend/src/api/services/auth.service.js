@@ -1,6 +1,7 @@
 // api/services/auth.service.js
 import api from '../axios';
 import { jwtDecode } from 'jwt-decode';
+import { secureStorage } from '../../utils/secureStorage';
 
 const AuthService = {
     login: async (credentials) => {
@@ -8,7 +9,7 @@ const AuthService = {
             const response = await api.post('/auth/login', credentials);
             if (response.data.access_token) {
                 const token = response.data.access_token;
-                localStorage.setItem('token', token);
+                secureStorage.setItem('token', token);
 
                 const decoded = jwtDecode(token);
 
@@ -19,7 +20,7 @@ const AuthService = {
                 };
 
                 // Guardar en UNA SOLA KEY (user) para simplificar
-                localStorage.setItem('user', JSON.stringify(user));
+                secureStorage.setItem('user', JSON.stringify(user));
 
                 response.data.user = user;
             }
@@ -42,7 +43,7 @@ const AuthService = {
             'rememberMe' // si usas remember me
         ];
 
-        keysToRemove.forEach(key => localStorage.removeItem(key));
+        keysToRemove.forEach(key => secureStorage.removeItem(key));
 
         // También podrías limpiar sessionStorage si usas algo ahí
         // sessionStorage.clear();
@@ -51,12 +52,12 @@ const AuthService = {
     },
 
     getCurrentUser: () => {
-        const user = localStorage.getItem('user');
+        const user = secureStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     },
 
     isAuthenticated: () => {
-        return !!localStorage.getItem('token');
+        return !!secureStorage.getItem('token');
     },
 };
 

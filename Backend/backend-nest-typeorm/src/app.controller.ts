@@ -10,6 +10,7 @@ export class AppController {
   @Public()
   @Get()
   getHello(): string {
+    console.log('¡Hola, se recargó Docker solo!');
     return this.appService.getHello();
   }
 }

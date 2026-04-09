@@ -5,6 +5,7 @@ import NavComponent from "../../components/GlobalNav";
 import StockService from "../../api/services/stock.service";
 import ProductosService from "../../api/services/productos.service";
 import api from "../../api/axios";
+import { secureStorage } from "../../utils/secureStorage";
 import "../../styles/HistoryInsert.css";
 
 export default function HistorialEntradas() {
@@ -26,7 +27,7 @@ export default function HistorialEntradas() {
   // Obtener usuario del token
   const obtenerUsuarioId = () => {
     try {
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const user = JSON.parse(secureStorage.getItem("user") || "{}");
       return user.id_usuario || 1;
     } catch {
       return 1;
@@ -75,7 +76,7 @@ export default function HistorialEntradas() {
       setLoading(true);
       const data = await StockService.getHistorialByProducto(productId);
       const soloEntradas = data.filter(item => item.tipo === 'entrada');
-      
+
       // Enriquecer con nombre del proveedor
       const entradasConProveedor = await Promise.all(soloEntradas.map(async (ent) => {
         if (ent.entrada?.id_proveedor) {
@@ -100,7 +101,7 @@ export default function HistorialEntradas() {
           observaciones: ent.entrada?.observaciones || ent.detalle || "-"
         };
       }));
-      
+
       setEntradas(entradasConProveedor);
     } catch (error) {
       console.error("Error cargando historial:", error);

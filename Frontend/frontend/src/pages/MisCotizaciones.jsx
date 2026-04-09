@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import NavComponent from "../components/GlobalNav";
+import { secureStorage } from "../utils/secureStorage";
 import "../styles/Perfil.css";
 
 export default function MisCotizaciones() {
@@ -7,7 +8,7 @@ export default function MisCotizaciones() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const rawUsuario = localStorage.getItem("usuario");
+        const rawUsuario = secureStorage.getItem("usuario");
         if (rawUsuario) {
             const user = JSON.parse(rawUsuario);
             fetch(`http://localhost:3001/api/usuarios/cotizaciones/${user.id_usuario}`)

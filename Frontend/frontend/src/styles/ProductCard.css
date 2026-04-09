@@ -1,21 +1,22 @@
 /* ================= CARD ================= */
 
 .product-card {
-  background: white;
-  border-radius: 22px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 2px solid #e6e6e6;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  transition: 0.35s ease;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
+  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   flex-direction: column;
   position: relative;
+  height: 100%;
 }
 
 .product-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 14px 35px rgba(74, 124, 89, 0.18);
-  border-color: #5a9367;
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-green-light);
 }
 
 /* ===== BADGE ===== */
@@ -50,13 +51,14 @@
 }
 
 .product-card:hover .product-image img {
-    transform: scale(1.1);
+  transform: scale(1.1);
 }
 
 /* ===== CONTENIDO ===== */
 
 .card-content {
   padding: 18px;
+  flex-grow: 1;
 }
 
 .card-content h3 {
@@ -90,17 +92,27 @@
 /* ===== BOTÓN ===== */
 
 .btn-add {
-  background: #ffcc00;
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-hover) 100%);
+  color: var(--white);
   border: none;
   padding: 10px 18px;
   border-radius: 14px;
   font-weight: 800;
   cursor: pointer;
   transition: 0.25s;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+}
+
+.btn-cart {
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: auto;
 }
 
 .btn-add:hover {
-  background: #f2c200;
+  background: var(--primary-green-hover);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }

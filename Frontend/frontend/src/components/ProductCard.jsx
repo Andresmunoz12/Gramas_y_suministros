@@ -1,15 +1,12 @@
-import { memo } from "react"; // 👈 Importar memo
+import { memo } from "react";
 import "../styles/ProductCard.css";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
 
 function ProductCard({ producto }) {
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const handleVerMas = () => {
-    navigate(`/producto/${producto.id_producto}`);
-  };
-
-  // Verifica que producto y sus propiedades existan
   if (!producto) return null;
 
   const imagenUrl = producto.imagen
@@ -27,10 +24,8 @@ function ProductCard({ producto }) {
         <img
           src={imagenUrl}
           alt={producto.nombre || "Producto"}
-          onError={(e) => {
-            e.target.src = "/placeholder-producto.png";
-          }}
-          loading="lazy" // 👈 Carga lazy para mejor rendimiento
+          onError={(e) => { e.target.src = "/placeholder-producto.png"; }}
+          loading="lazy"
         />
       </div>
 
@@ -44,8 +39,11 @@ function ProductCard({ producto }) {
           ${new Intl.NumberFormat("es-CO").format(producto.precio || 0)}
         </span>
 
-        <button className="btn-add" onClick={handleVerMas}>
-          VER MÁS
+        <button
+          className="btn-add"
+          onClick={() => addToCart(producto)}
+        >
+          Comprar
         </button>
       </div>
 
@@ -53,5 +51,4 @@ function ProductCard({ producto }) {
   );
 }
 
-// 👈 Exportar con memo para evitar re-renders innecesarios
 export default memo(ProductCard);

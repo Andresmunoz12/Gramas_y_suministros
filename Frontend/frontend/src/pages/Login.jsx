@@ -61,7 +61,7 @@ export default function Login() {
           {/* Correo */}
           <label className="auth-label">Dirección de correo <span>(Correo electrónico)</span></label>
           <div className="input-wrapper">
-            <img src="Backend/uploads/icons/email.png" alt="correo" />
+            <img src="http://localhost:3000/uploads/icons/email.png" alt="correo" />
             <input
               type="email"
               className="input-field"
@@ -74,7 +74,7 @@ export default function Login() {
           {/* Contraseña */}
           <label className="auth-label">Contraseña</label>
           <div className="input-wrapper">
-            <img src="Backend/uploads/icons/contraseña.png" alt="password" />
+            <img src="http://localhost:3000/uploads/icons/contraseña.png" alt="password" />
             <input
               type="password"
               className="input-field"

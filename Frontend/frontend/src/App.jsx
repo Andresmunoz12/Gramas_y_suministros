@@ -1,6 +1,8 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import CartDrawer from "./components/CartDrawer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthGuard } from "./components/AuthGuard";
 
@@ -23,6 +25,7 @@ import Stock from "./pages/AdminPages/Stock.jsx"
 import InsertarProducto from "./pages/AdminPages/ProductInsert.jsx";
 import EditarProducto from "./pages/AdminPages/EditProduct.jsx";
 import EntradasProductos from "./pages/AdminPages/HistoryInsert.jsx";
+import SalidasProductos from "./pages/AdminPages/SalidasProductos.jsx";
 import EliminarProducto from "./pages/AdminPages/Remove-Product.jsx";
 import Usuarios from "./pages/AdminPages/PRUEBAusuarios.jsx";
 import Reportes from "./pages/AdminPages/PRUEBAreportes.jsx"
@@ -151,6 +154,14 @@ function AppRoutesContent() {
         }
       />
       <Route
+        path="/salidasProductos"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <SalidasProductos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/usuarios"
         element={
           <ProtectedRoute requiredRole={1}>
@@ -174,7 +185,10 @@ function AppRoutesContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutesContent />
+      <CartProvider>
+        <AppRoutesContent />
+        <CartDrawer />
+      </CartProvider>
     </AuthProvider>
   );
 }

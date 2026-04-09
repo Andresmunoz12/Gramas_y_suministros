@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UsuariosService from '../../api/services/usuarios.service';
+import '../../styles/AdminGlobal.css';
 import '../../styles/PRUEBAusuarios.css';
 import NavComponent from "../../components/GlobalNav";
 
@@ -114,7 +115,7 @@ export default function Usuarios() {
                             <h3>Gestión de Usuarios</h3>
 
                             <div className="table-actions">
-                                
+
                                 {/* <button
                                     className="btn-primary"
                                     onClick={() => navigate("/crear-usuario")}
@@ -160,8 +161,8 @@ export default function Usuarios() {
 
                                                 <td>
                                                     <span className={`badge ${user.id_rol === 1
-                                                            ? 'badge-admin'
-                                                            : 'badge-client'
+                                                        ? 'badge-admin'
+                                                        : 'badge-client'
                                                         }`}>
                                                         {user.id_rol === 1 ? 'Administrador' : 'Cliente'}
                                                     </span>
@@ -177,7 +178,7 @@ export default function Usuarios() {
                                                     <button
                                                         className="btn-extra"
                                                         onClick={() =>
-                                                            navigate(`/editar-usuario/${user.id_usuario}`)
+                                                            navigate("/editar-perfil")
                                                         }
                                                     >
                                                         Editar

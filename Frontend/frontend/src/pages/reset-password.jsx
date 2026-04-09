@@ -1,22 +1,32 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import GlobalButton from "../components/GlobalButton";
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const email = params.get("email");
 
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
 
   const cambiar = async () => {
-    const res = await fetch("http://localhost:3001/api/auth/reset-password", {
+    const code = params.get("code");
+    const res = await fetch("http://localhost:3000/auth/restablecer-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({
+        codigo_verificacion: code,
+        nueva_password: password
+      })
     });
 
     const data = await res.json();
     setMsg(data.message);
+
+    if (res.ok) {
+      setTimeout(() => navigate("/login"), 2000);
+    }
   };
 
   return (
@@ -26,12 +36,19 @@ export default function ResetPassword() {
 
         <label className="auth-label">Nueva contraseña</label>
         <div className="input-wrapper">
+          <img src="http://localhost:3000/uploads/icons/contraseña.png" alt="password" style={{ width: "20px", marginRight: "12px", opacity: 0.6 }} />
           <input type="password" className="input-field" onChange={(e) => setPassword(e.target.value)} />
         </div>
 
-        <button onClick={cambiar}>Cambiar</button>
+        <GlobalButton onClick={cambiar} style={{ width: "100%", marginBottom: "15px" }}>
+          Cambiar
+        </GlobalButton>
 
-        <p style={{ marginTop: "10px", color: "red" }}>{msg}</p>
+        <p className="auth-link" onClick={() => navigate("/login")} style={{ textAlign: "center", marginTop: "10px" }}>
+          Volver a Iniciar Sesión
+        </p>
+
+        <p style={{ marginTop: "10px", color: "red", textAlign: "center" }}>{msg}</p>
       </div>
     </div>
   );

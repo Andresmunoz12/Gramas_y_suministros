@@ -2,27 +2,37 @@
 // Muestra diferentes categorías de reportes para el administrador
 
 import { useNavigate } from 'react-router-dom';
-import './reportes.css'; // Estilos específicos de reportes
-import NavComponent from "../../components/GlobalNav";
+import '../../styles/AdminGlobal.css';
+import './reportes.css';
 
 export default function Reportes() {
   const navigate = useNavigate();
 
-  // Datos de las tarjetas de reportes
   const reportCards = [
-    { title: 'Reporte de Ventas', icon: 'sales-icon', color: 'blue', action: () => alert('Generando reporte de ventas...') },
+    { title: 'Reporte de Ventas', icon: 'sales-icon', color: 'green', action: () => alert('Generando reporte de ventas...') },
     { title: 'Productos Más Vendidos', icon: 'best-seller-icon', color: 'green', action: () => alert('Generando reporte de productos...') },
-    { title: 'Usuarios Registrados', icon: 'users-icon', color: 'purple', action: () => navigate('/panel-admin/usuarios') },
-    { title: 'Cotizaciones Generadas', icon: 'quotes-icon', color: 'orange', action: () => navigate('/panel-admin/cotizaciones') },
-    { title: 'Pedidos Finalizados', icon: 'orders-icon', color: 'red', action: () => alert('Generando reporte de pedidos...') },
+    { title: 'Usuarios Registrados', icon: 'users-icon', color: 'green', action: () => navigate('/usuarios') },
+    { title: 'Cotizaciones Generadas', icon: 'quotes-icon', color: 'green', action: () => navigate('/panel') },
+    { title: 'Pedidos Finalizados', icon: 'orders-icon', color: 'green', action: () => alert('Generando reporte de pedidos...') },
   ];
 
   return (
-    <>
-      
-      <NavComponent />
+    <div className="admin-layout">
+      {/* SIDEBAR */}
+      <aside className="sidebar">
+        <h2>Dashboard</h2>
+        <nav>
+          <button onClick={() => navigate("/panel")}>Inventario</button>
+          <button onClick={() => navigate("/usuarios")}>Usuarios</button>
+          <button onClick={() => navigate("/stock")}>Stock</button>
+          <button onClick={() => navigate("/reportes")} className="active">Reportes</button>
+          <button onClick={() => navigate("/")}>Catálogo</button>
+        </nav>
+      </aside>
 
-      <main className="reportes-content">
+      <main className="main-area">
+        <h1 style={{ color: '#1a3c34', marginBottom: '20px' }}>Dashboard de Reportes</h1>
+
         <div className="reportes-grid">
           {reportCards.map((card, index) => (
             <div
@@ -37,7 +47,6 @@ export default function Reportes() {
           ))}
         </div>
 
-        {/* Sección de gráficos (Placeholder para futura implementación) */}
         <div className="charts-section">
           <div className="chart-placeholder">
             <h3>Resumen Mensual</h3>
@@ -45,6 +54,6 @@ export default function Reportes() {
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }
