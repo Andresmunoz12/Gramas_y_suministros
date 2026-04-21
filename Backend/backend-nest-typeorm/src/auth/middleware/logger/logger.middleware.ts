@@ -16,6 +16,6 @@ export class LoggerMiddleware implements NestMiddleware {
       );
     });
 
-    next(); // 👈 CRÍTICO: Si olvidas esto, la API se quedará "pensando" para siempre.
+    next();
   }
 }

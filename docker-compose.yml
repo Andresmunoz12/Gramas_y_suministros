@@ -18,7 +18,7 @@ services:
   api_gramas:
     build: ./Backend/backend-nest-typeorm
     container_name: nestjs_container
-    command: npm run start:dev # 👈 Comando agregado para habilitar el hot-reload automático
+    command: npm run start:dev #
     ports:
       - "3000:3000"
     volumes:

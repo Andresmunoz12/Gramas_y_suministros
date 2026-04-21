@@ -97,6 +97,7 @@ export default function Perfil() {
             <p>Actualiza tu información personal.</p>
           </div>
 
+          {/* TEMPORALMENTE DESHABILITADO - MIS COTIZACIONES
           <div
             className="perfil-card"
             onClick={() => navigate("/mis-cotizaciones")}
@@ -112,6 +113,7 @@ export default function Perfil() {
             <h3>Mis cotizaciones</h3>
             <p>Revisa las cotizaciones solicitadas.</p>
           </div>
+          */}
         </section>
       </main>
 

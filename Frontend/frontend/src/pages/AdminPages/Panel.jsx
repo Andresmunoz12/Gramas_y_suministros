@@ -138,7 +138,9 @@ export default function AdminDashboard() {
             <button onClick={() => navigate("/panel")}>Inventario</button>
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
+            {/* TEMPORALMENTE DESHABILITADO - REPORTES
             <button onClick={() => navigate("/reportes")}>Reportes</button>
+            */}
             <button onClick={() => navigate("/")}>Catálogo</button>
             <button onClick={handleLogout}>
               Cerrar Sesión
