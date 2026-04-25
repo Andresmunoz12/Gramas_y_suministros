@@ -26,7 +26,7 @@ class LoginScreen extends StatelessWidget {
       );
       //respuesta de servidor
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("¡Éxito! Conectado a Gramas y Suministros");//mensaje de respuesta en la terminal
+        print("¡Exito! Conectado a Gramas y Suministros");//mensaje de respuesta en la terminal
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('¡Bienvenido a Gramas y Suministros!'), backgroundColor: Colors.green),//mensaje de respueta al dispoditvo movil
         );
