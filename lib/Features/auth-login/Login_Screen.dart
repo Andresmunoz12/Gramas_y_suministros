@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
+import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:http/http.dart' as http; // es la comunicación con http
 import 'dart:convert';//convierte o traduce los json
 
@@ -67,30 +68,11 @@ class LoginScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 40),
-
-                TextField(
-                  controller: userController,
-                  decoration: InputDecoration(
-                    labelText: 'Usuario',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
+                //buttom usuario
+                CustomTextField(label: 'Usuario', icon: Icons.person, controller: userController),
                 const SizedBox(height: 20),
-
-                TextField(
-                  controller: passwordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                ),
+                //buttom Contraseña
+                CustomTextField(label: 'Contraseña', icon: Icons.lock , controller: passwordController),
                 const SizedBox(height: 30),
 
                 // --- BOTÓN DE INGRESAR ---
