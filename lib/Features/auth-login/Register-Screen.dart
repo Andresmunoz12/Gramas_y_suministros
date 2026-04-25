@@ -76,7 +76,7 @@ class RegisterScreen extends StatelessWidget{
                  CustomTextField(label:'Nombre', icon: Icons.person , controller: namecontroller),
                 const SizedBox(height: 20),
                 //button Apellido
-                 CustomTextField(label: 'Apellido', icon: Icons.badge_outlined, controller: apellidocontroller),
+                 CustomTextField(label: 'Apellidos', icon: Icons.badge_outlined, controller: apellidocontroller),
                 const SizedBox(height: 20),
                //button Correo
                  CustomTextField(label: 'Correo Electronico', icon: Icons.email_outlined, controller: emailcontroller),
