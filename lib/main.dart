@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:gramas_y_suministros_movil/Presentation/screens/Login_Screen.dart';
-import 'package:gramas_y_suministros_movil/Presentation/screens/counters/counter_functions_screen.dart';
+import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
+import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
+import 'package:gramas_y_suministros_movil/counter_functions_screen.dart';
 
 
 void main(){
@@ -18,7 +19,7 @@ class Myapp extends StatelessWidget {
         useMaterial3: true,
           colorSchemeSeed: Colors.blue
       ),
-    home:  LoginScreen()
+    home:  RegisterScreen()
     );
     throw UnimplementedError();
   }
