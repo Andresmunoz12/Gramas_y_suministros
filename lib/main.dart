@@ -19,7 +19,7 @@ class Myapp extends StatelessWidget {
         useMaterial3: true,
           colorSchemeSeed: Colors.blue
       ),
-    home:  RegisterScreen()
+    home:  LoginScreen()
     );
     throw UnimplementedError();
   }

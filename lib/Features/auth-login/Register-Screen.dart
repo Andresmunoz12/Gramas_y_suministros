@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'dart:convert'; // 👈 Esto arregla el error de jsonEncode
 import 'package:http/http.dart' as http; // es la comunicación con http
@@ -105,6 +106,27 @@ class RegisterScreen extends StatelessWidget{
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("¿Ya tienes cuenta?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                        );
+                      },
+                      child: const Text(
+                        "Iniciar sesión aqui",
+                        style: TextStyle(
+                          color: Color(0xFF81D460),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

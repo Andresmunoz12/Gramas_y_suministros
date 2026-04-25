@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
 import 'package:http/http.dart' as http; // es la comunicación con http
 import 'dart:convert';//convierte o traduce los json
 
@@ -92,14 +93,12 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 30),
 
+                // --- BOTÓN DE INGRESAR ---
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // llamamos la funcion
-                      login(context);
-                    },
+                    onPressed: () => login(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF81D460),
                       foregroundColor: Colors.white,
@@ -113,6 +112,31 @@ class LoginScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
+                ), // 👈 Aquí termina el SizedBox del botón
+
+                const SizedBox(height: 20), // Espacio entre botón y link
+
+                // --- LINK A REGISTRO (Fuera del botón, dentro de la Column) ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("¿No tienes cuenta?"),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) =>  RegisterScreen()),
+                        );
+                      },
+                      child: const Text(
+                        "Registrarse",
+                        style: TextStyle(
+                          color: Color(0xFF81D460),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
