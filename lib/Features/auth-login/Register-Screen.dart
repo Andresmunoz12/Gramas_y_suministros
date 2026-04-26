@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
+import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
-import 'dart:convert'; // 👈 Esto arregla el error de jsonEncode
+import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
+import 'dart:convert'; //
 import 'package:http/http.dart' as http; // es la comunicación con http
 
 class RegisterScreen extends StatelessWidget{
@@ -71,42 +73,20 @@ class RegisterScreen extends StatelessWidget{
                   'Registrar Usuario',
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 40),
+                AppSpaces.verticalLarge,
                 //button Nombre
                  CustomTextField(label:'Nombre', icon: Icons.person , controller: namecontroller),
-                const SizedBox(height: 20),
+                AppSpaces.verticalMedium,
                 //button Apellido
                  CustomTextField(label: 'Apellidos', icon: Icons.badge_outlined, controller: apellidocontroller),
-                const SizedBox(height: 20),
+                AppSpaces.verticalMedium,
                //button Correo
                  CustomTextField(label: 'Correo Electronico', icon: Icons.email_outlined, controller: emailcontroller),
-                const SizedBox(height: 20),
+                AppSpaces.verticalMedium,
                 //button password
                  CustomTextField(label: 'Contraseña', icon: Icons.lock, controller: passwordcontroller),
-                const SizedBox(height:30),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // llamamos la funcion
-                      login(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF81D460),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      elevation: 5,
-                    ),
-                    child: const Text(
-                      'Continuar',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+                AppSpaces.verticalinter,
+                CustomButton(text: 'REGISTRARSE', onPressed: () => login(context)),//buttom registrar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

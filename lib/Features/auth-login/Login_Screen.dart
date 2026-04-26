@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
+import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
+import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
 import 'package:http/http.dart' as http; // es la comunicación con http
 import 'dart:convert';//convierte o traduce los json
 
@@ -67,36 +69,19 @@ class LoginScreen extends StatelessWidget {
                   'Iniciar Sesión',
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 40),
+                AppSpaces.verticalLarge,
                 //buttom usuario
                 CustomTextField(label: 'Usuario', icon: Icons.person, controller: userController),
-                const SizedBox(height: 20),
+                AppSpaces.verticalMedium,
                 //buttom Contraseña
                 CustomTextField(label: 'Contraseña', icon: Icons.lock , controller: passwordController),
-                const SizedBox(height: 30),
+                AppSpaces.verticalinter,
 
                 // --- BOTÓN DE INGRESAR ---
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    onPressed: () => login(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF81D460),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      elevation: 5,
-                    ),
-                    child: const Text(
-                      'INGRESAR',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ), // 👈 Aquí termina el SizedBox del botón
 
-                const SizedBox(height: 20), // Espacio entre botón y link
+                CustomButton(text: 'INGRESAR', onPressed: () => login(context)),
+
+                AppSpaces.verticalMedium, // Espacio entre botón y link
 
                 // --- LINK A REGISTRO (Fuera del botón, dentro de la Column) ---
                 Row(

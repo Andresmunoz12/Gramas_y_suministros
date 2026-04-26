@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
-import 'package:gramas_y_suministros_movil/counter_functions_screen.dart';
 
 
 void main(){
