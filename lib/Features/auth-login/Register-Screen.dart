@@ -1,54 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
-import 'dart:convert'; //
-import 'package:http/http.dart' as http; // es la comunicación con http
+import 'package:gramas_y_suministros_movil/models/Register.usuario.model.dart';
+import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class RegisterScreen extends StatelessWidget{
-   RegisterScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  RegisterScreen({super.key});
 
   final TextEditingController namecontroller = TextEditingController();
   final TextEditingController apellidocontroller = TextEditingController();
   final TextEditingController emailcontroller = TextEditingController();
   final TextEditingController passwordcontroller = TextEditingController();
 
-   Future<void> login(BuildContext context) async {
-     // Tu IP de Wi-Fi y el puerto de Docker
-     final String urlApi = 'http://192.168.80.28:3000/usuarios';
+  // Cambiamos el nombre de la función a 'registrar' para que sea coherente
+  Future<void> registrar(BuildContext context) async {
+    final String urlApi = 'http://localhost:3000/usuarios';
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-     try {
-       final response = await http.post(//envio de datos http
-         Uri.parse(urlApi),
-         headers: {'Content-Type': 'application/json'},//envio de paquetes tipo json
-         body: jsonEncode({
-           'nombre': namecontroller.text,
-           'apellido': apellidocontroller.text,
-           'email': emailcontroller.text,
-           'password_hash': passwordcontroller.text,
-           'id_rol': 2,
-         }),
-       );
-       //respuesta de servidor
-       if (response.statusCode == 200 || response.statusCode == 201) {
-         print("¡Usuario registrado Correctamente !");//mensaje de respuesta en la terminal
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('¡Usuario registrado Correctamente !'), backgroundColor: Colors.green),//mensaje de respueta al dispoditvo movil
-         );
-       } else {
-         print("Error de credenciales: ${response.body}");//mensaje de respuesta en la terminal
-         ScaffoldMessenger.of(context).showSnackBar(
-           const SnackBar(content: Text('¡Error de Credenciales!'), backgroundColor: Colors.red),//mensaje de respueta al dispoditvo movil
-         );
-       }
-     } catch (e) {
-       print("Error de conexión: $e");
-       ScaffoldMessenger.of(context).showSnackBar(
-         const SnackBar(content: Text('¡Error de conexion!'), backgroundColor: Colors.red),
-       );
-     }
-   }
+    try {
+      final response = await http.post(
+        Uri.parse(urlApi),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nombre': namecontroller.text,
+          'apellido': apellidocontroller.text,
+          'email': emailcontroller.text,
+          'password_hash': passwordcontroller.text,
+          'id_rol': 2,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        // PASO A: MODELADO
+        RegisterUsuario nuevoUsuario = RegisterUsuario.fromJson(responseData);
+
+        // PASO B: PROVIDER
+        // ERROR CORREGIDO: Antes intentabas usar 'usuarioLogueado' que no existía.
+        // Ahora usamos 'nuevoUsuario' que es la variable que acabas de crear arriba.
+        authProvider.setUserName(nuevoUsuario.nombre);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('¡Usuario ${nuevoUsuario.nombre} registrado correctamente!'),
+              backgroundColor: Colors.green
+          ),
+        );
+
+        // Opcional: Navegar al Login o Home tras registrarse
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('¡Error en los datos!'), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Error de conexión!'), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,19 +90,16 @@ class RegisterScreen extends StatelessWidget{
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
                 AppSpaces.verticalLarge,
-                //button Nombre
-                 CustomTextField(label:'Nombre', icon: Icons.person , controller: namecontroller),
+                CustomTextField(label:'Nombre', icon: Icons.person , controller: namecontroller),
                 AppSpaces.verticalMedium,
-                //button Apellido
-                 CustomTextField(label: 'Apellidos', icon: Icons.badge_outlined, controller: apellidocontroller),
+                CustomTextField(label: 'Apellidos', icon: Icons.badge_outlined, controller: apellidocontroller),
                 AppSpaces.verticalMedium,
-               //button Correo
-                 CustomTextField(label: 'Correo Electronico', icon: Icons.email_outlined, controller: emailcontroller),
+                CustomTextField(label: 'Correo Electronico', icon: Icons.email_outlined, controller: emailcontroller),
                 AppSpaces.verticalMedium,
-                //button password
-                 CustomTextField(label: 'Contraseña', icon: Icons.lock, controller: passwordcontroller),
+                CustomTextField(label: 'Contraseña', icon: Icons.lock, controller: passwordcontroller),
                 AppSpaces.verticalinter,
-                CustomButton(text: 'REGISTRARSE', onPressed: () => login(context)),//buttom registrar
+                // ERROR CORREGIDO: Llamamos a 'registrar(context)'
+                CustomButton(text: 'REGISTRARSE', onPressed: () => registrar(context)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -95,11 +108,11 @@ class RegisterScreen extends StatelessWidget{
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) =>  LoginScreen()),
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
                         );
                       },
                       child: const Text(
-                        "Iniciar sesión aqui",
+                        "Iniciar sesión aquí",
                         style: TextStyle(
                           color: Color(0xFF81D460),
                           fontWeight: FontWeight.bold,
@@ -115,5 +128,4 @@ class RegisterScreen extends StatelessWidget{
       ),
     );
   }
-
 }

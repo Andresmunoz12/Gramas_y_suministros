@@ -18,7 +18,7 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> login(BuildContext context) async {
-    final String urlApi = 'http://192.168.80.28:3000/auth/login';
+    final String urlApi = 'http://localhost:3000/auth/login';
 
     // 3. Referencia al Provider (listen: false porque estamos dentro de una función)
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
