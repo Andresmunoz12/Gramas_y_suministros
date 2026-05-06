@@ -1,53 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 1. IMPORTANTE: Para usar Provider
 import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
-import 'package:http/http.dart' as http; // es la comunicación con http
-import 'dart:convert';//convierte o traduce los json
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+// 2. Importa tus nuevos archivos de arquitectura
+import 'package:gramas_y_suministros_movil/models/usuarios.model.dart';
+import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
 
-  // Controladores para capturar el texto
-  final TextEditingController userController = TextEditingController(); //variable que almacena lo que escribimos en el correo
-  final TextEditingController passwordController = TextEditingController();//
+  final TextEditingController userController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   Future<void> login(BuildContext context) async {
-    // Tu IP de Wi-Fi y el puerto de Docker
     final String urlApi = 'http://192.168.80.28:3000/auth/login';
 
+    // 3. Referencia al Provider (listen: false porque estamos dentro de una función)
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
     try {
-      final response = await http.post(//envio de datos http
+      // Opcional: Puedes activar un estado de carga en tu provider aquí
+      // authProvider.setLoading(true);
+
+      final response = await http.post(
         Uri.parse(urlApi),
-        headers: {'Content-Type': 'application/json'},//envio de paquetes tipo json
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': userController.text,
           'password_hash': passwordController.text,
         }),
       );
-      //respuesta de servidor
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("¡Exito! Conectado a Gramas y Suministros");//mensaje de respuesta en la terminal
+        // --- PASO A: MODELADO (Convertir JSON a Objeto Dart) ---
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        Usuario usuarioLogueado = Usuario.fromJson(responseData);
+
+        // --- PASO B: PROVIDER (Guardar el objeto globalmente) ---
+        authProvider.login(usuarioLogueado);
+
+        print("¡Éxito! Usuario modelado: ${usuarioLogueado.nombre}");
+
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Bienvenido a Gramas y Suministros!'), backgroundColor: Colors.green),//mensaje de respueta al dispoditvo movil
+          SnackBar(
+              content: Text('¡Bienvenido, ${usuarioLogueado.nombre}!'),
+              backgroundColor: Colors.green
+          ),
         );
+
+        // 4. Aquí ya podrías navegar al Home sabiendo que los datos están seguros
+        // Navigator.pushReplacementNamed(context, '/home');
+
       } else {
-        print("Error de credenciales: ${response.body}");//mensaje de respuesta en la terminal
+        print("Error de credenciales: ${response.body}");
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Error de Credenciales!'), backgroundColor: Colors.red),//mensaje de respueta al dispoditvo movil
+          const SnackBar(content: Text('¡Error de Credenciales!'), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
       print("Error de conexión: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('¡Error de conexion!'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('¡Error de conexión!'), backgroundColor: Colors.red),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 5. Ejemplo de cómo leer datos del Provider en el UI (opcional)
+    // final user = context.watch<AuthProvider>().usuario;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -70,20 +97,16 @@ class LoginScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                 ),
                 AppSpaces.verticalLarge,
-                //buttom usuario
                 CustomTextField(label: 'Usuario', icon: Icons.person, controller: userController),
                 AppSpaces.verticalMedium,
-                //buttom Contraseña
                 CustomTextField(label: 'Contraseña', icon: Icons.lock , controller: passwordController),
                 AppSpaces.verticalinter,
 
                 // --- BOTÓN DE INGRESAR ---
-
                 CustomButton(text: 'INGRESAR', onPressed: () => login(context)),
 
-                AppSpaces.verticalMedium, // Espacio entre botón y link
+                AppSpaces.verticalMedium,
 
-                // --- LINK A REGISTRO (Fuera del botón, dentro de la Column) ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -92,7 +115,7 @@ class LoginScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) =>  RegisterScreen()),
+                          MaterialPageRoute(builder: (context) => RegisterScreen()),
                         );
                       },
                       child: const Text(
