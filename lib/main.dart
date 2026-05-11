@@ -11,13 +11,13 @@ void main() {
         // 2. Registramos tu AuthProvider
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
-      child: const Myapp(),
+      child: const MyApp(),
     ),
   );
 }
 
-class Myapp extends StatelessWidget {
-  const Myapp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -4,7 +4,6 @@ import '../models/usuarios.model.dart';
 class AuthProvider extends ChangeNotifier {
   Usuario? _usuarioLogueado;
   bool _isLoading = false;
-
   // Variable para el nombre (útil para mostrar bienvenida rápida)
   String _nombreUsuario = '';
 
