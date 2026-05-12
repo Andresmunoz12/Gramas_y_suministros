@@ -9,9 +9,58 @@ import 'dart:convert';
 
 import 'package:gramas_y_suministros_movil/models/usuarios.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
+import 'dart:io' show Platform;
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:gramas_y_suministros_movil/Features/Password-reset/Email_Recovery_Screen.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  Future<void> signInWithGoogle(BuildContext context) async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser != null) {
+        // Aquí iría la lógica para enviar el token a tu backend
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Iniciando con Google: ${googleUser.email}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al iniciar con Google: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  Future<void> signInWithApple(BuildContext context) async {
+    if (!Platform.isIOS) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El inicio con iOS solo está disponible en dispositivos Apple'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      // Aquí enviarías credential.identityToken a tu backend
+      print('Apple login success: $credential');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al iniciar con Apple: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   final TextEditingController userController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -159,7 +208,12 @@ class LoginScreen extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          // TODO: Implementar recuperacion de contrasena.
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EmailRecoveryScreen(),
+                            ),
+                          );
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: const Color(0xFF4A7C3E),
@@ -203,9 +257,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     AppSpaces.verticalMedium,
                     OutlinedButton.icon(
-                      onPressed: () {
-                        // TODO: Implementar inicio con Google.
-                      },
+                      onPressed: () => signInWithGoogle(context),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.black87,
@@ -237,9 +289,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     AppSpaces.verticalSmall,
                     ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implementar inicio con Apple/iOS.
-                      },
+                      onPressed: () => signInWithApple(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
