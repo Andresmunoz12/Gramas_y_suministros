@@ -7,6 +7,7 @@ import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/models/usuarios.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'dart:io' show Platform;
@@ -87,8 +88,15 @@ class LoginScreen extends StatelessWidget {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Bienvenido, !'),
+            content: Text('Bienvenido, ${usuarioLogueado.nombre}!'),
             backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CatalogScreen(),
           ),
         );
       } else {
