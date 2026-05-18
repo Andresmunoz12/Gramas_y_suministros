@@ -12,6 +12,7 @@ import 'package:gramas_y_suministros_movil/models/usuarios.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'dart:io' show Platform;
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/services.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:gramas_y_suministros_movil/Features/Password-reset/Email_Recovery_Screen.dart';
 
@@ -24,12 +25,51 @@ class LoginScreen extends StatelessWidget {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
-        // Aquí iría la lógica para enviar el token a tu backend
+        // Obtenemos autenticación (idToken / accessToken) por si la necesitas para el backend
+        final GoogleSignInAuthentication auth = await googleUser.authentication;
+        debugPrint('GoogleSignIn success: id=${googleUser.id}, email=${googleUser.email}');
+
+        // Mostramos un mensaje breve al usuario
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Iniciando con Google: ${googleUser.email}')),
         );
+
+        // Creamos un Usuario local y notificamos al AuthProvider (flujo existente en tu app)
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final Usuario usuario = Usuario(
+          idUsuario: 0,
+          nombre: googleUser.displayName ?? googleUser.email.split('@').first,
+          email: googleUser.email,
+          // Puedes guardar auth.accessToken o idToken si tu backend lo necesita
+          token: auth.idToken,
+        );
+
+        authProvider.login(usuario);
+
+        // Navegar al catálogo
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CatalogScreen()),
+        );
       }
+    } on PlatformException catch (e) {
+      final String rawMessage = '${e.code}:${e.message}'.toLowerCase();
+      debugPrint('GoogleSignIn PlatformException: code=${e.code}, message=${e.message}');
+
+      String userMessage = 'Error al iniciar con Google. Inténtalo de nuevo más tarde.';
+      if (e.code == 'sign_in_canceled' || rawMessage.contains('cancel')) {
+        userMessage = 'El inicio de sesión fue cancelado.';
+      } else if (rawMessage.contains('apiexception') && rawMessage.contains('10')) {
+        userMessage = 'Error de autenticación. La firma de la aplicación no coincide con la configuración del servidor.';
+      } else if (rawMessage.contains('network')) {
+        userMessage = 'No se pudo conectar con los servidores. Revisa tu conexión a internet.';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(userMessage), backgroundColor: Colors.red),
+      );
     } catch (e) {
+      debugPrint('GoogleSignIn unexpected error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al iniciar con Google: $e'), backgroundColor: Colors.red),
       );

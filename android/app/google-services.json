@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "407220268848",
+    "project_id": "gramas-y-suministros",
+    "storage_bucket": "gramas-y-suministros.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407220268848:android:9dcf5e6e5fd8b70e98a2f5",
+        "android_client_info": {
+          "package_name": "com.example.gramas_y_suministros_movil"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407220268848-mat1qi3qojs05do8hfalfuk64pcq6t20.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gramas_y_suministros_movil",
+            "certificate_hash": "3e98f93b7233da89d2d87fd81586ef47a7c70964"
+          }
+        },
+        {
+          "client_id": "407220268848-kfuf8rq69sd55drqaob1d4t7fq28jrog.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIujkn1PogLmfqxm9F1jQQGVS75ZSk238"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407220268848-kfuf8rq69sd55drqaob1d4t7fq28jrog.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
