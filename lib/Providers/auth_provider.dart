@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/usuarios.model.dart';
+import '../core/security/secure_storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
+  final SecureStorageRepository _secureStorage = SecureStorageService();
+  
   Usuario? _usuarioLogueado;
   bool _isLoading = false;
   // Variable para el nombre (útil para mostrar bienvenida rápida)
@@ -15,10 +18,28 @@ class AuthProvider extends ChangeNotifier {
   String get recoveryEmail => _recoveryEmail;
   String get recoveryCode => _recoveryCode;
 
-  void login(Usuario user) {
+  /// Registra al usuario en memoria y escribe el token de forma cifrada en el almacenamiento seguro.
+  Future<void> login(Usuario user) async {
     _usuarioLogueado = user;
-    _nombreUsuario = user.nombre; // Guardamos el nombre también aquí
+    _nombreUsuario = user.nombre;
     notifyListeners();
+    
+    if (user.token != null) {
+      await _secureStorage.write('auth_token', user.token!);
+    }
+  }
+
+  /// Limpia los datos de sesión en memoria y elimina físicamente todas las claves cifradas.
+  Future<void> logout() async {
+    _usuarioLogueado = null;
+    _nombreUsuario = '';
+    notifyListeners();
+    await _secureStorage.deleteAll();
+  }
+
+  /// Intenta recuperar el token del almacenamiento cifrado para auto-login.
+  Future<String?> getSavedToken() async {
+    return await _secureStorage.read('auth_token');
   }
 
   void setRecoveryEmail(String email) {

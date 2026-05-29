@@ -44,7 +44,7 @@ class LoginScreen extends StatelessWidget {
           token: auth.idToken,
         );
 
-        authProvider.login(usuario);
+        await authProvider.login(usuario);
 
         // Navegar al catálogo
         Navigator.pushReplacement(
@@ -124,7 +124,7 @@ class LoginScreen extends StatelessWidget {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         Usuario usuarioLogueado = Usuario.fromJson(responseData);
 
-        authProvider.login(usuarioLogueado);
+        await authProvider.login(usuarioLogueado);
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
