@@ -25,7 +25,7 @@ Future<void> init() async {
   );
 
   // External
-  sl.registerLazySingleton(() => InternetConnectionCheckerPlus());
+  sl.registerLazySingleton(() => InternetConnection());
   sl.registerLazySingleton(() => GoogleSignIn());
   // sl.registerLazySingleton(() => SignInWithApple()); // Si se necesitara inyectar directamente
 }

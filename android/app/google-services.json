@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "407220268848-kcc8lg2qrp01akkpdadbt5hk63bofsef.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gramas_y_suministros_movil",
+            "certificate_hash": "bb36131ba1261287eada5add6c292467d0f5fc0f"
+          }
+        },
+        {
           "client_id": "407220268848-mat1qi3qojs05do8hfalfuk64pcq6t20.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

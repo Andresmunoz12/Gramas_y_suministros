@@ -6,12 +6,12 @@ abstract class NetworkInfo {
   Future<bool> get isConnected;
 }
 
-/// Implementación concreta de [NetworkInfo] que usa [InternetConnectionCheckerPlus].
+/// Implementación concreta de [NetworkInfo] usando la API moderna.
 class NetworkInfoImpl implements NetworkInfo {
-  final InternetConnectionCheckerPlus connectionChecker;
+  final InternetConnection connectionChecker;
 
   NetworkInfoImpl(this.connectionChecker);
 
   @override
-  Future<bool> get isConnected => connectionChecker.hasConnection;
+  Future<bool> get isConnected => connectionChecker.hasInternetAccess;
 }
