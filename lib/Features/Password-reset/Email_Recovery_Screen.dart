@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
@@ -30,13 +31,13 @@ class _EmailRecoveryScreenState extends State<EmailRecoveryScreen> {
       return;
     }
 
-    final String urlApi = 'http://localhost:3000/auth/solicitar-codigo';
+    final String urlApi = ApiConfig.authRequestCode;
 
     setState(() => isLoading = true);
 
     try {
       final response = await http.post(
-        Uri.parse(urlApi),
+        Uri.parse(urlApi.trim()),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': emailController.text,

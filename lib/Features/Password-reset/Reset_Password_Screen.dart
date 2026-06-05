@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
@@ -42,7 +43,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final String code = authProvider.recoveryCode;
-    final String urlApi = 'http://localhost:3000/auth/restablecer-password';
+    final String urlApi = ApiConfig.authResetPassword;
 
     setState(() => isLoading = true);
 

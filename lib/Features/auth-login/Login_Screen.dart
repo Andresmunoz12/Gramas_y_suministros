@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/models/usuarios.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'dart:io' show Platform;
@@ -106,12 +107,12 @@ class LoginScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
 
   Future<void> login(BuildContext context) async {
-    final String urlApi = 'http://localhost:3000/auth/login';
+    final String urlApi = ApiConfig.authLogin;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
       final response = await http.post(
-        Uri.parse(urlApi),
+        Uri.parse(urlApi.trim()),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': userController.text,
