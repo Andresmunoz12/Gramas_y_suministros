@@ -5,6 +5,7 @@ import 'package:gramas_y_suministros_movil/models/producto.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'CartView.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -62,6 +63,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F2),
+      drawer: _buildAppDrawer(context),
       floatingActionButton: selectedTabIndex == 0
           ? FloatingActionButton(
               onPressed: () {
@@ -156,20 +158,27 @@ class _CatalogScreenState extends State<CatalogScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
+            Builder(
+              builder: (context) {
+                return GestureDetector(
+                  onTap: () => Scaffold.of(context).openDrawer(),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.menu, color: Color(0xFF2D5A27)),
                   ),
-                ],
-              ),
-              child: const Icon(Icons.menu, color: Color(0xFF2D5A27)),
+                );
+              },
             ),
             GestureDetector(
               onTap: () {
@@ -651,6 +660,99 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 }
+
+  Widget _buildAppDrawer(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            UserAccountsDrawerHeader(
+              accountName: Text(
+                authProvider.nombreUsuario.isNotEmpty ? authProvider.nombreUsuario : 'Invitado',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              accountEmail: Text(
+                authProvider.usuario?.email ?? '',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Text(
+                  authProvider.nombreUsuario.isNotEmpty ? authProvider.nombreUsuario[0].toUpperCase() : 'U',
+                  style: const TextStyle(color: Color(0xFF2E7D32), fontSize: 20, fontWeight: FontWeight.w800),
+                ),
+              ),
+              decoration: const BoxDecoration(
+                color: Color(0xFF2E7D32),
+              ),
+            ),
+            if (authProvider.isAdmin)
+              ListTile(
+                leading: const Icon(Icons.dashboard, color: Color(0xFF3D7B2C)),
+                title: const Text('Administrador'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                  );
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.grid_view_rounded, color: Color(0xFF3D7B2C)),
+              title: const Text('Catálogo'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CatalogScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF3D7B2C)),
+              title: const Text('Carrito'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: const Text('Carrito'), backgroundColor: const Color(0xFF3D7B2C)),
+                      body: CartView(onGoToCatalog: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const CatalogScreen()),
+                        );
+                      }),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.redAccent),
+              title: const Text('Cerrar Sesión', style: TextStyle(color: Colors.redAccent)),
+              onTap: () async {
+                Navigator.pop(context);
+                await authProvider.logout();
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
 class _ProductCard extends StatelessWidget {
   final Producto product;

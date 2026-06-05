@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Register-Screen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
@@ -40,17 +41,15 @@ class LoginScreen extends StatelessWidget {
           idUsuario: 0,
           nombre: googleUser.displayName ?? googleUser.email.split('@').first,
           email: googleUser.email,
+          idRol: 2,
           // Puedes guardar auth.accessToken o idToken si tu backend lo necesita
           token: auth.idToken,
         );
 
         await authProvider.login(usuario);
 
-        // Navegar al catálogo
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const CatalogScreen()),
-        );
+        // Si Google no está conectada al backend, abrimos el catálogo como fallback.
+        _navigateToPostLogin(context, authProvider.idRol ?? 2);
       }
     } on PlatformException catch (e) {
       final String rawMessage = '${e.code}:${e.message}'.toLowerCase();
@@ -133,12 +132,7 @@ class LoginScreen extends StatelessWidget {
           ),
         );
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const CatalogScreen(),
-          ),
-        );
+        _navigateToPostLogin(context, usuarioLogueado.idRol);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -155,6 +149,20 @@ class LoginScreen extends StatelessWidget {
         ),
       );
     }
+  }
+
+  void _navigateToPostLogin(BuildContext context, int roleId) {
+    Widget nextPage;
+    if (roleId == 1) {
+      nextPage = const AdminDashboard();
+    } else {
+      nextPage = const CatalogScreen();
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => nextPage),
+    );
   }
 
   @override
