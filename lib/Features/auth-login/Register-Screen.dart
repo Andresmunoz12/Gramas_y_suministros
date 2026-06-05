@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-TextField.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-button.dart';
@@ -21,12 +22,12 @@ class RegisterScreen extends StatelessWidget {
 
   // Cambiamos el nombre de la función a 'registrar' para que sea coherente
   Future<void> registrar(BuildContext context) async {
-    final String urlApi = 'http://localhost:3000/usuarios';
+    final String urlApi = ApiConfig.users;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     try {
       final response = await http.post(
-        Uri.parse(urlApi),
+        Uri.parse(urlApi.trim()),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'nombre': namecontroller.text,
