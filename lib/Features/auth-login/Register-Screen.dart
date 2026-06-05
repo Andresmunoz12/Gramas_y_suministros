@@ -171,14 +171,14 @@ class RegisterScreen extends StatelessWidget {
                     ),
                     AppSpaces.verticalMedium,
                     CustomTextField(
-                      label: 'Contrasena',
+                      label: 'Contraseña',
                       icon: Icons.lock,
                       isPassword: true,
                       controller: passwordcontroller,
                     ),
                     AppSpaces.verticalMedium,
                     CustomTextField(
-                      label: 'Confirmar contrasena',
+                      label: 'Confirmar contraseña',
                       icon: Icons.lock_outline,
                       isPassword: true,
                       controller: confirmPasswordController,

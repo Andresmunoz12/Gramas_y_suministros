@@ -13,6 +13,10 @@ class AuthProvider extends ChangeNotifier {
   String _recoveryCode = '';
 
   Usuario? get usuario => _usuarioLogueado;
+  int? get idRol => _usuarioLogueado?.idRol;
+  bool get isAdmin => _usuarioLogueado?.idRol == 1;
+  bool get isClient => _usuarioLogueado?.idRol == 2;
+  bool get isWarehouseUser => _usuarioLogueado?.idRol == 3;
   bool get isLoading => _isLoading;
   String get nombreUsuario => _nombreUsuario;
   String get recoveryEmail => _recoveryEmail;
