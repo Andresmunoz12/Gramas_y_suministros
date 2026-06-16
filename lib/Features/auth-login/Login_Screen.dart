@@ -41,6 +41,7 @@ class LoginScreen extends StatelessWidget {
         final Usuario usuario = Usuario(
           idUsuario: 0,
           nombre: googleUser.displayName ?? googleUser.email.split('@').first,
+          apellido: '',
           email: googleUser.email,
           idRol: 2,
           // Puedes guardar auth.accessToken o idToken si tu backend lo necesita
