@@ -6,6 +6,7 @@ import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
+import 'package:gramas_y_suministros_movil/Features/profile/presentation/EditProfileScreen.dart';
 import 'CartView.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -538,8 +539,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget _buildProfileView(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final String emailToShow = authProvider.usuario?.email ?? 'usuario@ejemplo.com';
-    final String nameToShow = authProvider.nombreUsuario.isNotEmpty 
-        ? authProvider.nombreUsuario 
+    final String nameToShow = authProvider.usuario?.nombre ?? '';
+    final String lastNameToShow = authProvider.usuario?.apellido ?? '';
+    final String fullNameToShow = nameToShow.isNotEmpty 
+        ? (lastNameToShow.isNotEmpty ? '$nameToShow $lastNameToShow' : nameToShow)
         : 'Cliente Invitado';
 
     return Column(
@@ -571,7 +574,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 radius: 36,
                 backgroundColor: const Color(0xFF3D7B2C),
                 child: Text(
-                  nameToShow.isNotEmpty ? nameToShow[0].toUpperCase() : 'U',
+                  fullNameToShow.isNotEmpty ? fullNameToShow[0].toUpperCase() : 'U',
                   style: const TextStyle(fontSize: 28, color: Colors.white, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -581,7 +584,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nameToShow,
+                      fullNameToShow,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -599,11 +602,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ],
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: Color(0xFF2D5A27)),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                  );
+                },
+              ),
             ],
           ),
         ),
         AppSpaces.verticalLarge,
         // Opciones del perfil
+        _buildProfileOption(
+          Icons.person_outline,
+          'Editar Información Personal',
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+            );
+          },
+        ),
         _buildProfileOption(Icons.location_on_outlined, 'Direcciones guardadas'),
         _buildProfileOption(Icons.payment_outlined, 'Métodos de pago'),
         _buildProfileOption(Icons.notifications_none_outlined, 'Notificaciones'),
@@ -638,7 +660,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     );
   }
 
-  Widget _buildProfileOption(IconData icon, String title) {
+  Widget _buildProfileOption(IconData icon, String title, {VoidCallback? onTap}) {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
@@ -651,7 +673,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1F3D24)),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Color(0xFF9CA3AF)),
-        onTap: () {
+        onTap: onTap ?? () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Opción "$title" disponible en la versión final.')),
           );

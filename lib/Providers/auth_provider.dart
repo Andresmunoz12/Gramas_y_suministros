@@ -65,4 +65,10 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = value;
     notifyListeners();
   }
+
+  void updateUsuario(Usuario updatedUser) {
+    _usuarioLogueado = updatedUser;
+    _nombreUsuario = updatedUser.nombre;
+    notifyListeners();
+  }
 }
