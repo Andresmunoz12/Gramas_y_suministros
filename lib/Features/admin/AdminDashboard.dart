@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/AddProductScreen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -253,10 +254,27 @@ class AdminDashboard extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _buildActionButton(context, Icons.person, 'Usuarios'),
-            _buildActionButton(context, Icons.bar_chart, 'Reportes'),
-            _buildActionButton(context, Icons.inventory, 'Productos'),
-            _buildActionButton(context, Icons.notifications, 'Alertas'),
+            _buildActionButton(context, Icons.person, 'Usuarios', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ir a Usuarios')),
+              );
+            }),
+            _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ir a Reportes')),
+              );
+            }),
+            _buildActionButton(context, Icons.inventory, 'Productos', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddProductScreen()),
+              );
+            }),
+            _buildActionButton(context, Icons.notifications, 'Alertas', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ir a Alertas')),
+              );
+            }),
           ],
         ),
         const SizedBox(height: 30),
@@ -285,17 +303,13 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, IconData icon, String label) {
+  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Material(
         color: const Color(0xFFE8F7E5),
         child: InkWell(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Ir a $label')), 
-            );
-          },
+          onTap: onTap,
           child: SizedBox(
             width: 144,
             height: 104,
