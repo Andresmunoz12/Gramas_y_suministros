@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/models/producto.model.dart';
 import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
@@ -7,6 +11,7 @@ import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'package:gramas_y_suministros_movil/Features/profile/presentation/EditProfileScreen.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'CartView.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -21,44 +26,59 @@ class _CatalogScreenState extends State<CatalogScreen> {
   int selectedCategory = 0;
   int selectedTabIndex = 0;
 
-  final List<Producto> products = const [
-    Producto(
-      id: 'prod_deportiva',
-      title: 'Grama Deportiva',
-      subtitle: 'Ideal para canchas de alto tráfico.',
-      price: 12.50,
-      unit: '/m²',
-      color: Color(0xFFE8F7E5),
-      accentColor: Color(0xFF3D7B2C),
-    ),
-    Producto(
-      id: 'prod_bermuda',
-      title: 'Bermuda Grass',
-      subtitle: 'Resistente a sequía y sol fuerte.',
-      price: 14.00,
-      unit: '/m²',
-      color: Color(0xFFDFF4E5),
-      accentColor: Color(0xFF2B661C),
-    ),
-    Producto(
-      id: 'prod_agustin',
-      title: 'San Agustín',
-      subtitle: 'Crecimiento denso y color verde oscuro.',
-      price: 10.90,
-      unit: '/m²',
-      color: Color(0xFFF2F8EE),
-      accentColor: Color(0xFF4A7C3E),
-    ),
-    Producto(
-      id: 'prod_npk',
-      title: 'Fertilizante NPK',
-      subtitle: 'Nutrición balanceada para crecimiento rápido.',
-      price: 35.00,
-      unit: '/20kg',
-      color: Color(0xFFF3F6F1),
-      accentColor: Color(0xFF4A7C3E),
-    ),
-  ];
+  late Future<List<Producto>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = _loadProducts();
+  }
+
+  Future<List<Producto>> _loadProducts() async {
+    debugPrint('CatalogScreen: solicitando ${ApiConfig.productos}');
+    final response = await http.get(Uri.parse(ApiConfig.productos));
+    debugPrint('CatalogScreen: status ${response.statusCode}');
+
+    if (response.statusCode != 200) {
+      debugPrint('CatalogScreen: body ${response.body}');
+      throw Exception('Error al cargar los productos: código ${response.statusCode}');
+    }
+
+    final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+    debugPrint('CatalogScreen: recibidos ${jsonList.length} registros');
+    return jsonList.map((json) {
+      return Producto.fromJson(json as Map<String, dynamic>);
+    }).toList();
+  }
+
+  Widget _buildProductGrid(List<Producto> products) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: products.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.55,
+      ),
+      itemBuilder: (context, index) {
+        return _ProductCard(product: products[index]);
+      },
+    );
+  }
+
+  List<Producto> _filterProducts(List<Producto> products) {
+    if (selectedCategory == 0) return products;
+    final String selected = categories[selectedCategory].toLowerCase();
+    return products.where((product) {
+      final categoryMatch = product.categoryName?.toLowerCase().contains(selected) ?? false;
+      final titleMatch = product.title.toLowerCase().contains(selected);
+      final subtitleMatch = product.subtitle.toLowerCase().contains(selected);
+      final brandMatch = product.brand?.toLowerCase().contains(selected) ?? false;
+      return categoryMatch || titleMatch || subtitleMatch || brandMatch;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -344,128 +364,71 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ),
                 ),
                 AppSpaces.verticalLarge,
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ProductCard(product: products[0]),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _ProductCard(product: products[1]),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ProductCard(product: products[2]),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _ProductCard(product: products[3]),
-                    ),
-                  ],
-                ),
-                AppSpaces.verticalLarge,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'Más Vendidos',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F3D24),
-                      ),
-                    ),
-                    Text(
-                      'Ver todos>',
-                      style: TextStyle(
-                        color: Color(0xFF4A7C3E),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 20,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 96,
-                        height: 96,
+                FutureBuilder<List<Producto>>(
+                  future: _productsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                                    if (snapshot.hasError) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE3F3DF),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.grass,
-                          color: Color(0xFF2D5A27),
-                          size: 44,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text(
-                              'Riego Automático Smart',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF1F3D24),
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Kit completo para 50m²',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF6B7280),
-                              ),
-                            ),
-                            SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Icon(Icons.star, color: Color(0xFFFFC107), size: 16),
-                                SizedBox(width: 6),
-                                Text(
-                                  '4.9',
-                                  style: TextStyle(
-                                    color: Color(0xFF4A7C3E),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        '\$20.00',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF2D5A27),
+                        child: Text(
+                          'Error al cargar productos: ${snapshot.error}',
+                          style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                         ),
-                      ),
-                    ],
-                  ),
+                      );
+                    }
+
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: Text(
+                          'No se recibió lista de productos del backend.',
+                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                        ),
+                      );
+                    }
+
+                    final products = _filterProducts(snapshot.data!);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Text(
+                            'Mostrando ${products.length} producto(s)',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF6B7280),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (products.isEmpty)
+                          const Center(
+                            child: Text(
+                              'No hay productos disponibles en esta categoría.',
+                              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                            ),
+                          )
+                        else
+                          _buildProductGrid(products),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 100),
               ],
@@ -800,17 +763,35 @@ class _ProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 110,
+            height: 120,
             decoration: BoxDecoration(
               color: product.color,
               borderRadius: BorderRadius.circular(22),
             ),
-            child: Center(
-              child: Icon(
-                Icons.grass,
-                size: 42,
-                color: product.accentColor,
-              ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      product.imageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            Icons.grass,
+                            size: 42,
+                            color: product.accentColor,
+                          ),
+                        );
+                      },
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.grass,
+                        size: 42,
+                        color: product.accentColor,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 14),
@@ -821,8 +802,27 @@ class _ProductCard extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: Color(0xFF1F3D24),
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
+          if (product.categoryName != null && product.categoryName!.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F7E5),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(
+                product.categoryName!,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF2D5A27),
+                ),
+              ),
+            ),
           Text(
             product.subtitle,
             style: const TextStyle(
@@ -832,30 +832,36 @@ class _ProductCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.formattedPrice,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1F3D24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.formattedPrice,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F3D24),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Text(
-                    product.unit,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
+                    const SizedBox(height: 4),
+                    Text(
+                      product.unit,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   final cartProvider = Provider.of<CartProvider>(context, listen: false);

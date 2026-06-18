@@ -65,7 +65,7 @@ class CartView extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Miniatura decorativa del producto
+                    // Miniatura del producto (imagen remota si existe)
                     Container(
                       width: 76,
                       height: 76,
@@ -73,12 +73,31 @@ class CartView extends StatelessWidget {
                         color: product.color,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Center(
-                        child: Icon(
-                          Icons.grass,
-                          color: product.accentColor,
-                          size: 32,
-                        ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                            ? Image.network(
+                                product.imageUrl!,
+                                width: 76,
+                                height: 76,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Center(
+                                    child: Icon(
+                                      Icons.grass,
+                                      color: product.accentColor,
+                                      size: 32,
+                                    ),
+                                  );
+                                },
+                              )
+                            : Center(
+                                child: Icon(
+                                  Icons.grass,
+                                  color: product.accentColor,
+                                  size: 32,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 16),
