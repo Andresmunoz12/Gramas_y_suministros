@@ -1,0 +1,118 @@
+/* ================= CARD ================= */
+
+.product-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
+  transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  height: 100%;
+}
+
+.product-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-green-light);
+}
+
+/* ===== BADGE ===== */
+
+.product-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: white;
+  color: #2e7d32;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+/* ===== IMAGEN ===== */
+
+.product-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.product-card:hover .product-image img {
+  transform: scale(1.1);
+}
+
+/* ===== CONTENIDO ===== */
+
+.card-content {
+  padding: 18px;
+  flex-grow: 1;
+}
+
+.card-content h3 {
+  color: #2e7d32;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.card-content p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* ===== FOOTER ===== */
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 18px 20px;
+  border-top: 1px solid #eee;
+}
+
+.price {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #3a6b47;
+}
+
+/* ===== BOTÓN ===== */
+
+.btn-add {
+  background: linear-gradient(135deg, var(--primary-green) 0%, var(--primary-green-hover) 100%);
+  color: var(--white);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+}
+
+.btn-cart {
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.btn-add:hover {
+  background: var(--primary-green-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
