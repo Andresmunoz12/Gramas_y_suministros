@@ -1,5 +1,5 @@
 class ApiConfig {
-  static const String baseUrl = 'https://motivator-citrus-sprint.ngrok-free.dev';
+  static const String baseUrl = 'https://prognosis-grapple-drizzly.ngrok-free.dev';
   static const String authLogin = '$baseUrl/auth/login';
   static const String authRequestCode = '$baseUrl/auth/solicitar-codigo';
   static const String authResetPassword = '$baseUrl/auth/restablecer-password';

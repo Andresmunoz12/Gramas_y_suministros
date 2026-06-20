@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 
 class Producto {
   final String id;
@@ -53,17 +54,24 @@ class Producto {
     }
 
     final String url = rawUrl.trim();
-    if (url.contains('google.com/imgres') || url.contains('imgurl=')) {
-      final uri = Uri.tryParse(url);
-      if (uri != null) {
-        final imgUrl = uri.queryParameters['imgurl'];
-        if (imgUrl != null && imgUrl.isNotEmpty) {
-          return Uri.decodeComponent(imgUrl);
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      if (url.contains('google.com/imgres') || url.contains('imgurl=')) {
+        final uri = Uri.tryParse(url);
+        if (uri != null) {
+          final imgUrl = uri.queryParameters['imgurl'];
+          if (imgUrl != null && imgUrl.isNotEmpty) {
+            return Uri.decodeComponent(imgUrl);
+          }
         }
       }
+      return url;
     }
 
-    return url;
+    final String cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    if (cleanUrl.startsWith('uploads/')) {
+      return '${ApiConfig.baseUrl}/$cleanUrl';
+    }
+    return '${ApiConfig.baseUrl}/uploads/img_products/$cleanUrl';
   }
 
   static Color _getColor(dynamic seed) {
