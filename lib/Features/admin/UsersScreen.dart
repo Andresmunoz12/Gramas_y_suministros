@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -787,10 +788,10 @@ class _UsersScreenState extends State<UsersScreen> {
                   () => Navigator.pushReplacement(context,
                       MaterialPageRoute(
                           builder: (_) => const InventoryScreen()))),
-              _buildNavItem(Icons.storage_rounded, 'Stock', false, () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Sección de Stock')));
-              }),
+              _buildNavItem(Icons.bar_chart_rounded, 'Reportes', false,
+                  () => Navigator.pushReplacement(context,
+                      MaterialPageRoute(
+                          builder: (_) => const ReportesScreen()))),
             ],
           ),
         ),

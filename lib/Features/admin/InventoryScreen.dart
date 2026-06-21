@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/AddProductScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/EditProductScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -657,9 +658,10 @@ class _InventoryScreenState extends State<InventoryScreen> {
               _buildBottomMenuItem(Icons.inventory_2_rounded, 'Inventario', true, () {
                 _loadProducts();
               }),
-              _buildBottomMenuItem(Icons.storage_rounded, 'Stock', false, () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sección de Stock')),
+              _buildBottomMenuItem(Icons.bar_chart_rounded, 'Reportes', false, () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportesScreen()),
                 );
               }),
             ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -367,8 +368,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               );
             }),
             _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ir a Reportes')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportesScreen()),
               );
             }),
             _buildActionButton(context, Icons.inventory, 'Inventario', () async {
