@@ -1,8 +1,114 @@
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
+import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 
-class AdminDashboard extends StatelessWidget {
+class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
+
+  @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
+  int _totalProducts = 0;
+  bool _isLoadingProducts = true;
+
+  int _totalActiveUsers = 0;
+  bool _isLoadingUsers = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTotalProducts();
+    _loadTotalUsers();
+  }
+
+  Future<void> _loadTotalProducts() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+
+      if (token == null) {
+        throw Exception('Token no encontrado');
+      }
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.productos}/admin/all'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+        if (mounted) {
+          setState(() {
+            _totalProducts = jsonList.length;
+            _isLoadingProducts = false;
+          });
+        }
+      } else {
+        throw Exception('Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error cargando total de productos: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingProducts = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadTotalUsers() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+
+      if (token == null) throw Exception('Token no encontrado');
+
+      final response = await http.get(
+        Uri.parse(ApiConfig.users),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+        // Cuenta los que tienen estado == 'activo' (string del enum del backend)
+        final int activeCount = jsonList.where((u) {
+          if (u is! Map<String, dynamic>) return false;
+          final estado = u['estado']?.toString() ?? '';
+          return estado == 'activo';
+        }).length;
+        if (mounted) {
+          setState(() {
+            _totalActiveUsers = activeCount;
+            _isLoadingUsers = false;
+          });
+        }
+      } else {
+        throw Exception('Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error cargando total de usuarios: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUsers = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,13 +171,15 @@ class AdminDashboard extends StatelessWidget {
   }
 
   Widget _buildStatisticCards() {
+    final String productsValue = _isLoadingProducts ? '...' : _totalProducts.toString();
+    final String usersValue = _isLoadingUsers ? '...' : _totalActiveUsers.toString();
     return Column(
       children: [
         Row(
           children: [
-            Expanded(child: _buildMetricCard('Productos Totales', '1,284', Icons.inventory_2_rounded, const Color(0xFFF9FBEF))),
+            Expanded(child: _buildMetricCard('Productos Totales', productsValue, Icons.inventory_2_rounded, const Color(0xFFF9FBEF))),
             const SizedBox(width: 12),
-            Expanded(child: _buildMetricCard('Usuarios Activos', '856', Icons.people_alt_rounded, const Color(0xFFE8F7E5))),
+            Expanded(child: _buildMetricCard('Usuarios Activos', usersValue, Icons.people_alt_rounded, const Color(0xFFE8F7E5))),
           ],
         ),
         const SizedBox(height: 12),
@@ -253,10 +361,30 @@ class AdminDashboard extends StatelessWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _buildActionButton(context, Icons.person, 'Usuarios'),
-            _buildActionButton(context, Icons.bar_chart, 'Reportes'),
-            _buildActionButton(context, Icons.inventory, 'Productos'),
-            _buildActionButton(context, Icons.notifications, 'Alertas'),
+            _buildActionButton(context, Icons.person, 'Usuarios', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UsersScreen()),
+              );
+            }),
+            _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ReportesScreen()),
+              );
+            }),
+            _buildActionButton(context, Icons.inventory, 'Inventario', () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const InventoryScreen()),
+              );
+              _loadTotalProducts();
+            }),
+            _buildActionButton(context, Icons.notifications, 'Alertas', () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Ir a Alertas')),
+              );
+            }),
           ],
         ),
         const SizedBox(height: 30),
@@ -285,17 +413,13 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton(BuildContext context, IconData icon, String label) {
+  Widget _buildActionButton(BuildContext context, IconData icon, String label, VoidCallback onTap) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Material(
         color: const Color(0xFFE8F7E5),
         child: InkWell(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Ir a $label')), 
-            );
-          },
+          onTap: onTap,
           child: SizedBox(
             width: 144,
             height: 104,
