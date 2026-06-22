@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/StockScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -23,11 +24,16 @@ class _AdminDashboardState extends State<AdminDashboard> {
   int _totalActiveUsers = 0;
   bool _isLoadingUsers = true;
 
+  int _totalStock = 0;
+  int _agotados = 0;
+  bool _isLoadingStock = true;
+
   @override
   void initState() {
     super.initState();
     _loadTotalProducts();
     _loadTotalUsers();
+    _loadStockSummary();
   }
 
   Future<void> _loadTotalProducts() async {
@@ -85,7 +91,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-        // Cuenta los que tienen estado == 'activo' (string del enum del backend)
         final int activeCount = jsonList.where((u) {
           if (u is! Map<String, dynamic>) return false;
           final estado = u['estado']?.toString() ?? '';
@@ -110,6 +115,73 @@ class _AdminDashboardState extends State<AdminDashboard> {
     }
   }
 
+  Future<void> _loadStockSummary() async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+
+      if (token == null) {
+        throw Exception('Token no encontrado');
+      }
+
+      final response = await http.get(
+        Uri.parse(ApiConfig.stock),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final dynamic decoded = jsonDecode(response.body);
+        final List<dynamic> jsonList = decoded is List
+            ? decoded
+            : decoded is Map && decoded['data'] is List
+                ? decoded['data']
+                : [];
+
+        int totalStock = 0;
+        int agotados = 0;
+
+        for (final item in jsonList) {
+          if (item is! Map<String, dynamic>) continue;
+          final cantidad = _parseInt(item['cantidad_actual'] ?? item['cantidad'] ?? item['stock']);
+          totalStock += cantidad;
+          if (cantidad <= 0) {
+            agotados++;
+          }
+        }
+
+        if (mounted) {
+          setState(() {
+            _totalStock = totalStock;
+            _agotados = agotados;
+            _isLoadingStock = false;
+          });
+        }
+      } else {
+        throw Exception('Error: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error cargando stock: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingStock = false;
+        });
+      }
+    }
+  }
+
+  int _parseInt(dynamic value) {
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      if (parsed != null) return parsed;
+    }
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,8 +195,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
               _buildHeader(context),
               const SizedBox(height: 24),
               _buildStatisticCards(),
-              const SizedBox(height: 24),
-              _buildStockCard(context),
               const SizedBox(height: 24),
               _buildQuickActions(context),
             ],
@@ -173,6 +243,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   Widget _buildStatisticCards() {
     final String productsValue = _isLoadingProducts ? '...' : _totalProducts.toString();
     final String usersValue = _isLoadingUsers ? '...' : _totalActiveUsers.toString();
+    final String stockValue = _isLoadingStock ? '...' : _totalStock.toString();
+    final String agotadosValue = _isLoadingStock ? '...' : _agotados.toString();
+
     return Column(
       children: [
         Row(
@@ -185,9 +258,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _buildMetricCard('Stock Total', '3,240', Icons.storage_rounded, const Color(0xFFF4F1EB))),
+            Expanded(child: _buildMetricCard('Stock Total', stockValue, Icons.storage_rounded, const Color(0xFFF4F1EB))),
             const SizedBox(width: 12),
-            Expanded(child: _buildMetricCard('Agotados', '24', Icons.cancel_outlined, const Color(0xFFFFF1F0))),
+            Expanded(child: _buildMetricCard('Agotados', agotadosValue, Icons.cancel_outlined, const Color(0xFFFFF1F0))),
           ],
         ),
       ],
@@ -235,119 +308,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  Widget _buildStockCard(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Gestión de Stock',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1F3D24)),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F0),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    '4 ALERTAS',
-                    style: TextStyle(fontSize: 12, color: Color(0xFFD14343), fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _buildStockItem(
-            context,
-            title: 'Grama Bermuda Premium',
-            subtitle: 'Quedan 5 rollos',
-            imageAsset: null,
-          ),
-          const Divider(height: 1),
-          _buildStockItem(
-            context,
-            title: 'Semillas de Trébol Enano',
-            subtitle: 'Quedan 2 bultos',
-            imageAsset: null,
-          ),
-          const Divider(height: 1),
-          _buildStockItem(
-            context,
-            title: 'Kit de Herramientas Master',
-            subtitle: 'En stock: 45 unidades',
-            imageAsset: null,
-          ),
-          const SizedBox(height: 14),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ver todo el inventario aún no está implementado.')),
-                );
-              },
-              child: const Text('Ver todo el inventario >'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStockItem(BuildContext context, {required String title, required String subtitle, String? imageAsset}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7F3DE),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: const Icon(Icons.inventory_2_outlined, color: Color(0xFF3D7B2C)),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF1F3D24))),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Editar inventario: $title')),
-              );
-            },
-            icon: const Icon(Icons.edit, color: Color(0xFF4A7C3E)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickActions(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -357,35 +317,40 @@ class _AdminDashboardState extends State<AdminDashboard> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1F3D24)),
         ),
         const SizedBox(height: 14),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            _buildActionButton(context, Icons.person, 'Usuarios', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UsersScreen()),
-              );
-            }),
-            _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ReportesScreen()),
-              );
-            }),
-            _buildActionButton(context, Icons.inventory, 'Inventario', () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const InventoryScreen()),
-              );
-              _loadTotalProducts();
-            }),
-            _buildActionButton(context, Icons.notifications, 'Alertas', () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Ir a Alertas')),
-              );
-            }),
-          ],
+        Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            runAlignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _buildActionButton(context, Icons.person, 'Usuarios', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const UsersScreen()),
+                );
+              }),
+              _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ReportesScreen()),
+                );
+              }),
+              _buildActionButton(context, Icons.inventory, 'Inventario', () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const InventoryScreen()),
+                );
+                _loadTotalProducts();
+              }),
+              _buildActionButton(context, Icons.inventory_2_rounded, 'Stock', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StockScreen()),
+                );
+              }),
+            ],
+          ),
         ),
         const SizedBox(height: 30),
         Row(

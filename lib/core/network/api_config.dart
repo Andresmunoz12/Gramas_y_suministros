@@ -7,4 +7,6 @@ class ApiConfig {
   static const String productos = '$baseUrl/productos';
   static const String categorias = '$baseUrl/categorias';
   static const String reportes = '$baseUrl/reportes';
+  static const String stock = '$baseUrl/stock';
+  static const String movimientos = '$baseUrl/movimientos';
 }
