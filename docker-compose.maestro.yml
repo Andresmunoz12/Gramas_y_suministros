@@ -1,0 +1,47 @@
+services:
+
+  # --- BACKEND (NestJS) ---
+  api_gramas:
+    build:
+      context: ./Gramas_Backend/Backend/backend-nest-typeorm
+      dockerfile: Dockerfile
+    container_name: nestjs_container
+    command: npm run start:dev
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Gramas_Backend/Backend/backend-nest-typeorm:/app
+      - /app/node_modules
+    env_file:
+      - ./Gramas_Backend/.env
+    environment:
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET:-SUPER_SECRET_KEY_123}
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # --- FRONTEND (React/Vite) ---
+  frontend_gramas:
+    build:
+      context: ./Gramas_Frontend
+      dockerfile: Dockerfile
+    container_name: react_frontend_container
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Gramas_Frontend:/app
+      - /app/node_modules
+    env_file:
+      - ./Gramas_Frontend/.env
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    depends_on:
+      api_gramas:
+        condition: service_healthy
