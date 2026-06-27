@@ -1,0 +1,4 @@
+Archivo: login.feature
+Función: Contiene el escenario de prueba escrito en lenguaje Gherkin (Dado, Cuando, Entonces).
+Es la descripción de alto nivel de lo que queremos probar: que un usuario pueda entrar a la tienda y realizar una compra completa.
+Es legible por cualquier persona del equipo (negocio, QA, desarrolladores).

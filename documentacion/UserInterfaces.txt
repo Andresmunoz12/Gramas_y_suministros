@@ -1,0 +1,7 @@
+Archivos: LoginPage.java, InventoryPage.java, CheckoutPage.java
+Función: Estos archivos representan las "Interfaces de Usuario" (User Interfaces).
+Contienen los "mapeos" o "localizadores" (Locators) de los elementos HTML de la página (botones, campos de texto, etiquetas).
+- LoginPage: Contiene los campos de usuario y contraseña.
+- InventoryPage: Contiene los botones de productos y el carrito.
+- CheckoutPage: Contiene los campos del formulario de pago y el mensaje de confirmación.
+Separar estos elementos ayuda a que, si la página cambia, solo debamos actualizar este archivo y no las tareas.

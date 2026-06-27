@@ -1,0 +1,4 @@
+Archivo: LoginRunner.java
+Función: Es el punto de entrada para ejecutar las pruebas.
+Utiliza JUnit y Cucumber. Indica dónde están los archivos '.feature' (escenarios) y los 'stepdefinitions' (código).
+Cuando ejecutas 'mvn clean verify', este archivo le dice a Serenity qué pruebas correr y cómo generar el reporte.

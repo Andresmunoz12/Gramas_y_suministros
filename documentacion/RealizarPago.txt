@@ -1,0 +1,8 @@
+Archivo: RealizarPago.java
+Función: Tarea que completa el proceso de pago (Checkout).
+Realiza las siguientes acciones:
+1. Hace clic en el botón 'Checkout'.
+2. Ingresa la información del cliente (Nombre, Apellido, Código Postal).
+3. Hace clic en 'Continue'.
+4. Hace clic en 'Finish' para confirmar la compra.
+Este archivo maneja todo el formulario final de la tienda.

@@ -1,0 +1,6 @@
+Archivo: GestionarCarrito.java
+Función: Tarea que maneja la selección de productos.
+Sus acciones son:
+1. Hacer clic en el botón de agregar al carrito de un producto (definido en InventoryPage).
+2. Hacer clic en el ícono del carrito para ir a la vista de compras.
+Es fundamental para avanzar en el flujo de compra.

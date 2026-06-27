@@ -1,0 +1,3 @@
+Archivo: AbrirPagina.java
+Función: Esta es una "Tarea" (Task) en el patrón Screenplay. Su único propósito es abrir el navegador en la URL específica de la tienda (SauceDemo). 
+Utiliza el comando 'Open.url' de Serenity para navegar a la página inicial.

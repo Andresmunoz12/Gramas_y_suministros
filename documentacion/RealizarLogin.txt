@@ -1,0 +1,7 @@
+Archivo: RealizarLogin.java
+Función: Tarea encargada de la autenticación. 
+Recibe el usuario y la contraseña, y realiza tres acciones principales:
+1. Ingresa el nombre de usuario en el campo correspondiente.
+2. Ingresa la contraseña.
+3. Hace clic en el botón de Login.
+Es el núcleo de la primera parte de la automatización.

@@ -1,0 +1,7 @@
+Archivo: LoginStepDefinitions.java
+Función: Actúa como el puente entre el lenguaje natural (Gherkin) y las acciones de código (Tasks).
+Aquí se definen los pasos:
+- @Given: Preparación (El actor está en la página).
+- @When: Acción (El actor intenta loguearse, compra productos).
+- @Then: Resultado esperado (El actor debería ver el mensaje de éxito).
+Coordina el uso de los actores y las tareas.

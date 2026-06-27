@@ -1,0 +1,4 @@
+Archivo: ConfirmacionCompra.java
+Función: Es una "Pregunta" (Question) en Screenplay.
+Se encarga de verificar que la compra fue exitosa. Para esto, extrae el texto del mensaje de éxito (como "Thank you for your order!") que aparece en la pantalla final. 
+Se usa al final de la prueba para validar (Assertion) que el flujo terminó correctamente.
