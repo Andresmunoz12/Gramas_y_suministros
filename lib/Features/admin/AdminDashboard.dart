@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
+import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -18,6 +19,7 @@ class AdminDashboard extends StatefulWidget {
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
+  final HttpCacheService _cacheService = HttpCacheService();
   int _totalProducts = 0;
   bool _isLoadingProducts = true;
 
@@ -37,6 +39,25 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<void> _loadTotalProducts() async {
+    final String cacheKey = '${ApiConfig.productos}/admin/all';
+
+    // 1. Cargar desde la caché primero
+    final String? cachedData = await _cacheService.get(cacheKey);
+    if (cachedData != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(cachedData) as List<dynamic>;
+        if (mounted) {
+          setState(() {
+            _totalProducts = jsonList.length;
+            _isLoadingProducts = false;
+          });
+        }
+      } catch (e) {
+        debugPrint('AdminDashboard: Error decodificando caché de productos: $e');
+      }
+    }
+
+    // 2. Red en segundo plano
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
@@ -46,7 +67,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
 
       final response = await http.get(
-        Uri.parse('${ApiConfig.productos}/admin/all'),
+        Uri.parse(cacheKey),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -54,7 +75,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+        final String responseBody = response.body;
+        await _cacheService.save(cacheKey, responseBody);
+
+        final List<dynamic> jsonList = jsonDecode(responseBody) as List<dynamic>;
         if (mounted) {
           setState(() {
             _totalProducts = jsonList.length;
@@ -66,7 +90,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       }
     } catch (e) {
       debugPrint('Error cargando total de productos: $e');
-      if (mounted) {
+      if (mounted && _totalProducts == 0) {
         setState(() {
           _isLoadingProducts = false;
         });

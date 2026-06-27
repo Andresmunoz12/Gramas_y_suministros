@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/models/producto.model.dart';
@@ -12,6 +13,7 @@ import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart
 import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'package:gramas_y_suministros_movil/Features/profile/presentation/EditProfileScreen.dart';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
+import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
 import 'CartView.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -26,29 +28,92 @@ class _CatalogScreenState extends State<CatalogScreen> {
   int selectedCategory = 0;
   int selectedTabIndex = 0;
 
-  late Future<List<Producto>> _productsFuture;
+  final HttpCacheService _cacheService = HttpCacheService();
+  List<Producto>? _products;
+  bool _isLoadingProducts = true;
+  String? _productsError;
 
   @override
   void initState() {
     super.initState();
-    _productsFuture = _loadProducts();
+    _loadProducts();
   }
 
-  Future<List<Producto>> _loadProducts() async {
-    debugPrint('CatalogScreen: solicitando ${ApiConfig.productos}');
-    final response = await http.get(Uri.parse(ApiConfig.productos));
-    debugPrint('CatalogScreen: status ${response.statusCode}');
-
-    if (response.statusCode != 200) {
-      debugPrint('CatalogScreen: body ${response.body}');
-      throw Exception('Error al cargar los productos: código ${response.statusCode}');
+  Future<void> _loadProducts() async {
+    // 1. Cargar desde la caché local primero (instantáneo)
+    final String? cachedData = await _cacheService.get(ApiConfig.productos);
+    if (cachedData != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(cachedData) as List<dynamic>;
+        final cachedProducts = jsonList.map((json) {
+          return Producto.fromJson(json as Map<String, dynamic>);
+        }).toList();
+        
+        if (mounted) {
+          setState(() {
+            _products = cachedProducts;
+            _isLoadingProducts = false;
+          });
+        }
+        debugPrint('CatalogScreen: Productos cargados desde caché local');
+      } catch (e) {
+        debugPrint('CatalogScreen: Error al decodificar caché: $e');
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoadingProducts = true;
+        });
+      }
     }
 
-    final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-    debugPrint('CatalogScreen: recibidos ${jsonList.length} registros');
-    return jsonList.map((json) {
-      return Producto.fromJson(json as Map<String, dynamic>);
-    }).toList();
+    // 2. Consultar el servidor en segundo plano
+    try {
+      debugPrint('CatalogScreen: solicitando ${ApiConfig.productos}');
+      final response = await http.get(Uri.parse(ApiConfig.productos));
+      debugPrint('CatalogScreen: status ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final String responseBody = response.body;
+        // Guardar la respuesta fresca en caché
+        await _cacheService.save(ApiConfig.productos, responseBody);
+
+        final List<dynamic> jsonList = jsonDecode(responseBody) as List<dynamic>;
+        final freshProducts = jsonList.map((json) {
+          return Producto.fromJson(json as Map<String, dynamic>);
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _products = freshProducts;
+            _isLoadingProducts = false;
+            _productsError = null;
+          });
+        }
+      } else {
+        throw Exception('Error al cargar productos: código ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('CatalogScreen: Error de red: $e');
+      if (_products == null) {
+        if (mounted) {
+          setState(() {
+            _productsError = e.toString();
+            _isLoadingProducts = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Visualizando catálogo guardado (sin conexión).'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildProductGrid(List<Producto> products) {
@@ -60,7 +125,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.55,
+        childAspectRatio: 0.52,
       ),
       itemBuilder: (context, index) {
         return _ProductCard(product: products[index]);
@@ -311,127 +376,134 @@ class _CatalogScreenState extends State<CatalogScreen> {
         ),
         AppSpaces.verticalLarge,
         Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3D7B2C), Color(0xFF81D460)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await _cacheService.invalidate(ApiConfig.productos);
+              await _loadProducts();
+            },
+            color: const Color(0xFF2D5A27),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3D7B2C), Color(0xFF81D460)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 30,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
                     ),
-                    borderRadius: BorderRadius.circular(28),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
-                        blurRadius: 30,
-                        offset: const Offset(0, 12),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        'PROMOCIÓN',
-                        style: TextStyle(
-                          color: Color(0xFFF5FFF3),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        'Grama Premium',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Descuento del 15% en rollos de San Agustín.',
-                        style: TextStyle(
-                          color: Color(0xFFF5FFF3),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                AppSpaces.verticalLarge,
-                FutureBuilder<List<Producto>>(
-                  future: _productsFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                                    if (snapshot.hasError) {
-                      return Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          'Error al cargar productos: ${snapshot.error}',
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                        ),
-                      );
-                    }
-
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: Text(
-                          'No se recibió lista de productos del backend.',
-                          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                        ),
-                      );
-                    }
-
-                    final products = _filterProducts(snapshot.data!);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Text(
-                            'Mostrando ${products.length} producto(s)',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
-                              fontWeight: FontWeight.w600,
-                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'PROMOCIÓN',
+                          style: TextStyle(
+                            color: Color(0xFFF5FFF3),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        if (products.isEmpty)
-                          const Center(
-                            child: Text(
-                              'No hay productos disponibles en esta categoría.',
-                              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                            ),
-                          )
-                        else
-                          _buildProductGrid(products),
+                        SizedBox(height: 12),
+                        Text(
+                          'Grama Premium',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Descuento del 15% en rollos de San Agustín.',
+                          style: TextStyle(
+                            color: Color(0xFFF5FFF3),
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 100),
-              ],
+                    ),
+                  ),
+                  AppSpaces.verticalLarge,
+                  Builder(
+                    builder: (context) {
+                      if (_isLoadingProducts && (_products == null || _products!.isEmpty)) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (_productsError != null && (_products == null || _products!.isEmpty)) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            'Error al cargar productos: $_productsError',
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                          ),
+                        );
+                      }
+
+                      if (_products == null || _products!.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No hay productos registrados.',
+                            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                          ),
+                        );
+                      }
+
+                      final products = _filterProducts(_products!);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Text(
+                              'Mostrando ${products.length} producto(s)',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          if (products.isEmpty)
+                            const Center(
+                              child: Text(
+                                'No hay productos disponibles en esta categoría.',
+                                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                              ),
+                            )
+                          else
+                            _buildProductGrid(products),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
           ),
         ),
@@ -758,12 +830,12 @@ class _ProductCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 120,
+            height: 110,
             decoration: BoxDecoration(
               color: product.color,
               borderRadius: BorderRadius.circular(22),
@@ -771,19 +843,25 @@ class _ProductCard extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
               child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                  ? Image.network(
-                      product.imageUrl!,
+                  ? CachedNetworkImage(
+                      imageUrl: product.imageUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            Icons.grass,
-                            size: 42,
-                            color: product.accentColor,
+                      placeholder: (context, url) => Center(
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            product.accentColor,
                           ),
-                        );
-                      },
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Center(
+                        child: Icon(
+                          Icons.grass,
+                          size: 42,
+                          color: product.accentColor,
+                        ),
+                      ),
                     )
                   : Center(
                       child: Icon(
@@ -794,7 +872,7 @@ class _ProductCard extends StatelessWidget {
                     ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Text(
             product.title,
             style: const TextStyle(
@@ -805,11 +883,11 @@ class _ProductCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           if (product.categoryName != null && product.categoryName!.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F7E5),
                 borderRadius: BorderRadius.circular(16),
@@ -832,7 +910,7 @@ class _ProductCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -850,7 +928,7 @@ class _ProductCard extends StatelessWidget {
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       product.unit,
                       style: const TextStyle(

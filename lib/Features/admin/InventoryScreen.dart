@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:provider/provider.dart';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
+import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 
 class InventoryProduct {
@@ -59,6 +60,7 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
+  final HttpCacheService _cacheService = HttpCacheService();
   List<InventoryProduct> _products = [];
   bool _isLoading = true;
   String? _error;
@@ -71,13 +73,41 @@ class _InventoryScreenState extends State<InventoryScreen> {
     _loadProducts();
   }
 
-  Future<void> _loadProducts() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-      _currentPage = 1;
-    });
+  Future<void> _invalidateAndReload() async {
+    await _cacheService.invalidate(ApiConfig.productos);
+    await _cacheService.invalidate('${ApiConfig.productos}/admin/all');
+    await _loadProducts();
+  }
 
+  Future<void> _loadProducts() async {
+    final String cacheKey = '${ApiConfig.productos}/admin/all';
+
+    // 1. Cargar desde la caché local primero
+    final String? cachedData = await _cacheService.get(cacheKey);
+    if (cachedData != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(cachedData) as List<dynamic>;
+        final cachedProducts = jsonList.map((json) => InventoryProduct.fromJson(json as Map<String, dynamic>)).toList();
+        if (mounted) {
+          setState(() {
+            _products = cachedProducts;
+            _isLoading = false;
+            _error = null;
+          });
+        }
+      } catch (e) {
+        debugPrint('InventoryScreen: Error al decodificar caché: $e');
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+      }
+    }
+
+    // 2. Cargar en segundo plano
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
@@ -87,7 +117,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('${ApiConfig.productos}/admin/all'),
+        Uri.parse(cacheKey),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -95,20 +125,42 @@ class _InventoryScreenState extends State<InventoryScreen> {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
-        setState(() {
-          _products = jsonList.map((json) => InventoryProduct.fromJson(json as Map<String, dynamic>)).toList();
-          _isLoading = false;
-        });
+        final String responseBody = response.body;
+        await _cacheService.save(cacheKey, responseBody);
+
+        final List<dynamic> jsonList = jsonDecode(responseBody) as List<dynamic>;
+        final freshProducts = jsonList.map((json) => InventoryProduct.fromJson(json as Map<String, dynamic>)).toList();
+
+        if (mounted) {
+          setState(() {
+            _products = freshProducts;
+            _isLoading = false;
+            _error = null;
+          });
+        }
       } else {
         throw Exception('Error: ${response.statusCode}');
       }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-      debugPrint('Error cargando productos: $e');
+      debugPrint('Error cargando productos de red: $e');
+      if (_products.isEmpty) {
+        if (mounted) {
+          setState(() {
+            _error = e.toString();
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Visualizando inventario guardado localmente (sin conexión).'),
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
     }
   }
 
@@ -133,7 +185,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$productName desactivado correctamente'), backgroundColor: const Color(0xFF3D7B2C)),
         );
-        _loadProducts();
+        await _invalidateAndReload();
       } else {
         throw Exception('Error: ${response.statusCode}');
       }
@@ -165,7 +217,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$productName activado correctamente'), backgroundColor: const Color(0xFF3D7B2C)),
         );
-        _loadProducts();
+        await _invalidateAndReload();
       } else {
         throw Exception('Error: ${response.statusCode}');
       }
@@ -197,7 +249,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('$productName eliminado correctamente'), backgroundColor: const Color(0xFF3D7B2C)),
         );
-        _loadProducts();
+        await _invalidateAndReload();
       } else {
         throw Exception('Error: ${response.statusCode}');
       }
@@ -279,7 +331,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 MaterialPageRoute(builder: (_) => const AddProductScreen()),
               );
               if (result == true) {
-                _loadProducts();
+                _invalidateAndReload();
               }
             },
             icon: const Icon(Icons.add, color: Colors.white),
@@ -441,7 +493,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         ),
                       );
                       if (result == true) {
-                        _loadProducts();
+                        _invalidateAndReload();
                       }
                     },
                   ),
