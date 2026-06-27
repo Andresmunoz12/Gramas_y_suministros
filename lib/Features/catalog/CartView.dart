@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../Providers/cart_provider.dart';
 import '../../Shared/Custom-Sizedbox.dart';
 import '../../Shared/Custom-button.dart';
@@ -76,20 +77,28 @@ class CartView extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: (product.imageUrl != null && product.imageUrl!.isNotEmpty)
-                            ? Image.network(
-                                product.imageUrl!,
+                            ? CachedNetworkImage(
+                                imageUrl: product.imageUrl!,
                                 width: 76,
                                 height: 76,
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Center(
-                                    child: Icon(
-                                      Icons.grass,
-                                      color: product.accentColor,
-                                      size: 32,
+                                placeholder: (context, url) => const Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3D7B2C)),
                                     ),
-                                  );
-                                },
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) => Center(
+                                  child: Icon(
+                                    Icons.grass,
+                                    color: product.accentColor,
+                                    size: 32,
+                                  ),
+                                ),
                               )
                             : Center(
                                 child: Icon(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:cached_network_image/cached_network_image.dart';
 
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
@@ -441,7 +442,19 @@ class _EditProductScreenState extends State<EditProductScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(_currentImageUrl!, height: 200, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                    imageUrl: _currentImageUrl!,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3D7B2C)),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => const Center(
+                      child: Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 12),
               ],
