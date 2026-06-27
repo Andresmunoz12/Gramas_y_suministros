@@ -1,0 +1,27 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Estados */
+
+.estado-activo::before {
+  background: #2ecc71;
+}
+
+.estado-alerta::before {
+  background: #f39c12;
+}
+
+.estado-inactivo::before {
+  background: #e74c3c;
+}

@@ -1,0 +1,108 @@
+.stats-card {
+    /* Fondo con transparencia y efecto glassmorphism */
+    background: rgba(255, 255, 255, 0.1);
+    /* Bordes redondeados para diseño moderno */
+    border-radius: 20px;
+    /* Espaciado interno */
+    padding: 25px;
+    /* Flexbox para alinear icono e información */
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    /* Transición suave para animaciones */
+    transition: all 0.3s ease;
+    /* Efecto de desenfoque del fondo */
+    backdrop-filter: blur(10px);
+    /* Borde sutil */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Ancho mínimo para mantener consistencia */
+    min-width: 250px;
+}
+
+/* Efecto hover para interactividad */
+.stats-card:hover {
+    /* Eleva la tarjeta */
+    transform: translateY(-5px);
+    /* Sombra más pronunciada */
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
+    /* Fondo ligeramente más visible */
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Contenedor del icono de estadística */
+.stats-icon {
+    /* Tamaño del icono */
+    width: 60px;
+    height: 60px;
+    /* Icono circular */
+    border-radius: 50%;
+    /* Flexbox para centrar contenido */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Evita que se encoja */
+    flex-shrink: 0;
+}
+
+/* Variantes de color para diferentes tipos de estadísticas */
+.stats-card-blue .stats-icon {
+    /* Gradiente azul para usuarios */
+    background: linear-gradient(135deg, #00d4ff, #0066ff);
+    /* Sombra con brillo azul */
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.stats-card-green .stats-icon {
+    /* Gradiente verde para productos/ventas */
+    background: linear-gradient(135deg, #00ff88, #00cc66);
+    /* Sombra con brillo verde */
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+}
+
+.stats-card-orange .stats-icon {
+    /* Gradiente naranja para alertas/stock */
+    background: linear-gradient(135deg, #ff9500, #ff6600);
+    /* Sombra con brillo naranja */
+    box-shadow: 0 0 20px rgba(255, 149, 0, 0.5);
+}
+
+.stats-card-purple .stats-icon {
+    /* Gradiente morado para reportes */
+    background: linear-gradient(135deg, #b366ff, #8000ff);
+    /* Sombra con brillo morado */
+    box-shadow: 0 0 20px rgba(179, 102, 255, 0.5);
+}
+
+/* Contenedor de texto de la estadística */
+.stats-info {
+    /* Ocupa el espacio restante */
+    flex: 1;
+}
+
+/* Título de la estadística */
+.stats-title {
+    /* Tamaño de fuente */
+    font-size: 0.9rem;
+    /* Color gris claro */
+    color: #a0e6ff;
+    /* Elimina margen por defecto */
+    margin: 0 0 8px 0;
+    /* Peso de fuente normal */
+    font-weight: 400;
+    /* Texto en mayúsculas */
+    text-transform: uppercase;
+    /* Espaciado entre letras */
+    letter-spacing: 1px;
+}
+
+/* Valor numérico de la estadística */
+.stats-value {
+    /* Tamaño grande para destacar */
+    font-size: 2rem;
+    /* Peso bold */
+    font-weight: 700;
+    /* Color blanco */
+    color: #fff;
+    /* Elimina margen */
+    margin: 0;
+}

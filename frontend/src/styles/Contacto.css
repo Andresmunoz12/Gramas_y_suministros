@@ -1,0 +1,95 @@
+.contacto-page {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.contacto-main {
+    flex: 1;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.welcome-section {
+    width: 100%;
+    padding: 30px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.saludo {
+    color: var(--primary-green-dark);
+    font-size: 2.5rem;
+    margin: 0 0 10px 0;
+    font-weight: 800;
+}
+
+.subtitulo {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.opciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.opcion-card {
+    padding: 40px 20px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.opcion-card:hover {
+    transform: translateY(-10px);
+    background: var(--white);
+    border-color: var(--primary-green);
+    box-shadow: var(--shadow-lg);
+}
+
+.opcion-card .icon {
+    font-size: 50px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.opcion-card p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+    text-align: center;
+}
+
+.action-footer {
+    margin-top: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+@media (max-width: 600px) {
+    .saludo {
+        font-size: 1.8rem;
+    }
+
+    .opciones-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,27 @@
+/* BADGES */
+.badge {
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-admin {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-client {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* BUTTONS are mostly handled by AdminGlobal.css */
+/* But we can add specific tweaks if needed */
+
+.btn-danger {
+  margin-left: 10px;
+}
