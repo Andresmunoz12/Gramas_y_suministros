@@ -12,6 +12,7 @@ import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'package:gramas_y_suministros_movil/Features/profile/presentation/EditProfileScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/nosotros/nosotros_screen.dart';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
 import 'CartView.dart';
@@ -787,6 +788,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       }),
                     ),
                   ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline, color: Color(0xFF3D7B2C)),
+              title: const Text('Nosotros'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NosotrosScreen()),
                 );
               },
             ),
