@@ -34,6 +34,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   bool _isLoadingProducts = true;
   String? _productsError;
 
+  List<dynamic>? _orders;
+  bool _isLoadingOrders = false;
+  String? _ordersError;
+
   @override
   void initState() {
     super.initState();
@@ -117,6 +121,85 @@ class _CatalogScreenState extends State<CatalogScreen> {
     }
   }
 
+  Future<void> _loadOrders() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingOrders = true;
+      _ordersError = null;
+    });
+
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final token = auth.usuario?.token ?? await auth.getSavedToken();
+      if (token == null) {
+        throw Exception('Inicia sesión para ver tus pedidos');
+      }
+
+      final response = await http.get(
+        Uri.parse(ApiConfig.movimientos),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> allMovements = jsonDecode(response.body) as List<dynamic>;
+        final userId = auth.usuario?.idUsuario;
+
+        final userOrders = allMovements.where((mov) {
+          final isSalida = mov['tipo'] == 'salida';
+          final matchesUser = mov['id_usuario'] == userId;
+          return isSalida && matchesUser;
+        }).toList();
+
+        if (mounted) {
+          setState(() {
+            _orders = userOrders;
+            _isLoadingOrders = false;
+          });
+        }
+      } else {
+        throw Exception('Error al obtener pedidos (${response.statusCode})');
+      }
+    } catch (e) {
+      debugPrint('Error cargando pedidos: $e');
+      if (mounted) {
+        setState(() {
+          _ordersError = e.toString().replaceAll('Exception:', '').trim();
+          _isLoadingOrders = false;
+        });
+      }
+    }
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      return '${date.day} ${months[date.month - 1]}, ${date.year}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  String? _normalizeProductImageUrl(String? rawUrl) {
+    if (rawUrl == null || rawUrl.trim().isEmpty) {
+      return null;
+    }
+
+    final String url = rawUrl.trim();
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    final String cleanUrl = url.startsWith('/') ? url.substring(1) : url;
+    if (cleanUrl.startsWith('uploads/')) {
+      return '${ApiConfig.baseUrl}/$cleanUrl';
+    }
+    return '${ApiConfig.baseUrl}/uploads/img_products/$cleanUrl';
+  }
+
   Widget _buildProductGrid(List<Producto> products) {
     return GridView.builder(
       shrinkWrap: true,
@@ -151,27 +234,15 @@ class _CatalogScreenState extends State<CatalogScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F8F2),
       drawer: _buildAppDrawer(context),
-      floatingActionButton: selectedTabIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Soporte por chat próximamente disponible.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              backgroundColor: const Color(0xFF3D7B2C),
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.chat_bubble_outline),
-            )
-          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedTabIndex,
         onTap: (index) {
           setState(() {
             selectedTabIndex = index;
           });
+          if (index == 1) {
+            _loadOrders();
+          }
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -227,8 +298,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
         return CartView(
           onGoToCatalog: () {
             setState(() {
-              selectedTabIndex = 0;
+              selectedTabIndex = 1;
             });
+            _loadOrders();
           },
         );
       case 3:
@@ -513,62 +585,261 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Widget _buildOrdersView(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Mis Pedidos',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1F3D24),
-          ),
-        ),
-        AppSpaces.verticalSmall,
-        const Text(
-          'Historial de tus compras realizadas.',
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE5E7EB),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.receipt_long_outlined,
-                      color: Color(0xFF6B7280),
-                      size: 44,
-                    ),
-                  ),
-                ),
-                AppSpaces.verticalMedium,
-                const Text(
-                  'No tienes pedidos activos',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F3D24),
-                  ),
-                ),
-                AppSpaces.verticalSmall,
-                const Text(
-                  'Tus pedidos e historial se mostrarán aquí una vez realices tu primera compra.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                ),
-              ],
+    return RefreshIndicator(
+      onRefresh: _loadOrders,
+      color: const Color(0xFF2D5A27),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Mis Pedidos',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F3D24),
             ),
           ),
-        ),
-      ],
+          AppSpaces.verticalSmall,
+          const Text(
+            'Historial de tus compras realizadas.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+          ),
+          AppSpaces.verticalMedium,
+          Expanded(
+            child: Builder(
+              builder: (context) {
+                if (_isLoadingOrders && (_orders == null || _orders!.isEmpty)) {
+                  return const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3D7B2C)),
+                    ),
+                  );
+                }
+
+                if (_ordersError != null && (_orders == null || _orders!.isEmpty)) {
+                  return Center(
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+                          AppSpaces.verticalMedium,
+                          Text(
+                            'Error al cargar pedidos: $_ordersError',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                          ),
+                          AppSpaces.verticalMedium,
+                          ElevatedButton(
+                            onPressed: _loadOrders,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3D7B2C),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                if (_orders == null || _orders!.isEmpty) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFE5E7EB),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.receipt_long_outlined,
+                                  color: Color(0xFF6B7280),
+                                  size: 44,
+                                ),
+                              ),
+                            ),
+                            AppSpaces.verticalMedium,
+                            const Text(
+                              'No tienes pedidos activos',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1F3D24),
+                              ),
+                            ),
+                            AppSpaces.verticalSmall,
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                'Tus pedidos e historial se mostrarán aquí una vez realices tu primera compra.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: _orders!.length,
+                  itemBuilder: (context, index) {
+                    final order = _orders![index];
+                    final double price = double.tryParse(order['producto']?['precio']?.toString() ?? '0') ?? 0.0;
+                    final int qty = order['cantidad'] ?? 0;
+                    final double totalItem = price * qty;
+                    final rawImg = order['producto']?['imagen']?.toString();
+                    final imgUrl = _normalizeProductImageUrl(rawImg);
+
+                    return Card(
+                      elevation: 0,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        side: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8F7E4),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Pedido #${order['id_movimiento']}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF2D5A27),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  _formatDate(order['fecha'] ?? ''),
+                                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F4F6),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: (imgUrl != null && imgUrl.isNotEmpty)
+                                        ? CachedNetworkImage(
+                                            imageUrl: imgUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) => const Center(
+                                              child: SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3D7B2C)),
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget: (context, url, error) => const Icon(
+                                              Icons.grass,
+                                              color: Color(0xFF3D7B2C),
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.grass,
+                                            color: Color(0xFF3D7B2C),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        order['producto']?['nombre'] ?? 'Producto Desconocido',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF1F3D24),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Cantidad: $qty',
+                                        style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '\$${totalItem.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF2D5A27),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (order['salida']?['destino'] != null && order['salida']?['destino'].toString().trim().isNotEmpty == true) ...[
+                              const SizedBox(height: 12),
+                              const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF6B7280)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'Destino: ${order['salida']?['destino']}',
+                                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
