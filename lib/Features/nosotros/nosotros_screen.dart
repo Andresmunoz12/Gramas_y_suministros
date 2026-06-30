@@ -1,55 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class NosotrosScreen extends StatelessWidget {
   const NosotrosScreen({super.key});
 
-  // ── Paleta corporativa ──────────────────────────────────────────────────────
-  static const Color _medGreen = Color(0xFF2D5A27);
-  static const Color _bgGrey  = Color(0xFFF5F8F2);
+  static const Color _bgGrey = Color(0xFFF3F6F1);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgGrey,
-      // ── AppBar ──────────────────────────────────────────────────────────────
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: Builder(
-          builder: (ctx) => IconButton(
-            icon: const Icon(Icons.menu, color: _medGreen),
-            onPressed: () => Scaffold.of(ctx).openDrawer(),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF2D5A27)),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Nosotros',
           style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+            color: Color(0xFF1F3D24),
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
           ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.notifications_none_outlined, color: Colors.black87),
-          ),
-        ],
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _HeroSection(),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             _HistoriaSection(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _StatsSection(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             _MisionVisionSection(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _ValoresSection(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _PorQueElegirnosSection(),
             _Footer(),
           ],
@@ -63,49 +54,69 @@ class NosotrosScreen extends StatelessWidget {
 class _HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 200,
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/icons/icono_apk.png'),
-          fit: BoxFit.cover,
-          colorFilter: ColorFilter.mode(Color(0xAA0A2E0A), BlendMode.multiply),
-          onError: _heroFallback,
-        ),
-        color: Color(0xFF1B3C1B),
-      ),
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text(
-              'Gramas y Suministros',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
-                height: 1.2,
+      height: 220,
+      child: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: CachedNetworkImage(
+              imageUrl: 'https://images.unsplash.com/photo-1533460004989-cef01064af7e?q=80&w=1000',
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: const Color(0xFF1B3C1B),
+              ),
+              errorWidget: (context, url, error) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1B3C1B), Color(0xFF2D5A27)],
+                  ),
+                ),
               ),
             ),
-            SizedBox(height: 6),
-            Text(
-              'Transformamos Espacios, Creamos Experiencias',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+          ),
+          // Dark Overlay
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withOpacity(0.45),
             ),
-          ],
-        ),
+          ),
+          // Content
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 28,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Gramas y Suministros',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Transformamos Espacios, Creamos Experiencias',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-
-  static void _heroFallback(Object e, StackTrace? s) {}
 }
 
 // ── 2. NUESTRA HISTORIA ───────────────────────────────────────────────────────
@@ -113,12 +124,18 @@ class _HistoriaSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 2))],
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,68 +143,60 @@ class _HistoriaSection extends StatelessWidget {
           const Text(
             'Nuestra Historia',
             style: TextStyle(
-              color: Color(0xFF2D5A27),
+              color: Color(0xFF1F3D24),
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const Divider(color: Color(0xFF81D460), thickness: 2, height: 16, endIndent: 200),
-          const SizedBox(height: 12),
-          // Imagen placeholder (cielo azul)
+          const SizedBox(height: 6),
+          Container(
+            width: 60,
+            height: 3,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2D5A27),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 180,
+            borderRadius: BorderRadius.circular(16),
+            child: CachedNetworkImage(
+              imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1000',
+              height: 160,
               width: double.infinity,
-              color: const Color(0xFF87CEEB),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0xFF5AB4E8), Color(0xFF87CEEB)],
-                      ),
-                    ),
-                  ),
-                  const Center(
-                    child: Icon(Icons.landscape_outlined, size: 60, color: Colors.white54),
-                  ),
-                ],
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(color: const Color(0xFFE5E7EB)),
+              errorWidget: (context, url, error) => Container(
+                height: 160,
+                color: const Color(0xFFE8F7E4),
+                child: const Icon(Icons.history_edu, color: Color(0xFF2D5A27), size: 40),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          _richText(
-            'En ',
-            'Gramas y Suministros',
-            ' comenzamos como un pequeño emprendimiento familiar con una visión clara: elevar la '
-            'calidad de los espacios verdes en Colombia. Hoy somos referentes nacionales en '
-            'soluciones deportivas, residenciales y comerciales.',
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 14, color: Color(0xFF4B5563), height: 1.6),
+              children: [
+                TextSpan(text: 'En '),
+                TextSpan(
+                  text: 'Gramas y Suministros',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F3D24)),
+                ),
+                TextSpan(
+                  text: ' comenzamos como un pequeño emprendimiento familiar con una visión clara: elevar la '
+                      'calidad de los espacios verdes en Colombia. Hoy somos referentes nacionales en '
+                      'soluciones deportivas, residenciales y comerciales.',
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
             'Más de 10 años liderando proyectos de grama sintética, superficies deportivas y '
-            'soluciones paisajísticas integrales.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF444444), height: 1.6),
+            'soluciones paisajísticas integrales con la máxima garantía y calidad del mercado.',
+            style: TextStyle(fontSize: 14, color: Color(0xFF6B7280), height: 1.6),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _richText(String before, String bold, String after) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(fontSize: 14, color: Color(0xFF444444), height: 1.6),
-        children: [
-          TextSpan(text: before),
-          TextSpan(
-            text: bold,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F4020)),
-          ),
-          TextSpan(text: after),
         ],
       ),
     );
@@ -199,78 +208,96 @@ class _StatsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          // +500 Proyectos
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF81D460),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Column(
-              children: [
-                Text(
-                  '+500',
-                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white),
-                ),
-                Text(
-                  'PROYECTOS COMPLETADOS',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1),
-                ),
-              ],
+          Expanded(
+            child: _StatCard(
+              number: '+500',
+              label: 'PROYECTOS',
+              icon: Icons.assignment_turned_in_outlined,
+              color: const Color(0xFF2D5A27),
+              bgColor: const Color(0xFFE8F7E4),
             ),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatCard(
+              number: '+10',
+              label: 'AÑOS',
+              icon: Icons.workspace_premium_outlined,
+              color: const Color(0xFF1F3D24),
+              bgColor: const Color(0xFFF3F4F6),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _StatCard(
+              number: '98%',
+              label: 'ÉXITO',
+              icon: Icons.sentiment_very_satisfied_outlined,
+              color: const Color(0xFF3D7B2C),
+              bgColor: const Color(0xFFE5F2E1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String number;
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Color bgColor;
+
+  const _StatCard({
+    required this.number,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: bgColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
           const SizedBox(height: 10),
-          // +10 Años | 98% Éxito
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2D5A27),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    children: [
-                      Text(
-                        '+10',
-                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Colors.white),
-                      ),
-                      Text(
-                        'AÑOS',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white70, letterSpacing: 1),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEEEEE),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Column(
-                    children: [
-                      Text(
-                        '98%',
-                        style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: Color(0xFF2D5A27)),
-                      ),
-                      Text(
-                        'ÉXITO',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF666666), letterSpacing: 1),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            number,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+              letterSpacing: 0.5,
+            ),
           ),
         ],
       ),
@@ -283,23 +310,23 @@ class _MisionVisionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          _MisionVisionCard(
-            icon: Icons.gps_fixed_outlined,
-            title: 'Misión',
-            description:
-                'Ofrecer soluciones integrales en superficies sintéticas, garantizando '
-                'innovación, sostenibilidad y excelencia en cada proyecto.',
+          Expanded(
+            child: _MisionVisionCard(
+              icon: Icons.gps_fixed,
+              title: 'Misión',
+              description: 'Ofrecer soluciones integrales en superficies sintéticas, garantizando innovación y sostenibilidad.',
+            ),
           ),
-          const SizedBox(height: 12),
-          _MisionVisionCard(
-            icon: Icons.remove_red_eye_outlined,
-            title: 'Visión',
-            description:
-                'Ser la empresa líder en Colombia para 2030 en soluciones de grama sintética '
-                'y paisajismo sostenible.',
+          const SizedBox(width: 12),
+          Expanded(
+            child: _MisionVisionCard(
+              icon: Icons.remove_red_eye,
+              title: 'Visión',
+              description: 'Ser la empresa líder en Colombia para 2030 en soluciones de grama sintética y paisajismo.',
+            ),
           ),
         ],
       ),
@@ -321,36 +348,49 @@ class _MisionVisionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: 170,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: const Border(left: BorderSide(color: Color(0xFF81D460), width: 4)),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(18),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: const Color(0xFF2D5A27), size: 28),
-          const SizedBox(width: 14),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: const BoxDecoration(
+              color: Color(0xFFE8F7E4),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF2D5A27), size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F3D24),
+            ),
+          ),
+          const SizedBox(height: 6),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F4020),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF555555), height: 1.5),
-                ),
-              ],
+            child: Text(
+              description,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6B7280),
+                height: 1.4,
+              ),
+              overflow: TextOverflow.fade,
             ),
           ),
         ],
@@ -363,46 +403,55 @@ class _MisionVisionCard extends StatelessWidget {
 class _ValoresSection extends StatelessWidget {
   static const _valores = [
     _Valor(
-      icon: Icons.settings_outlined,
-      title: 'Calidad',
-      description: 'No negociamos la excelencia de nuestros productos y procesos.',
-      bgColor: Color(0xFFECF9E3),
+      icon: Icons.military_tech_outlined,
+      title: 'Calidad Superior',
+      description: 'Garantizamos la excelencia de cada uno de nuestros productos y procesos de instalación.',
+      bgColor: Color(0xFFE8F7E4),
       iconColor: Color(0xFF2D5A27),
     ),
     _Valor(
-      icon: Icons.diamond_outlined,
-      title: 'Integridad',
-      description: 'Actuamos con honestidad y transparencia en cada relación comercial.',
-      bgColor: Color(0xFFECF9E3),
-      iconColor: Color(0xFF2D5A27),
+      icon: Icons.handshake_outlined,
+      title: 'Integridad y Confianza',
+      description: 'Actuamos con total transparencia y honestidad en cada acuerdo comercial.',
+      bgColor: Color(0xFFE5F2E1),
+      iconColor: Color(0xFF3D7B2C),
     ),
     _Valor(
-      icon: Icons.lightbulb_outline,
-      title: 'Innovación',
-      description: 'Buscamos constantemente nuevas tecnologías y métodos eficientes.',
-      bgColor: Color(0xFFFFF5EC),
-      iconColor: Color(0xFFB87333),
+      icon: Icons.tips_and_updates_outlined,
+      title: 'Innovación Constante',
+      description: 'Buscamos nuevas tecnologías en gramas para ofrecer soluciones eficientes y sostenibles.',
+      bgColor: Color(0xFFFFF7ED),
+      iconColor: Color(0xFFEA580C),
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Nuestros Valores',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF1F4020),
+              color: Color(0xFF1F3D24),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          Container(
+            width: 40,
+            height: 3,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2D5A27),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
           ..._valores.map((v) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: 12),
                 child: _ValorCard(valor: v),
               )),
         ],
@@ -437,21 +486,27 @@ class _ValorCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2))],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: valor.bgColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(valor.icon, color: valor.iconColor, size: 24),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,13 +516,13 @@ class _ValorCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F4020),
+                    color: Color(0xFF1F3D24),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   valor.description,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF555555), height: 1.45),
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280), height: 1.4),
                 ),
               ],
             ),
@@ -482,45 +537,56 @@ class _ValorCard extends StatelessWidget {
 class _PorQueElegirnosSection extends StatelessWidget {
   static const _razones = [
     _Razon(
-      icon: Icons.verified_outlined,
+      icon: Icons.verified_user_outlined,
       title: 'Materiales Premium',
-      description: 'Proveedores certificados y tecnología avanzada.',
+      description: 'Trabajamos con proveedores internacionales certificados.',
     ),
     _Razon(
       icon: Icons.engineering_outlined,
       title: 'Instalación Profesional',
-      description: 'Equipo técnico altamente capacitado y detallista.',
+      description: 'Personal técnico con amplia experiencia y precisión.',
     ),
     _Razon(
-      icon: Icons.shield_outlined,
-      title: 'Garantía Real',
-      description: 'Respaldamos cada proyecto con soporte post-venta.',
+      icon: Icons.verified_outlined,
+      title: 'Garantía Extendida',
+      description: 'Ofrecemos soporte completo y respaldo post-venta.',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
       decoration: const BoxDecoration(
-        color: Color(0xFF2D5A27),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2D5A27), Color(0xFF1F3D24)],
+        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
             '¿Por qué elegirnos?',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 22,
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          Container(
+            width: 50,
+            height: 3,
+            decoration: BoxDecoration(
+              color: const Color(0xFF81D460),
+              borderRadius: BorderRadius.circular(1.5),
+            ),
+          ),
+          const SizedBox(height: 24),
           ..._razones.map((r) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: _RazonCard(razon: r),
               )),
         ],
@@ -545,7 +611,7 @@ class _RazonCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: Colors.white.withOpacity(0.12),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white24),
       ),
@@ -585,12 +651,12 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFE8EDE5),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      color: const Color(0xFF1F3D24),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
       child: const Text(
-        '© 2024 Gramas y Suministros — Todos los derechos reservados.',
+        '© 2026 Gramas y Suministros. Todos los derechos reservados.',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 12, color: Color(0xFF666666)),
+        style: TextStyle(fontSize: 12, color: Colors.white54, height: 1.4),
       ),
     );
   }

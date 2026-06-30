@@ -1,10 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../../Providers/auth_provider.dart';
 import '../../Providers/cart_provider.dart';
 import '../../Shared/Custom-TextField.dart';
 import '../../Shared/Custom-button.dart';
 import '../../Shared/Custom-Sizedbox.dart';
+import '../../core/network/api_config.dart';
 
 class CheckoutDialog {
   static void show(BuildContext context, {required VoidCallback onOrderSuccess}) {
@@ -33,6 +36,7 @@ class _CheckoutFormState extends State<_CheckoutForm> {
   final TextEditingController phoneController = TextEditingController();
   String selectedPaymentMethod = 'Efectivo contra entrega';
   bool isSuccess = false;
+  bool _isSubmitting = false;
 
   final List<String> paymentMethods = [
     'Efectivo contra entrega',
@@ -209,27 +213,88 @@ class _CheckoutFormState extends State<_CheckoutForm> {
               AppSpaces.verticalLarge,
 
               // Botón de Confirmación
-              CustomButton(
-                text: 'Confirmar Pedido',
-                onPressed: () {
-                  if (nameController.text.trim().isEmpty ||
-                      addressController.text.trim().isEmpty ||
-                      phoneController.text.trim().isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Por favor completa todos los campos del formulario'),
-                        backgroundColor: Colors.orange,
+              _isSubmitting
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 10),
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3D7B2C)),
+                        ),
                       ),
-                    );
-                    return;
-                  }
+                    )
+                  : CustomButton(
+                      text: 'Confirmar Pedido',
+                      onPressed: () async {
+                        if (nameController.text.trim().isEmpty ||
+                            addressController.text.trim().isEmpty ||
+                            phoneController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Por favor completa todos los campos del formulario'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                          return;
+                        }
 
-                  // Procesar compra exitosa
-                  setState(() {
-                    isSuccess = true;
-                  });
-                },
-              ),
+                        setState(() {
+                          _isSubmitting = true;
+                        });
+
+                        try {
+                          final auth = Provider.of<AuthProvider>(context, listen: false);
+                          final token = auth.usuario?.token ?? await auth.getSavedToken();
+                          if (token == null) {
+                            throw Exception('Inicia sesión para poder realizar un pedido.');
+                          }
+
+                          // Register one salida per cart item
+                          for (final item in cartProvider.items.values) {
+                            final intProductId = int.tryParse(item.producto.id) ?? 0;
+                            final response = await http.post(
+                              Uri.parse('${ApiConfig.movimientos}/salida'),
+                              headers: {
+                                'Authorization': 'Bearer $token',
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                              },
+                              body: jsonEncode({
+                                'id_producto': intProductId,
+                                'cantidad': item.cantidad,
+                                'destino': addressController.text.trim(),
+                                'motivo': 'Venta Directa',
+                                'observaciones': 'Pedido realizado por ${auth.usuario?.email}. Contacto: ${phoneController.text.trim()}',
+                                'id_usuario': auth.usuario?.idUsuario,
+                              }),
+                            );
+
+                            if (response.statusCode != 201 && response.statusCode != 200) {
+                              final body = jsonDecode(response.body);
+                              final errMsg = body['message'] ?? 'Error desconocido al registrar salida';
+                              throw Exception(errMsg);
+                            }
+                          }
+
+                          // Procesar compra exitosa
+                          setState(() {
+                            isSuccess = true;
+                          });
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al realizar el pedido: ${e.toString().replaceAll('Exception:', '').trim()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          setState(() {
+                            _isSubmitting = false;
+                          });
+                        }
+                      },
+                    ),
               AppSpaces.verticalSmall,
               TextButton(
                 onPressed: () => Navigator.pop(context),
