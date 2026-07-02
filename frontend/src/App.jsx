@@ -1,10 +1,9 @@
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import { CartProvider } from "./context/CartContext";
-import CartDrawer from "./components/CartDrawer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthGuard } from "./components/AuthGuard";
+import { CartProvider } from './context/CartContext';
 
 // CLIENTS PAGES
 import Login from "./pages/Login.jsx";
@@ -19,6 +18,9 @@ import ResetPassword from "./pages/reset-password.jsx";
 import MisPedidos from "./pages/MisPedidos.jsx";
 import EditarPerfil from "./pages/EditarPerfil.jsx";
 import MisCotizaciones from "./pages/MisCotizaciones.jsx";
+import ProductDetail from "./pages/ProductDetail";
+import Cotizacion from './pages/Cotizacion';
+import GestionCotizaciones from "./pages/AdminPages/GestionCotizaciones";
 
 // ADMIN PAGES
 import Stock from "./pages/AdminPages/Stock.jsx"
@@ -53,12 +55,14 @@ function AppRoutesContent() {
     <Routes>
       {/* RUTAS PÚBLICAS */}
       <Route path="/" element={<Catalogo />} />
+      <Route path="/producto/:id" element={<ProductDetail />} />
       <Route path="/login" element={<Login />} />
       <Route path="/nosotros" element={<Nosotros />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/verify-code" element={<VerifyCode />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/cotizacion" element={<Cotizacion />} />
 
       {/* RUTAS PROTEGIDAS DE CLIENTE */}
       <Route
@@ -177,7 +181,17 @@ function AppRoutesContent() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/gestion-cotizaciones"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <GestionCotizaciones />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
+    
   );
 }
 
@@ -186,8 +200,7 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <AppRoutesContent />
-        <CartDrawer />
+      <AppRoutesContent />
       </CartProvider>
     </AuthProvider>
   );

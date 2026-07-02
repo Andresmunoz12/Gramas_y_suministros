@@ -4,6 +4,7 @@ import ProductCard from "../components/ProductCard";
 import "../styles/catalogo.css";
 import Footer from "../components/Footer";
 import ProductosService from "../api/services/productos.service";
+import CartFloat from '../components/CartFloat';
 
 export default function Index() {
   const [productos, setProductos] = useState([]);
@@ -126,7 +127,7 @@ export default function Index() {
             <br /><br />
           </>
         )}
-
+        <CartFloat />
         <Footer />
       </div>
     </>

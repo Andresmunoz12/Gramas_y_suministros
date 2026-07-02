@@ -104,15 +104,25 @@
   font-size: 0.9rem;
 }
 
-.btn-cart {
-  padding: 10px 14px;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  width: auto;
-}
-
 .btn-add:hover {
   background: var(--primary-green-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+.btn-ver {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.25s;
+  font-size: 0.85rem;
+}
+
+.btn-ver:hover {
+  background: #c8e6c9;
+  transform: translateY(-2px);
 }

@@ -1,0 +1,57 @@
+/* src/styles/CartFloat.css */
+.cart-float {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(46, 125, 50, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.cart-float:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 30px rgba(46, 125, 50, 0.5);
+}
+
+.cart-float-icon {
+  font-size: 20px;
+}
+
+.cart-float-badge {
+  background: #ff6b6b;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  min-width: 20px;
+  text-align: center;
+}
+
+.cart-float-text {
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .cart-float {
+    padding: 10px 16px;
+    font-size: 14px;
+    bottom: 15px;
+    right: 15px;
+  }
+
+  .cart-float-text {
+    display: none;
+  }
+}

@@ -1,14 +1,11 @@
 // components/GlobalNav.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useCart } from "../context/CartContext";
 import "../styles/GlobalNav.css";
-import "../styles/CartDrawer.css";
 
 export default function NavComponent() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
-  const { totalItems, setCartOpen } = useCart();
 
   const handleLogout = () => {
     logout();
@@ -55,19 +52,6 @@ export default function NavComponent() {
               Cerrar Sesión
             </button>
 
-            {/* Cart icon — only for non-admin users */}
-            {!isAdmin && (
-              <button
-                className="cart-nav-btn"
-                onClick={() => setCartOpen(true)}
-                title="Ver carrito"
-              >
-                🛒
-                {totalItems > 0 && (
-                  <span className="cart-badge">{totalItems}</span>
-                )}
-              </button>
-            )}
           </>
         )}
       </nav>

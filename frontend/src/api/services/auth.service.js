@@ -39,7 +39,6 @@ const AuthService = {
             'usuario',
             'id_rol',
             'access_token',
-            'cart', // si tienes carrito
             'rememberMe' // si usas remember me
         ];
 

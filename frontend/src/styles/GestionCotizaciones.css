@@ -1,0 +1,116 @@
+/* src/styles/GestionCotizaciones.css */
+
+/* ===== FILTROS ===== */
+.filtros-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.filtro-select {
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  min-width: 160px;
+}
+
+.filtro-input {
+  padding: 8px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  flex: 1;
+  min-width: 140px;
+}
+
+.filtro-input:focus,
+.filtro-select:focus {
+  border-color: #2e7d32;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.btn-filtrar {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-filtrar:hover {
+  background: #1b5e20;
+  transform: translateY(-1px);
+}
+
+/* ===== BOTONES DE ACCIÓN ===== */
+.btn-success {
+  background: #2e7d32 !important;
+  color: white !important;
+  border: none !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: 0.25s !important;
+}
+
+.btn-success:hover {
+  background: #1b5e20 !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-danger {
+  background: #d32f2f !important;
+  color: white !important;
+  border: none !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: 0.25s !important;
+}
+
+.btn-danger:hover {
+  background: #b71c1c !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-primary {
+  background: #1976d2 !important;
+  color: white !important;
+  border: none !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  transition: 0.25s !important;
+}
+
+.btn-primary:hover {
+  background: #0d47a1 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .filtros-container {
+    flex-direction: column;
+  }
+
+  .filtro-select,
+  .filtro-input {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .btn-filtrar {
+    width: 100%;
+  }
+}
