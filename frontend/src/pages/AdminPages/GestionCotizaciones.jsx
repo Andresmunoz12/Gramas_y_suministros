@@ -72,9 +72,17 @@ export default function GestionCotizaciones() {
   const handleCambiarEstado = async (id, nuevoEstado) => {
     if (accionando) return;
     
-    const confirmar = window.confirm(
-      `¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`
-    );
+    let mensajeConfirmacion = `¿Estás seguro de cambiar el estado a "${nuevoEstado}"?`;
+    
+    if (nuevoEstado === 'entregado') {
+      const totalItems = cotizaciones.find(c => c.idCotizacion === id)?.detalles?.length || 0;
+      mensajeConfirmacion = 
+        `¿Estás seguro de marcar esta cotización como ENTREGADA?\n\n` +
+        `Esta acción RESTARÁ ${totalItems} producto(s) del inventario.\n` +
+        `¿Deseas continuar?`;
+    }
+    
+    const confirmar = window.confirm(mensajeConfirmacion);
     if (!confirmar) return;
 
     try {
@@ -92,6 +100,11 @@ export default function GestionCotizaciones() {
 
   const handleDescargarPDF = (id) => {
     CotizacionesService.descargarPDF(id);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   const getEstadoColor = (estado) => {
@@ -114,11 +127,6 @@ export default function GestionCotizaciones() {
     return labels[estado] || estado;
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
-
   const statsCards = useMemo(() => {
     if (!estadisticas) return [];
     return [
@@ -132,19 +140,6 @@ export default function GestionCotizaciones() {
 
   if (loading && !cotizaciones.length) {
     return (
-      <>
-        <NavComponent />
-        <div className="loading-container">
-          <div className="loader"></div>
-          <p>Cargando cotizaciones...</p>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  return (
-    <>
       <div className="admin-layout">
         <aside className="sidebar">
           <h2>Dashboard</h2>
@@ -156,229 +151,237 @@ export default function GestionCotizaciones() {
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
-            <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
+            <button className="active" onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
             <button onClick={handleLogout}>Cerrar Sesión</button>
           </nav>
         </aside>
-
         <div className="main-area">
-          <section className="stats-row">
-            {statsCards.map((stat) => (
-              <div key={stat.label} className="stat-card" style={{ borderTop: `4px solid ${stat.color}` }}>
-                <h3>{stat.value}</h3>
-                <p>{stat.label}</p>
-              </div>
-            ))}
-          </section>
-
-          <section className="table-section">
-            <div className="table-card">
-              <div className="table-header">
-                <h3>Filtros</h3>
-                <div className="filtros-container">
-                  <select
-                    value={filtroEstado}
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                    className="filtro-select"
-                  >
-                    <option value="">Todos los estados</option>
-                    <option value="pendiente">Pendiente</option>
-                    <option value="pagado">Pagado</option>
-                    <option value="entregado">Entregado</option>
-                    <option value="cancelado">Cancelado</option>
-                  </select>
-
-                  <input
-                    type="date"
-                    value={filtroFechaInicio}
-                    onChange={(e) => setFiltroFechaInicio(e.target.value)}
-                    className="filtro-input"
-                    placeholder="Fecha inicio"
-                  />
-                  <input
-                    type="date"
-                    value={filtroFechaFin}
-                    onChange={(e) => setFiltroFechaFin(e.target.value)}
-                    className="filtro-input"
-                    placeholder="Fecha fin"
-                  />
-                  <input
-                    type="text"
-                    value={filtroSearch}
-                    onChange={(e) => setFiltroSearch(e.target.value)}
-                    className="filtro-input"
-                    placeholder="Buscar cliente..."
-                  />
-                  <button onClick={cargarCotizaciones} className="btn-filtrar">
-                    Filtrar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section className="table-section">
-            <div className="table-card">
-              <div className="table-header">
-                <h3>Cotizaciones ({cotizaciones.length})</h3>
-              </div>
-
-              <div className="table-container">
-                {error ? (
-                  <p className="no-data">{error}</p>
-                ) : cotizaciones.length === 0 ? (
-                  <p className="no-data">No hay cotizaciones registradas</p>
-                ) : (
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Cliente</th>
-                        <th>Fecha</th>
-                        <th>Total</th>
-                        <th>Método</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cotizaciones.map((c) => (
-                        <tr key={c.idCotizacion}>
-                          <td>#{c.idCotizacion}</td>
-                          <td>
-                            <strong>{c.usuario?.nombre}</strong>
-                            <br />
-                            <small style={{ color: "#666" }}>{c.usuario?.email}</small>
-                          </td>
-                          <td>
-                            {new Date(c.fechaCreacion).toLocaleDateString("es-CO")}
-                            <br />
-                            <small style={{ color: "#666" }}>
-                              {new Date(c.fechaCreacion).toLocaleTimeString("es-CO")}
-                            </small>
-                          </td>
-                          <td>
-                            <strong style={{ color: "#2e7d32" }}>
-                              ${new Intl.NumberFormat("es-CO").format(c.total)}
-                            </strong>
-                            <br />
-                            <small style={{ color: "#666" }}>
-                              {c.detalles?.length || 0} items
-                            </small>
-                          </td>
-                          <td>
-                            {c.metodoVenta === "fisico" ? "📍 Físico" : "🚚 Envío"}
-                            <br />
-                            <small style={{ color: "#666" }}>
-                              {c.metodoPago === "efectivo" ? "Efectivo" :
-                               c.metodoPago === "tarjeta_debito" ? "Tarjeta débito" :
-                               "Tarjeta crédito"}
-                            </small>
-                          </td>
-                          <td>
-                            <span
-                              style={{
-                                display: "inline-block",
-                                padding: "4px 12px",
-                                borderRadius: "20px",
-                                backgroundColor: getEstadoColor(c.estado),
-                                color: "white",
-                                fontSize: "12px",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              {getEstadoLabel(c.estado)}
-                            </span>
-                          </td>
-                          <td>
-                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                              <button
-                                className="btn-extra"
-                                onClick={() => handleDescargarPDF(c.idCotizacion)}
-                                style={{ fontSize: "0.75rem" }}
-                              >
-                                📄 PDF
-                              </button>
-
-                              {c.estado === "pendiente" && (
-                                <>
-                                  <button
-                                    className="btn-success"
-                                    onClick={() => handleCambiarEstado(c.idCotizacion, "pagado")}
-                                    disabled={accionando === c.idCotizacion}
-                                    style={{
-                                      fontSize: "0.75rem",
-                                      background: "#2e7d32",
-                                      color: "white",
-                                      border: "none",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    Pagar
-                                  </button>
-                                  <button
-                                    className="btn-danger"
-                                    onClick={() => handleCambiarEstado(c.idCotizacion, "cancelado")}
-                                    disabled={accionando === c.idCotizacion}
-                                    style={{
-                                      fontSize: "0.75rem",
-                                      background: "#d32f2f",
-                                      color: "white",
-                                      border: "none",
-                                      padding: "4px 10px",
-                                      borderRadius: "6px",
-                                      cursor: "pointer",
-                                    }}
-                                  >
-                                    Cancelar
-                                  </button>
-                                </>
-                              )}
-
-                              {c.estado === "pagado" && (
-                                <button
-                                  className="btn-primary"
-                                  onClick={() => {
-                                    const totalItems = c.detalles?.length || 0;
-                                    const confirmar = window.confirm(
-                                      `¿Estás seguro de marcar esta cotización como ENTREGADA?\n\n` +
-                                      `Esta acción RESTARÁ ${totalItems} producto(s) del inventario.\n` +
-                                      `¿Deseas continuar?`
-                                    );
-                                    if (confirmar) {
-                                      handleCambiarEstado(c.idCotizacion, "entregado");
-                                    }
-                                  }}
-                                  disabled={accionando === c.idCotizacion}
-                                  style={{
-                                    fontSize: "0.75rem",
-                                    background: "#1976d2",
-                                    color: "white",
-                                    border: "none",
-                                    padding: "4px 10px",
-                                    borderRadius: "6px",
-                                    cursor: "pointer",
-                                  }}
-                                >
-                                  Entregar
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </section>
+          <div className="loading-container">
+            <div className="loader"></div>
+            <p>Cargando cotizaciones...</p>
+          </div>
         </div>
       </div>
-      <Footer />
-    </>
+    );
+  }
+
+  return (
+    <div className="admin-layout">
+      {/* SIDEBAR */}
+      <aside className="sidebar">
+        <h2>Dashboard</h2>
+        <div className="user-info">
+          <p>Bienvenido, {user?.nombre}</p>
+        </div>
+        <nav>
+          <button onClick={() => navigate("/panel")}>Inventario</button>
+          <button onClick={() => navigate("/usuarios")}>Usuarios</button>
+          <button onClick={() => navigate("/stock")}>Stock</button>
+          <button onClick={() => navigate("/reportes")}>Reportes</button>
+          <button className="active" onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
+          <button onClick={() => navigate("/")}>Catálogo</button>
+          <button onClick={handleLogout}>Cerrar Sesión</button>
+        </nav>
+      </aside>
+
+      {/* MAIN AREA */}
+      <div className="main-area">
+        {/* STATS CARDS */}
+        <section className="stats-row">
+          {statsCards.map((stat) => (
+            <div key={stat.label} className="stat-card" style={{ borderTop: `4px solid ${stat.color}` }}>
+              <h3>{stat.value}</h3>
+              <p>{stat.label}</p>
+            </div>
+          ))}
+        </section>
+
+        {/* FILTROS */}
+        <div className="filtros-wrapper">
+          <div className="filtros-container">
+            <select
+              value={filtroEstado}
+              onChange={(e) => setFiltroEstado(e.target.value)}
+              className="filtro-select"
+            >
+              <option value="">Todos los estados</option>
+              <option value="pendiente">⏳ Pendiente</option>
+              <option value="pagado">✅ Pagado</option>
+              <option value="entregado">📦 Entregado</option>
+              <option value="cancelado">❌ Cancelado</option>
+            </select>
+
+            <input
+              type="date"
+              value={filtroFechaInicio}
+              onChange={(e) => setFiltroFechaInicio(e.target.value)}
+              className="filtro-input"
+              placeholder="Fecha inicio"
+            />
+            <input
+              type="date"
+              value={filtroFechaFin}
+              onChange={(e) => setFiltroFechaFin(e.target.value)}
+              className="filtro-input"
+              placeholder="Fecha fin"
+            />
+            <input
+              type="text"
+              value={filtroSearch}
+              onChange={(e) => setFiltroSearch(e.target.value)}
+              className="filtro-input"
+              placeholder="Buscar cliente..."
+            />
+            <button onClick={cargarCotizaciones} className="btn-filtrar">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="22 3 2 3 10 13 10 21 14 18 14 13 22 3"/>
+              </svg>
+              Filtrar
+            </button>
+            <button 
+              onClick={() => {
+                setFiltroEstado("");
+                setFiltroFechaInicio("");
+                setFiltroFechaFin("");
+                setFiltroSearch("");
+                cargarCotizaciones();
+              }} 
+              className="btn-limpiar"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        {/* TABLA DE COTIZACIONES */}
+        <section className="table-section">
+          <div className="table-card">
+            <div className="table-header">
+              <h3>Cotizaciones ({cotizaciones.length})</h3>
+              <div className="table-actions">
+                <button className="btn-secondary" onClick={() => navigate("/reportes")}>
+                  Ver Reportes
+                </button>
+              </div>
+            </div>
+
+            <div className="table-container">
+              {error ? (
+                <p className="no-data">{error}</p>
+              ) : cotizaciones.length === 0 ? (
+                <p className="no-data">No hay cotizaciones registradas</p>
+              ) : (
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Cliente</th>
+                      <th>Fecha</th>
+                      <th>Total</th>
+                      <th>Método</th>
+                      <th>Estado</th>
+                      <th>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cotizaciones.map((c) => (
+                      <tr key={c.idCotizacion}>
+                        <td>
+                          <strong>#{c.idCotizacion}</strong>
+                        </td>
+                        <td>
+                          <strong>{c.usuario?.nombre || c.usuario?.email || 'Anónimo'}</strong>
+                          <br />
+                          <small style={{ color: "#999", fontSize: "0.7rem" }}>
+                            {c.usuario?.email || 'Sin email'}
+                          </small>
+                        </td>
+                        <td>
+                          {new Date(c.fechaCreacion).toLocaleDateString("es-CO")}
+                          <br />
+                          <small style={{ color: "#999", fontSize: "0.6rem" }}>
+                            {new Date(c.fechaCreacion).toLocaleTimeString("es-CO")}
+                          </small>
+                        </td>
+                        <td>
+                          <strong style={{ color: "#2e7d32" }}>
+                            ${new Intl.NumberFormat("es-CO").format(c.total)}
+                          </strong>
+                          <br />
+                          <small style={{ color: "#999", fontSize: "0.6rem" }}>
+                            {c.detalles?.length || 0} items
+                          </small>
+                        </td>
+                        <td>
+                          {c.metodoVenta === "fisico" ? "📍 Físico" : "🚚 Envío"}
+                          <br />
+                          <small style={{ color: "#999", fontSize: "0.6rem" }}>
+                            {c.metodoPago === "efectivo" ? "Efectivo" :
+                             c.metodoPago === "tarjeta_debito" ? "Tarjeta débito" :
+                             c.metodoPago === "tarjeta_credito" ? "Tarjeta crédito" : ""}
+                          </small>
+                        </td>
+                        <td>
+                          <span className="status-badge" style={{
+                            backgroundColor: getEstadoColor(c.estado) + '20',
+                            color: getEstadoColor(c.estado),
+                          }}>
+                            ● {getEstadoLabel(c.estado)}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="acciones-container">
+                            <button
+                              className="btn-pdf"
+                              onClick={() => handleDescargarPDF(c.idCotizacion)}
+                              title="Descargar PDF"
+                            >
+                              📄
+                            </button>
+
+                            {c.estado === "pendiente" && (
+                              <>
+                                <button
+                                  className="btn-pagar"
+                                  onClick={() => handleCambiarEstado(c.idCotizacion, "pagado")}
+                                  disabled={accionando === c.idCotizacion}
+                                >
+                                  Pagar
+                                </button>
+                                <button
+                                  className="btn-cancelar"
+                                  onClick={() => handleCambiarEstado(c.idCotizacion, "cancelado")}
+                                  disabled={accionando === c.idCotizacion}
+                                >
+                                  Cancelar
+                                </button>
+                              </>
+                            )}
+
+                            {c.estado === "pagado" && (
+                              <button
+                                className="btn-entregar"
+                                onClick={() => handleCambiarEstado(c.idCotizacion, "entregado")}
+                                disabled={accionando === c.idCotizacion}
+                              >
+                                Entregar
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <div className="table-footer">
+              <span>Mostrando {cotizaciones.length} cotizaciones</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }

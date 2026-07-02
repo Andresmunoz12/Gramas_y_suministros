@@ -1,27 +1,222 @@
-/* BADGES */
+/* PRUEBAusuarios.css - Gestión de Usuarios */
+
+/* ========== BADGES ========== */
 .badge {
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-size: 0.8rem;
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
 .badge-admin {
-  background: #f0fdf4;
+  background: #dcfce7;
   color: #166534;
   border: 1px solid #bbf7d0;
 }
 
 .badge-client {
-  background: #f8fafc;
-  color: #64748b;
+  background: #f1f5f9;
+  color: #475569;
   border: 1px solid #e2e8f0;
 }
 
-/* BUTTONS are mostly handled by AdminGlobal.css */
-/* But we can add specific tweaks if needed */
+.badge-almacen {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
 
-.btn-danger {
-  margin-left: 10px;
+/* ========== STATUS BADGE ========== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-badge .dot {
+  font-size: 0.5rem;
+}
+
+/* ========== ACCIONES ========== */
+.acciones-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.acciones-container .btn-extra {
+  background: #f1f5f9;
+  color: #334155;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.acciones-container .btn-extra:hover:not(:disabled) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+.acciones-container .btn-success {
+  background: #dcfce7;
+  color: #166534;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.acciones-container .btn-success:hover:not(:disabled) {
+  background: #bbf7d0;
+  transform: translateY(-1px);
+}
+
+.acciones-container .btn-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.acciones-container .btn-warning:hover:not(:disabled) {
+  background: #fde68a;
+  transform: translateY(-1px);
+}
+
+.acciones-container .btn-danger {
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.7rem;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.acciones-container .btn-danger:hover:not(:disabled) {
+  background: #fecaca;
+  transform: translateY(-1px);
+}
+
+.acciones-container button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ========== ESTADOS ========== */
+.estado-activo {
+  color: #166534;
+  background: #dcfce7;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.estado-inactivo {
+  color: #92400e;
+  background: #fef3c7;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.estado-suspendido {
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* ========== ERROR ========== */
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 4px solid #ef4444;
+  font-weight: 500;
+}
+
+/* ========== STATS CARDS (heredado de Panel.css) ========== */
+/* Las tarjetas de estadísticas usan los mismos estilos que Panel.css */
+/* Asegúrate de que Panel.css esté importado o estos estilos estén disponibles */
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .acciones-container {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .acciones-container .btn-extra,
+  .acciones-container .btn-success,
+  .acciones-container .btn-warning,
+  .acciones-container .btn-danger {
+    width: 100%;
+    text-align: center;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 3px 10px;
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+    padding: 3px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .badge {
+    font-size: 0.55rem;
+    padding: 2px 8px;
+  }
+
+  .status-badge {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+  }
 }

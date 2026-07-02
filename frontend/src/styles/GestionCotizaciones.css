@@ -1,55 +1,207 @@
 /* src/styles/GestionCotizaciones.css */
 
+/* ===== FILTROS WRAPPER ===== */
+.filtros-wrapper {
+  margin-bottom: 16px;
+  background: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  border: 1px solid #eef2f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
 /* ===== FILTROS ===== */
 .filtros-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .filtro-select {
-  padding: 8px 14px;
-  border: 1px solid #ddd;
+  padding: 7px 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   background: white;
-  min-width: 160px;
+  min-width: 140px;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  transition: all 0.2s ease;
+  height: 36px;
+  flex: 0 1 auto;
 }
 
 .filtro-input {
-  padding: 8px 14px;
-  border: 1px solid #ddd;
+  padding: 7px 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 0.9rem;
-  flex: 1;
-  min-width: 140px;
+  font-size: 0.8rem;
+  font-family: 'Inter', sans-serif;
+  color: #1e293b;
+  transition: all 0.2s ease;
+  height: 36px;
+  min-width: 120px;
+  max-width: 150px;
+  flex: 0 1 auto;
+}
+
+.filtro-input[type="text"] {
+  min-width: 160px;
+  max-width: 200px;
+  flex: 0 1 180px;
 }
 
 .filtro-input:focus,
 .filtro-select:focus {
-  border-color: #2e7d32;
+  border-color: #2d5a27;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.08);
+}
+
+.filtro-input::placeholder {
+  color: #94a3b8;
+  font-size: 0.75rem;
 }
 
 .btn-filtrar {
-  background: #2e7d32;
+  background: #2d5a27;
   color: white;
   border: none;
-  padding: 8px 20px;
+  padding: 7px 18px;
   border-radius: 8px;
   font-weight: 600;
+  font-size: 0.8rem;
   cursor: pointer;
-  transition: 0.25s;
+  transition: all 0.25s ease;
+  font-family: 'Inter', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  white-space: nowrap;
 }
 
 .btn-filtrar:hover {
-  background: #1b5e20;
+  background: #1a3c34;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(45, 90, 39, 0.2);
+}
+
+.btn-filtrar:active {
+  transform: translateY(0);
+}
+
+.btn-limpiar {
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-family: 'Inter', sans-serif;
+  height: 36px;
+  white-space: nowrap;
+}
+
+.btn-limpiar:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+/* ===== STATUS BADGE ===== */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* ===== ACCIONES ===== */
+.acciones-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.acciones-container button {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.acciones-container button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.acciones-container button:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-/* ===== BOTONES DE ACCIÓN ===== */
+.btn-pdf {
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.85rem !important;
+  padding: 4px 10px !important;
+}
+
+.btn-pdf:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.btn-pagar {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.btn-pagar:hover:not(:disabled) {
+  background: #bbf7d0;
+}
+
+.btn-cancelar {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.btn-cancelar:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.btn-entregar {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.btn-entregar:hover:not(:disabled) {
+  background: #bfdbfe;
+}
+
+/* ===== TABLE FOOTER ===== */
+.table-footer {
+  padding: 12px 24px;
+  border-top: 1px solid #f1f5f9;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  background: #fafcff;
+}
+
+/* ===== BOTONES DE ACCIÓN (legacy support) ===== */
 .btn-success {
   background: #2e7d32 !important;
   color: white !important;
@@ -99,18 +251,108 @@
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 992px) {
+  .filtros-container {
+    gap: 6px;
+  }
+  
+  .filtro-select,
+  .filtro-input {
+    min-width: 100px;
+    flex: 1 0 auto;
+  }
+  
+  .filtro-input[type="text"] {
+    min-width: 140px;
+    flex: 1 0 160px;
+  }
+}
+
 @media (max-width: 768px) {
+  .filtros-wrapper {
+    padding: 10px 12px;
+  }
+
   .filtros-container {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtro-select,
+  .filtro-input,
+  .filtro-input[type="text"] {
+    width: 100%;
+    min-width: unset;
+    max-width: none;
+    flex: none;
+    height: 40px;
+    font-size: 0.85rem;
+  }
+
+  .btn-filtrar,
+  .btn-limpiar {
+    width: 100%;
+    justify-content: center;
+    height: 40px;
+  }
+
+  .btn-limpiar {
+    order: 10;
+  }
+
+  .acciones-container {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .acciones-container button {
+    width: 100%;
+    text-align: center;
+    font-size: 0.65rem;
+    padding: 4px 8px;
+  }
+
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filtros-wrapper {
+    padding: 8px;
   }
 
   .filtro-select,
   .filtro-input {
-    width: 100%;
-    min-width: unset;
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    height: 36px;
   }
 
-  .btn-filtrar {
-    width: 100%;
+  .btn-filtrar,
+  .btn-limpiar {
+    font-size: 0.75rem;
+    height: 36px;
+    padding: 6px 12px;
+  }
+
+  .status-badge {
+    font-size: 0.6rem;
+    padding: 2px 8px;
+  }
+
+  .table-footer {
+    font-size: 0.7rem;
+    padding: 8px 16px;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr 1fr;
   }
 }
