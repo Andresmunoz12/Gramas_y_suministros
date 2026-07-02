@@ -81,6 +81,7 @@ const StockGrama = () => {
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
+            <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
           </nav>
         </aside>

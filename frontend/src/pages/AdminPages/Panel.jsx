@@ -141,9 +141,7 @@ export default function AdminDashboard() {
             <button onClick={() => navigate("/reportes")}>Reportes</button>
             <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
-            <button onClick={handleLogout}>
-              Cerrar Sesión
-            </button>
+            <button onClick={handleLogout}>Cerrar Sesión</button>
           </nav>
         </aside>
 

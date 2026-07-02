@@ -17,13 +17,11 @@ export default function GestionCotizaciones() {
   const [error, setError] = useState(null);
   const [estadisticas, setEstadisticas] = useState(null);
   
-  // Filtros
   const [filtroEstado, setFiltroEstado] = useState("");
   const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
   const [filtroFechaFin, setFiltroFechaFin] = useState("");
   const [filtroSearch, setFiltroSearch] = useState("");
   
-  // Accionando (para evitar doble click)
   const [accionando, setAccionando] = useState(null);
 
   useEffect(() => {
@@ -121,7 +119,6 @@ export default function GestionCotizaciones() {
     navigate("/");
   };
 
-  // Estadísticas resumen
   const statsCards = useMemo(() => {
     if (!estadisticas) return [];
     return [
@@ -149,7 +146,6 @@ export default function GestionCotizaciones() {
   return (
     <>
       <div className="admin-layout">
-        {/* SIDEBAR */}
         <aside className="sidebar">
           <h2>Dashboard</h2>
           <div className="user-info">
@@ -160,17 +156,13 @@ export default function GestionCotizaciones() {
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
-            <button className="active" onClick={() => navigate("/gestion-cotizaciones")}>
-              Cotizaciones
-            </button>
+            <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
             <button onClick={handleLogout}>Cerrar Sesión</button>
           </nav>
         </aside>
 
-        {/* MAIN */}
         <div className="main-area">
-          {/* STATS */}
           <section className="stats-row">
             {statsCards.map((stat) => (
               <div key={stat.label} className="stat-card" style={{ borderTop: `4px solid ${stat.color}` }}>
@@ -180,7 +172,6 @@ export default function GestionCotizaciones() {
             ))}
           </section>
 
-          {/* FILTROS */}
           <section className="table-section">
             <div className="table-card">
               <div className="table-header">
@@ -227,7 +218,6 @@ export default function GestionCotizaciones() {
             </div>
           </section>
 
-          {/* TABLA DE COTIZACIONES */}
           <section className="table-section">
             <div className="table-card">
               <div className="table-header">
@@ -257,7 +247,8 @@ export default function GestionCotizaciones() {
                         <tr key={c.idCotizacion}>
                           <td>#{c.idCotizacion}</td>
                           <td>
-                            <strong>{c.usuario?.nombre}</strong><br />
+                            <strong>{c.usuario?.nombre}</strong>
+                            <br />
                             <small style={{ color: "#666" }}>{c.usuario?.email}</small>
                           </td>
                           <td>
@@ -350,7 +341,17 @@ export default function GestionCotizaciones() {
                               {c.estado === "pagado" && (
                                 <button
                                   className="btn-primary"
-                                  onClick={() => handleCambiarEstado(c.idCotizacion, "entregado")}
+                                  onClick={() => {
+                                    const totalItems = c.detalles?.length || 0;
+                                    const confirmar = window.confirm(
+                                      `¿Estás seguro de marcar esta cotización como ENTREGADA?\n\n` +
+                                      `Esta acción RESTARÁ ${totalItems} producto(s) del inventario.\n` +
+                                      `¿Deseas continuar?`
+                                    );
+                                    if (confirmar) {
+                                      handleCambiarEstado(c.idCotizacion, "entregado");
+                                    }
+                                  }}
                                   disabled={accionando === c.idCotizacion}
                                   style={{
                                     fontSize: "0.75rem",

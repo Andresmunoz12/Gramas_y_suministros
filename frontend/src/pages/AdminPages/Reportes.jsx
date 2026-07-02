@@ -380,37 +380,64 @@ function StockContent({ data }) {
 
       <div className="chart-card">
         <h4>Detalle de Productos</h4>
-        <div className="table-container">
+        <div className="table-container" style={{ maxHeight: '500px', overflowY: 'auto' }}>
           <table className="admin-table">
-            <thead><tr><th>Producto</th><th>Stock Actual</th><th>Stock Mínimo</th><th>Estado</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Stock Actual</th>
+                <th>Stock Mínimo</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
             <tbody>
-              {detalleData.slice(0, 20).map((item) => (
-                <tr key={item.id} style={{
-                  backgroundColor: item.estado === 'Sin stock' ? '#fff3f3' :
-                                  item.estado === 'Stock bajo' ? '#fff8e7' : 'transparent'
-                }}>
-                  <td>{item.producto}</td>
-                  <td><strong>{item.stock}</strong></td>
-                  <td>{item.minimo}</td>
-                  <td>
-                    <span style={{
-                      display: 'inline-block',
-                      padding: '2px 10px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      backgroundColor: item.estado === 'Sin stock' ? '#ffcdd2' :
-                                      item.estado === 'Stock bajo' ? '#ffecb3' : '#c8e6c9',
-                      color: item.estado === 'Sin stock' ? '#c62828' :
-                             item.estado === 'Stock bajo' ? '#e65100' : '#1b5e20',
-                    }}>
-                      {item.estado}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {detalleData.length === 0 ? (
+                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>No hay productos registrados</td></tr>
+              ) : (
+                detalleData.map((item) => (
+                  <tr key={item.id} style={{
+                    backgroundColor: item.estado === 'Sin stock' ? '#fff3f3' :
+                                   item.estado === 'Stock bajo' ? '#fff8e7' : 'transparent'
+                  }}>
+                    <td>
+                      <strong>{item.producto}</strong>
+                      <br />
+                      <small style={{ color: '#999', fontSize: '11px' }}>
+                        ID: {item.id}
+                      </small>
+                    </td>
+                    <td>
+                      <strong style={{
+                        color: item.estado === 'Sin stock' ? '#d32f2f' :
+                               item.estado === 'Stock bajo' ? '#f57c00' : '#2e7d32',
+                      }}>
+                        {item.stock}
+                      </strong>
+                    </td>
+                    <td>{item.minimo}</td>
+                    <td>
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '4px 12px',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        backgroundColor: item.estado === 'Sin stock' ? '#ffcdd2' :
+                                        item.estado === 'Stock bajo' ? '#ffecb3' : '#c8e6c9',
+                        color: item.estado === 'Sin stock' ? '#c62828' :
+                               item.estado === 'Stock bajo' ? '#e65100' : '#1b5e20',
+                      }}>
+                        {item.estado}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+        <div style={{ marginTop: '8px', textAlign: 'right', color: '#999', fontSize: '12px' }}>
+          Mostrando {detalleData.length} productos
         </div>
       </div>
     </div>
@@ -512,7 +539,7 @@ export default function Reportes() {
             <button onClick={() => navigate("/panel")}>Inventario</button>
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
-            <button className="active" onClick={() => navigate("/reportes")}>Reportes</button>
+            <button onClick={() => navigate("/reportes")}>Reportes</button>
             <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
             <button onClick={() => navigate("/")}>Catálogo</button>
             <button onClick={handleLogout}>Cerrar Sesión</button>

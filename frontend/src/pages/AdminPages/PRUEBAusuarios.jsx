@@ -79,7 +79,8 @@ export default function Usuarios() {
                         <button onClick={() => navigate("/usuarios")}>Usuarios</button>
                         <button onClick={() => navigate("/stock")}>Stock</button>
                         <button onClick={() => navigate("/reportes")}>Reportes</button>
-                        <button onClick={() => navigate("/")}>Catalogo</button>
+                        <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
+                        <button onClick={() => navigate("/")}>Catálogo</button>
                     </nav>
                 </aside>
                 <div className="main-area">
@@ -101,7 +102,8 @@ export default function Usuarios() {
                     <button onClick={() => navigate("/usuarios")}>Usuarios</button>
                     <button onClick={() => navigate("/stock")}>Stock</button>
                     <button onClick={() => navigate("/reportes")}>Reportes</button>
-                    <button onClick={() => navigate("/")}>Catalogo</button>
+                    <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
+                    <button onClick={() => navigate("/")}>Catálogo</button>
                 </nav>
             </aside>
 
