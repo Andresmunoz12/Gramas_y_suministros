@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { Cotizacion } from './cotizacion.entity';
 import { DetalleCotizacion } from './detalle-cotizacion.entity';
 import { productos } from '../productos/productos.entity';
+import { movimiento } from '../movimiento/movimiento.entity';
+import { stock } from '../stock/stock.entity';
 import { CrearCotizacionDto } from './dto/crear-cotizacion.dto';
 import { usuario } from '../Usuarios/usuarios.entity';
 import PDFDocument from 'pdfkit';
@@ -19,6 +21,10 @@ export class CotizacionesService {
     private detalleRepo: Repository<DetalleCotizacion>,
     @InjectRepository(productos)
     private productoRepo: Repository<productos>,
+    @InjectRepository(movimiento)
+    private movimientoRepo: Repository<movimiento>,
+    @InjectRepository(stock)
+    private stockRepo: Repository<stock>,
   ) {}
 
   async crearCotizacion(usuarioId: number, dto: CrearCotizacionDto) {
@@ -62,7 +68,6 @@ export class CotizacionesService {
     const costoEnvio = dto.metodoVenta === 'envio' ? 8000 : 0;
     const total = subtotal + costoEnvio;
 
-    // ✅ SOLUCIÓN 1: No usar null, usar undefined o omitir la propiedad
     const cotizacionData: any = {
       idUsuario: usuarioId,
       metodoVenta: dto.metodoVenta,
@@ -73,15 +78,11 @@ export class CotizacionesService {
       estado: 'pendiente',
     };
 
-    // Solo agregar direccionEnvio si es envío
     if (dto.metodoVenta === 'envio' && dto.direccionEnvio) {
       cotizacionData.direccionEnvio = dto.direccionEnvio;
     }
 
-    // ✅ SOLUCIÓN 2: Guardar y obtener el ID correctamente
     const savedCotizacion = await this.cotizacionRepo.save(cotizacionData);
-    
-    // ✅ Ahora savedCotizacion es un objeto, obtener su ID
     const cotizacionId = savedCotizacion.idCotizacion;
 
     for (const detalle of detalles) {
@@ -327,7 +328,6 @@ export class CotizacionesService {
       .fillColor('#666')
       .text('¡Gracias por preferirnos!', { align: 'center' });
     
-    // ✅ SOLUCIÓN 3: Usar fontSize como parte del objeto de opciones
     doc
       .fontSize(9)
       .font('Helvetica')
@@ -343,115 +343,207 @@ export class CotizacionesService {
 
   // ========== MÉTODOS PARA ADMINISTRADOR ==========
 
-async obtenerTodasCotizaciones(filtros: {
-  estado?: string;
-  fechaInicio?: string;
-  fechaFin?: string;
-  search?: string;
-}) {
-  const query = this.cotizacionRepo
-    .createQueryBuilder('cotizacion')
-    .leftJoinAndSelect('cotizacion.usuario', 'usuario')
-    .leftJoinAndSelect('cotizacion.detalles', 'detalles')
-    .leftJoinAndSelect('detalles.producto', 'producto');
+  async obtenerTodasCotizaciones(filtros: {
+    estado?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    search?: string;
+  }) {
+    const query = this.cotizacionRepo
+      .createQueryBuilder('cotizacion')
+      .leftJoinAndSelect('cotizacion.usuario', 'usuario')
+      .leftJoinAndSelect('cotizacion.detalles', 'detalles')
+      .leftJoinAndSelect('detalles.producto', 'producto');
 
-  // Filtro por estado
-  if (filtros.estado) {
-    query.andWhere('cotizacion.estado = :estado', { estado: filtros.estado });
+    if (filtros.estado) {
+      query.andWhere('cotizacion.estado = :estado', { estado: filtros.estado });
+    }
+
+    if (filtros.fechaInicio) {
+      query.andWhere('cotizacion.fechaCreacion >= :fechaInicio', { 
+        fechaInicio: new Date(filtros.fechaInicio) 
+      });
+    }
+    if (filtros.fechaFin) {
+      query.andWhere('cotizacion.fechaCreacion <= :fechaFin', { 
+        fechaFin: new Date(filtros.fechaFin) 
+      });
+    }
+
+    if (filtros.search) {
+      query.andWhere(
+        '(usuario.nombre LIKE :search OR usuario.email LIKE :search)',
+        { search: `%${filtros.search}%` },
+      );
+    }
+
+    query.orderBy('cotizacion.fechaCreacion', 'DESC');
+
+    return query.getMany();
   }
 
-  // Filtro por rango de fechas
-  if (filtros.fechaInicio) {
-    query.andWhere('cotizacion.fechaCreacion >= :fechaInicio', { 
-      fechaInicio: new Date(filtros.fechaInicio) 
+  // ✅ ACTUALIZAR ESTADO CON RESTA DE STOCK
+  async actualizarEstado(idCotizacion: number, estado: string) {
+    const cotizacion = await this.cotizacionRepo.findOne({
+      where: { idCotizacion },
+      relations: ['detalles', 'detalles.producto'],
     });
+
+    if (!cotizacion) {
+      throw new NotFoundException('Cotización no encontrada');
+    }
+
+    const estadosValidos = ['pendiente', 'pagado', 'entregado', 'cancelado'];
+    if (!estadosValidos.includes(estado)) {
+      throw new BadRequestException(`Estado inválido. Debe ser: ${estadosValidos.join(', ')}`);
+    }
+
+    // ✅ Si se cambia a "entregado", restar stock
+    if (estado === 'entregado' && cotizacion.estado !== 'entregado') {
+      await this.restarStockCotizacion(cotizacion);
+    }
+
+    // ✅ Si se cambia de "entregado" a otro estado, devolver stock
+    if (cotizacion.estado === 'entregado' && estado !== 'entregado') {
+      await this.devolverStockCotizacion(cotizacion);
+    }
+
+    cotizacion.estado = estado;
+    await this.cotizacionRepo.save(cotizacion);
+
+    return {
+      mensaje: `Estado actualizado a "${estado}"`,
+      cotizacion: await this.obtenerCotizacionCompleta(idCotizacion),
+    };
   }
-  if (filtros.fechaFin) {
-    query.andWhere('cotizacion.fechaCreacion <= :fechaFin', { 
-      fechaFin: new Date(filtros.fechaFin) 
+
+  // ✅ Método para restar stock (CORREGIDO)
+  private async restarStockCotizacion(cotizacion: Cotizacion) {
+    for (const detalle of cotizacion.detalles) {
+      // Buscar el stock del producto
+      const stockRegistro = await this.stockRepo.findOne({
+        where: { id_producto: detalle.idProducto },
+      });
+
+      if (!stockRegistro) {
+        throw new NotFoundException(`Stock para producto ID ${detalle.idProducto} no encontrado`);
+      }
+
+      // Verificar que hay suficiente stock
+      if (stockRegistro.cantidad_actual < detalle.cantidad) {
+        const producto = await this.productoRepo.findOne({
+          where: { id_producto: detalle.idProducto },
+        });
+        throw new BadRequestException(
+          `Stock insuficiente para "${producto?.nombre || 'Producto'}". Disponible: ${stockRegistro.cantidad_actual}, Requerido: ${detalle.cantidad}`
+        );
+      }
+
+      // ✅ Restar stock en la tabla stock
+      await this.stockRepo
+        .createQueryBuilder()
+        .update(stock)
+        .set({ 
+          cantidad_actual: () => `cantidad_actual - ${detalle.cantidad}`,
+          ultima_actualizacion: () => 'CURRENT_TIMESTAMP',
+        })
+        .where('id_producto = :id', { id: detalle.idProducto })
+        .execute();
+
+      // Registrar movimiento de salida
+      await this.registrarMovimiento(
+        detalle.idProducto,
+        detalle.cantidad,
+        'salida',
+        `Venta por cotización #${cotizacion.idCotizacion}`,
+        cotizacion.idUsuario,
+      );
+    }
+  }
+
+  // ✅ Método para devolver stock (CORREGIDO)
+  private async devolverStockCotizacion(cotizacion: Cotizacion) {
+    for (const detalle of cotizacion.detalles) {
+      // ✅ Devolver stock en la tabla stock
+      await this.stockRepo
+        .createQueryBuilder()
+        .update(stock)
+        .set({ 
+          cantidad_actual: () => `cantidad_actual + ${detalle.cantidad}`,
+          ultima_actualizacion: () => 'CURRENT_TIMESTAMP',
+        })
+        .where('id_producto = :id', { id: detalle.idProducto })
+        .execute();
+
+      await this.registrarMovimiento(
+        detalle.idProducto,
+        detalle.cantidad,
+        'entrada',
+        `Devolución por cotización #${cotizacion.idCotizacion}`,
+        cotizacion.idUsuario,
+      );
+    }
+  }
+
+  // ✅ Método para registrar movimiento
+  private async registrarMovimiento(
+    idProducto: number,
+    cantidad: number,
+    tipo: 'entrada' | 'salida',
+    detalle: string,
+    idUsuario: number,
+  ) {
+    const movimiento = this.movimientoRepo.create({
+      id_producto: idProducto,
+      id_usuario: idUsuario,
+      cantidad: cantidad,
+      tipo: tipo,
+      detalle: detalle,
+      fecha: new Date(),
     });
+    await this.movimientoRepo.save(movimiento);
   }
 
-  // Búsqueda por nombre de usuario o email
-  if (filtros.search) {
-    query.andWhere(
-      '(usuario.nombre LIKE :search OR usuario.email LIKE :search)',
-      { search: `%${filtros.search}%` },
-    );
+  async obtenerEstadisticas() {
+    const total = await this.cotizacionRepo.count();
+    const pendiente = await this.cotizacionRepo.count({ where: { estado: 'pendiente' } });
+    const pagado = await this.cotizacionRepo.count({ where: { estado: 'pagado' } });
+    const entregado = await this.cotizacionRepo.count({ where: { estado: 'entregado' } });
+    const cancelado = await this.cotizacionRepo.count({ where: { estado: 'cancelado' } });
+
+    const ventasTotalesResult = await this.cotizacionRepo
+      .createQueryBuilder('cotizacion')
+      .select('SUM(cotizacion.total)', 'total')
+      .where('cotizacion.estado IN (:...estados)', { estados: ['pagado', 'entregado'] })
+      .getRawOne();
+
+    const ventasTotales = Number(ventasTotalesResult?.total || 0);
+
+    const unMesAtras = new Date();
+    unMesAtras.setMonth(unMesAtras.getMonth() - 1);
+    const ultimoMes = await this.cotizacionRepo.count({
+      where: {
+        fechaCreacion: { $gte: unMesAtras } as any,
+      },
+    });
+
+    const unaSemanaAtras = new Date();
+    unaSemanaAtras.setDate(unaSemanaAtras.getDate() - 7);
+    const ultimaSemana = await this.cotizacionRepo.count({
+      where: {
+        fechaCreacion: { $gte: unaSemanaAtras } as any,
+      },
+    });
+
+    return {
+      total,
+      pendiente,
+      pagado,
+      entregado,
+      cancelado,
+      ventasTotales,
+      ultimoMes,
+      ultimaSemana,
+    };
   }
-
-  query.orderBy('cotizacion.fechaCreacion', 'DESC');
-
-  return query.getMany();
 }
-
-async actualizarEstado(idCotizacion: number, estado: string) {
-  const cotizacion = await this.cotizacionRepo.findOne({
-    where: { idCotizacion },
-  });
-
-  if (!cotizacion) {
-    throw new NotFoundException('Cotización no encontrada');
-  }
-
-  const estadosValidos = ['pendiente', 'pagado', 'entregado', 'cancelado'];
-  if (!estadosValidos.includes(estado)) {
-    throw new BadRequestException(`Estado inválido. Debe ser: ${estadosValidos.join(', ')}`);
-  }
-
-  cotizacion.estado = estado;
-  await this.cotizacionRepo.save(cotizacion);
-
-  return {
-    mensaje: `Estado actualizado a "${estado}"`,
-    cotizacion: await this.obtenerCotizacionCompleta(idCotizacion),
-  };
-}
-
-async obtenerEstadisticas() {
-  const total = await this.cotizacionRepo.count();
-  const pendiente = await this.cotizacionRepo.count({ where: { estado: 'pendiente' } });
-  const pagado = await this.cotizacionRepo.count({ where: { estado: 'pagado' } });
-  const entregado = await this.cotizacionRepo.count({ where: { estado: 'entregado' } });
-  const cancelado = await this.cotizacionRepo.count({ where: { estado: 'cancelado' } });
-
-  // ✅ Ventas totales (pagado + entregado)
-  const ventasTotalesResult = await this.cotizacionRepo
-    .createQueryBuilder('cotizacion')
-    .select('SUM(cotizacion.total)', 'total')
-    .where('cotizacion.estado IN (:...estados)', { estados: ['pagado', 'entregado'] }) // ✅ Incluir entregado
-    .getRawOne();
-
-  const ventasTotales = Number(ventasTotalesResult?.total || 0);
-
-  // Cotizaciones del último mes
-  const unMesAtras = new Date();
-  unMesAtras.setMonth(unMesAtras.getMonth() - 1);
-  const ultimoMes = await this.cotizacionRepo.count({
-    where: {
-      fechaCreacion: { $gte: unMesAtras } as any,
-    },
-  });
-
-  // Cotizaciones de la última semana
-  const unaSemanaAtras = new Date();
-  unaSemanaAtras.setDate(unaSemanaAtras.getDate() - 7);
-  const ultimaSemana = await this.cotizacionRepo.count({
-    where: {
-      fechaCreacion: { $gte: unaSemanaAtras } as any,
-    },
-  });
-
-  return {
-    total,
-    pendiente,
-    pagado,
-    entregado,
-    cancelado,
-    ventasTotales,
-    ultimoMes,
-    ultimaSemana,
-  };
-}
-}
-
