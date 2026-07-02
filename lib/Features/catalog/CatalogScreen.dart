@@ -1,3 +1,4 @@
+// lib/Features/catalog/CatalogScreen.dart
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -5,16 +6,17 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 
+import 'package:gramas_y_suministros_movil/Features/cotizacion/MisCotizacionesScreen.dart';
 import 'package:gramas_y_suministros_movil/Shared/Custom-Sizedbox.dart';
 import 'package:gramas_y_suministros_movil/models/producto.model.dart';
-import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/AdminDashboard.dart';
 import 'package:gramas_y_suministros_movil/Features/profile/presentation/EditProfileScreen.dart';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
-import 'CartView.dart';
+import 'package:gramas_y_suministros_movil/providers/cart_provider.dart';
+import 'package:gramas_y_suministros_movil/Features/cart/CartScreen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -40,7 +42,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Future<void> _loadProducts() async {
-    // 1. Cargar desde la caché local primero (instantáneo)
     final String? cachedData = await _cacheService.get(ApiConfig.productos);
     if (cachedData != null) {
       try {
@@ -67,7 +68,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
       }
     }
 
-    // 2. Consultar el servidor en segundo plano
     try {
       debugPrint('CatalogScreen: solicitando ${ApiConfig.productos}');
       final response = await http.get(Uri.parse(ApiConfig.productos));
@@ -75,7 +75,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
       if (response.statusCode == 200) {
         final String responseBody = response.body;
-        // Guardar la respuesta fresca en caché
         await _cacheService.save(ApiConfig.productos, responseBody);
 
         final List<dynamic> jsonList = jsonDecode(responseBody) as List<dynamic>;
@@ -168,6 +167,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedTabIndex,
         onTap: (index) {
+          if (index == 1) {
+            // ✅ Pestaña de Cotizaciones - pasar token
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final token = authProvider.usuario?.token;
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MisCotizacionesScreen(token: token),
+              ),
+            );
+            return;
+          }
           setState(() {
             selectedTabIndex = index;
           });
@@ -177,31 +188,16 @@ class _CatalogScreenState extends State<CatalogScreen> {
         selectedItemColor: const Color(0xFF2D5A27),
         unselectedItemColor: const Color(0xFF94A16E),
         elevation: 8,
-        items: [
-          const BottomNavigationBarItem(
+        items: const [
+          BottomNavigationBarItem(
             icon: Icon(Icons.grid_view_rounded),
             label: 'Catálogo',
           ),
-          const BottomNavigationBarItem(
+          BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long_outlined),
-            label: 'Pedidos',
+            label: 'Cotizaciones',
           ),
           BottomNavigationBarItem(
-            icon: Consumer<CartProvider>(
-              builder: (context, cart, child) {
-                return cart.totalItems > 0
-                    ? Badge(
-                        label: Text('${cart.totalItems}'),
-                        backgroundColor: const Color(0xFFE0533C),
-                        textColor: Colors.white,
-                        child: const Icon(Icons.shopping_cart_outlined),
-                      )
-                    : const Icon(Icons.shopping_cart_outlined);
-              },
-            ),
-            label: 'Carrito',
-          ),
-          const BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             label: 'Perfil',
           ),
@@ -223,14 +219,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
       case 1:
         return _buildOrdersView(context);
       case 2:
-        return CartView(
-          onGoToCatalog: () {
-            setState(() {
-              selectedTabIndex = 0;
-            });
-          },
-        );
-      case 3:
         return _buildProfileView(context);
       default:
         return _buildCatalogView(context);
@@ -242,7 +230,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Builder(
               builder: (context) {
@@ -265,38 +253,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ),
                 );
               },
-            ),
-            GestureDetector(
-              onTap: () {
-                setState(() {
-                  selectedTabIndex = 2; // Ir al carrito
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Consumer<CartProvider>(
-                  builder: (context, cart, child) {
-                    return cart.totalItems > 0
-                        ? Badge(
-                            label: Text('${cart.totalItems}'),
-                            backgroundColor: const Color(0xFFE0533C),
-                            child: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF2D5A27)),
-                          )
-                        : const Icon(Icons.shopping_cart_outlined, color: Color(0xFF2D5A27));
-                  },
-                ),
-              ),
             ),
           ],
         ),
@@ -512,63 +468,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Widget _buildOrdersView(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Mis Pedidos',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF1F3D24),
-          ),
-        ),
-        AppSpaces.verticalSmall,
-        const Text(
-          'Historial de tus compras realizadas.',
-          style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-        ),
-        Expanded(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE5E7EB),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.receipt_long_outlined,
-                      color: Color(0xFF6B7280),
-                      size: 44,
-                    ),
-                  ),
-                ),
-                AppSpaces.verticalMedium,
-                const Text(
-                  'No tienes pedidos activos',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1F3D24),
-                  ),
-                ),
-                AppSpaces.verticalSmall,
-                const Text(
-                  'Tus pedidos e historial se mostrarán aquí una vez realices tu primera compra.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+    final authProvider = Provider.of<AuthProvider>(context);
+    final token = authProvider.usuario?.token;
+
+    return MisCotizacionesScreen(token: token);
   }
 
   Widget _buildProfileView(BuildContext context) {
@@ -592,7 +495,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ),
         ),
         AppSpaces.verticalLarge,
-        // Card de información del usuario
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -650,7 +552,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ),
         ),
         AppSpaces.verticalLarge,
-        // Opciones del perfil
         _buildProfileOption(
           Icons.person_outline,
           'Editar Información Personal',
@@ -716,7 +617,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
     );
   }
-}
 
   Widget _buildAppDrawer(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -750,12 +650,17 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ListTile(
                 leading: const Icon(Icons.dashboard, color: Color(0xFF3D7B2C)),
                 title: const Text('Administrador'),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const AdminDashboard()),
-                  );
+                  final token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+                  if (context.mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminDashboard(token: token),
+                      ),
+                    );
+                  }
                 },
               ),
             ListTile(
@@ -769,25 +674,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 );
               },
             ),
+            // ✅ Opción Mis Cotizaciones en el Drawer
             ListTile(
-              leading: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF3D7B2C)),
-              title: const Text('Carrito'),
-              onTap: () {
+              leading: const Icon(Icons.receipt_long_outlined, color: Color(0xFF3D7B2C)),
+              title: const Text('Mis Cotizaciones'),
+              onTap: () async {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Carrito'), backgroundColor: const Color(0xFF3D7B2C)),
-                      body: CartView(onGoToCatalog: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const CatalogScreen()),
-                        );
-                      }),
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+                if (context.mounted) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MisCotizacionesScreen(token: token),
                     ),
-                  ),
-                );
+                  );
+                }
               },
             ),
             const Divider(),
@@ -810,6 +712,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
     );
   }
+}
 
 class _ProductCard extends StatelessWidget {
   final Producto product;
@@ -943,14 +846,30 @@ class _ProductCard extends StatelessWidget {
               GestureDetector(
                 onTap: () {
                   final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                  cartProvider.addToCart(product);
+                  cartProvider.addProduct(product);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('¡${product.title} agregado al carrito!'),
-                      duration: const Duration(seconds: 1),
-                      backgroundColor: const Color(0xFF3D7B2C),
+                      content: Text('✅ ${product.title} agregado al carrito'),
+                      duration: const Duration(seconds: 2),
+                      backgroundColor: const Color(0xFF2D5A27),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      action: SnackBarAction(
+                        label: 'Ver carrito',
+                        textColor: Colors.white,
+                        onPressed: () async {
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+                          if (context.mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CartScreen(token: token),
+                              ),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   );
                 },
@@ -962,7 +881,7 @@ class _ProductCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
-                    Icons.add_shopping_cart,
+                    Icons.add_shopping_cart_outlined,
                     size: 18,
                     color: Color(0xFF2D5A27),
                   ),

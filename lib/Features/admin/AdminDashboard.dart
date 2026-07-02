@@ -1,3 +1,4 @@
+// lib/Features/admin/AdminDashboard.dart
 import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
@@ -8,18 +9,17 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
-import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
-import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
+import 'package:gramas_y_suministros_movil/providers/auth_provider.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  final String? token;
+  const AdminDashboard({super.key, this.token});
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final HttpCacheService _cacheService = HttpCacheService();
   int _totalProducts = 0;
   bool _isLoadingProducts = true;
 
@@ -38,36 +38,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _loadStockSummary();
   }
 
-  Future<void> _loadTotalProducts() async {
-    final String cacheKey = '${ApiConfig.productos}/admin/all';
-
-    // 1. Cargar desde la caché primero
-    final String? cachedData = await _cacheService.get(cacheKey);
-    if (cachedData != null) {
-      try {
-        final List<dynamic> jsonList = jsonDecode(cachedData) as List<dynamic>;
-        if (mounted) {
-          setState(() {
-            _totalProducts = jsonList.length;
-            _isLoadingProducts = false;
-          });
-        }
-      } catch (e) {
-        debugPrint('AdminDashboard: Error decodificando caché de productos: $e');
-      }
+  Future<String?> _getToken() async {
+    if (widget.token != null) {
+      return widget.token;
     }
-
-    // 2. Red en segundo plano
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+      return authProvider.usuario?.token ?? await authProvider.getSavedToken();
+    } catch (e) {
+      return null;
+    }
+  }
 
+  Future<void> _loadTotalProducts() async {
+    try {
+      final String? token = await _getToken();
       if (token == null) {
-        throw Exception('Token no encontrado');
+        setState(() => _isLoadingProducts = false);
+        return;
       }
 
       final response = await http.get(
-        Uri.parse(cacheKey),
+        Uri.parse(ApiConfig.productos),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -75,10 +67,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
 
       if (response.statusCode == 200) {
-        final String responseBody = response.body;
-        await _cacheService.save(cacheKey, responseBody);
-
-        final List<dynamic> jsonList = jsonDecode(responseBody) as List<dynamic>;
+        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
         if (mounted) {
           setState(() {
             _totalProducts = jsonList.length;
@@ -89,21 +78,20 @@ class _AdminDashboardState extends State<AdminDashboard> {
         throw Exception('Error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error cargando total de productos: $e');
-      if (mounted && _totalProducts == 0) {
-        setState(() {
-          _isLoadingProducts = false;
-        });
+      debugPrint('Error cargando productos: $e');
+      if (mounted) {
+        setState(() => _isLoadingProducts = false);
       }
     }
   }
 
   Future<void> _loadTotalUsers() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
-
-      if (token == null) throw Exception('Token no encontrado');
+      final String? token = await _getToken();
+      if (token == null) {
+        setState(() => _isLoadingUsers = false);
+        return;
+      }
 
       final response = await http.get(
         Uri.parse(ApiConfig.users),
@@ -130,22 +118,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
         throw Exception('Error: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error cargando total de usuarios: $e');
+      debugPrint('Error cargando usuarios: $e');
       if (mounted) {
-        setState(() {
-          _isLoadingUsers = false;
-        });
+        setState(() => _isLoadingUsers = false);
       }
     }
   }
 
   Future<void> _loadStockSummary() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
-
+      final String? token = await _getToken();
       if (token == null) {
-        throw Exception('Token no encontrado');
+        setState(() => _isLoadingStock = false);
+        return;
       }
 
       final response = await http.get(
@@ -157,13 +142,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
       );
 
       if (response.statusCode == 200) {
-        final dynamic decoded = jsonDecode(response.body);
-        final List<dynamic> jsonList = decoded is List
-            ? decoded
-            : decoded is Map && decoded['data'] is List
-                ? decoded['data']
-                : [];
-
+        final List<dynamic> jsonList = jsonDecode(response.body) as List<dynamic>;
+        
         int totalStock = 0;
         int agotados = 0;
 
@@ -189,9 +169,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     } catch (e) {
       debugPrint('Error cargando stock: $e');
       if (mounted) {
-        setState(() {
-          _isLoadingStock = false;
-        });
+        setState(() => _isLoadingStock = false);
       }
     }
   }
@@ -357,7 +335,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
               _buildActionButton(context, Icons.bar_chart, 'Reportes', () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ReportesScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => ReportesScreen(token: widget.token),
+                  ),
                 );
               }),
               _buildActionButton(context, Icons.inventory, 'Inventario', () async {
