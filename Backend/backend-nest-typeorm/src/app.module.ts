@@ -25,6 +25,7 @@ import { LoggerMiddleware } from './auth/middleware/logger/logger.middleware';
 import { join } from 'path';
 import { RolesGuard } from './auth/guards/roles.guard';
 import * as fs from 'fs';
+import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import * as fs from 'fs';
     ProductosModule,
     CategoriaModule,
     PasswordResetsModule,
+    CotizacionesModule,
     StockModule,
     MovimientoModule,
     ProveedoresModule,
