@@ -789,9 +789,13 @@ class _UsersScreenState extends State<UsersScreen> {
                       MaterialPageRoute(
                           builder: (_) => const InventoryScreen()))),
               _buildNavItem(Icons.bar_chart_rounded, 'Reportes', false,
-                  () => Navigator.pushReplacement(context,
-                      MaterialPageRoute(
-                          builder: (_) => const ReportesScreen()))),
+                  () {
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final String? token = authProvider.usuario?.token;
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(
+                            builder: (_) => ReportesScreen(token: token)));
+                  }),
             ],
           ),
         ),

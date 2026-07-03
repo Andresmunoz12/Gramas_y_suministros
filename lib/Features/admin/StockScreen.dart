@@ -483,9 +483,11 @@ class _StockScreenState extends State<StockScreen> {
                 );
               }),
               _buildBottomMenuItem(Icons.bar_chart_rounded, 'Reportes', false, () {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final String? token = authProvider.usuario?.token;
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (_) => const ReportesScreen()),
+                  MaterialPageRoute(builder: (_) => ReportesScreen(token: token)),
                 );
               }),
             ],

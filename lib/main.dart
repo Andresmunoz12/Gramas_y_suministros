@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // 👈 Importamos la librería que descargaste
+import 'package:provider/provider.dart';
 import 'package:gramas_y_suministros_movil/Features/auth-login/Login_Screen.dart';
 import 'Providers/auth_provider.dart';
-import 'Providers/cart_provider.dart'; // 👈 Importamos CartProvider
+import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
+import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 
 void main() {
   runApp(
     // 1. Envolvemos la App con MultiProvider
     MultiProvider(
       providers: [
-        // 2. Registramos tu AuthProvider y CartProvider
+        // 2. Registramos tu AuthProvider
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
