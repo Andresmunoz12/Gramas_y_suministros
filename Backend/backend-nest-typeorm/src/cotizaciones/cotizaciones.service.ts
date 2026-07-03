@@ -1,7 +1,7 @@
 // src/cotizaciones/cotizaciones.service.ts
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Cotizacion } from './cotizacion.entity';
 import { DetalleCotizacion } from './detalle-cotizacion.entity';
 import { productos } from '../productos/productos.entity';
@@ -523,7 +523,7 @@ export class CotizacionesService {
     unMesAtras.setMonth(unMesAtras.getMonth() - 1);
     const ultimoMes = await this.cotizacionRepo.count({
       where: {
-        fechaCreacion: { $gte: unMesAtras } as any,
+        fechaCreacion: MoreThanOrEqual(unMesAtras),
       },
     });
 
@@ -531,7 +531,7 @@ export class CotizacionesService {
     unaSemanaAtras.setDate(unaSemanaAtras.getDate() - 7);
     const ultimaSemana = await this.cotizacionRepo.count({
       where: {
-        fechaCreacion: { $gte: unaSemanaAtras } as any,
+        fechaCreacion: MoreThanOrEqual(unaSemanaAtras),
       },
     });
 
