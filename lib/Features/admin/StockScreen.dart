@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/InventoryScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/MovimientosHistorialScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/catalog/CatalogScreen.dart';
 import 'package:gramas_y_suministros_movil/Providers/auth_provider.dart';
 import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
@@ -205,6 +206,8 @@ class _StockScreenState extends State<StockScreen> {
                         children: [
                           _buildHeaderCard(),
                           const SizedBox(height: 16),
+                          _buildQuickActionsRow(),
+                          const SizedBox(height: 16),
                           _buildSummaryCards(totalItems, totalUnidades, bajoStock),
                           const SizedBox(height: 16),
                           _buildStockList(),
@@ -389,6 +392,7 @@ class _StockScreenState extends State<StockScreen> {
         child: ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 700),
           child: DataTable(
+            showCheckboxColumn: false,
             headingRowColor: MaterialStateProperty.all(const Color(0xFF76C776)),
             headingTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
             dataRowHeight: 72,
@@ -402,23 +406,30 @@ class _StockScreenState extends State<StockScreen> {
               DataColumn(label: Text('ESTADO')),
             ],
             rows: _stock.map((item) {
-              return DataRow(cells: [
-                DataCell(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F3D24))),
-                      if (item.marca != null)
-                        Text(item.marca!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                    ],
+              return DataRow(
+                onSelectChanged: (selected) {
+                  if (selected != null && selected) {
+                    _showProductActionsBottomSheet(item);
+                  }
+                },
+                cells: [
+                  DataCell(
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(item.nombre, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF1F3D24))),
+                        if (item.marca != null)
+                          Text(item.marca!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      ],
+                    ),
                   ),
-                ),
-                DataCell(Text(item.categoria)),
-                DataCell(Text(item.cantidad.toString(), style: const TextStyle(fontWeight: FontWeight.w700))),
-                DataCell(Text(item.nivelMinimo.toString())),
-                DataCell(_buildStatusChip(item)),
-              ]);
+                  DataCell(Text(item.categoria)),
+                  DataCell(Text(item.cantidad.toString(), style: const TextStyle(fontWeight: FontWeight.w700))),
+                  DataCell(Text(item.nivelMinimo.toString())),
+                  DataCell(_buildStatusChip(item)),
+                ],
+              );
             }).toList(),
           ),
         ),
@@ -527,6 +538,160 @@ class _StockScreenState extends State<StockScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickActionsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC3545), // Red
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MovimientosHistorialScreen(initialTab: 'salidas'),
+                ),
+              ).then((_) => _loadStock());
+            },
+            icon: const Icon(Icons.logout_rounded, size: 20),
+            label: const Text('Nueva Salida', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D6EFD), // Blue
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const MovimientosHistorialScreen(initialTab: 'entradas'),
+                ),
+              ).then((_) => _loadStock());
+            },
+            icon: const Icon(Icons.login_rounded, size: 20),
+            label: const Text('Nueva Entrada', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showProductActionsBottomSheet(StockItem item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.nombre,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F3D24),
+                  ),
+                ),
+                if (item.marca != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Marca: ${item.marca}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      'Stock actual: ',
+                      style: TextStyle(color: Colors.grey[800], fontSize: 15),
+                    ),
+                    Text(
+                      '${item.cantidad}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF3D7B2C),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(height: 32),
+                ListTile(
+                  leading: const Icon(Icons.history_rounded, color: Color(0xFF3D7B2C)),
+                  title: const Text('Ver Historial de Movimientos', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MovimientosHistorialScreen(
+                          initialProductId: item.idProducto,
+                          initialProductName: item.nombre,
+                        ),
+                      ),
+                    ).then((_) => _loadStock());
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.login_rounded, color: Color(0xFF0D6EFD)),
+                  title: const Text('Registrar Nueva Entrada', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MovimientosHistorialScreen(
+                          initialProductId: item.idProducto,
+                          initialProductName: item.nombre,
+                          initialTab: 'entradas',
+                        ),
+                      ),
+                    ).then((_) => _loadStock());
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout_rounded, color: Color(0xFFDC3545)),
+                  title: const Text('Registrar Nueva Salida', style: TextStyle(fontWeight: FontWeight.w600)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MovimientosHistorialScreen(
+                          initialProductId: item.idProducto,
+                          initialProductName: item.nombre,
+                          initialTab: 'salidas',
+                        ),
+                      ),
+                    ).then((_) => _loadStock());
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

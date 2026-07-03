@@ -306,7 +306,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Builder(
               builder: (context) {
@@ -326,6 +326,72 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       ],
                     ),
                     child: const Icon(Icons.menu, color: Color(0xFF2D5A27)),
+                  ),
+                );
+              },
+            ),
+            Consumer<CartProvider>(
+              builder: (context, cartProvider, child) {
+                return GestureDetector(
+                  onTap: () async {
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CartScreen(token: token),
+                        ),
+                      );
+                    }
+                  },
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: Color(0xFF2D5A27),
+                        ),
+                      ),
+                      if (cartProvider.totalItems > 0)
+                        Positioned(
+                          right: -4,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
+                            ),
+                            child: Text(
+                              '${cartProvider.totalItems}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 );
               },
@@ -1188,13 +1254,13 @@ class _ProductCard extends StatelessWidget {
                   cartProvider.addProduct(product);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('✅ ${product.title} agregado al carrito'),
+                      content: Text('✅ ${product.title} agregado a la cotización'),
                       duration: const Duration(seconds: 2),
                       backgroundColor: const Color(0xFF2D5A27),
                       behavior: SnackBarBehavior.floating,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       action: SnackBarAction(
-                        label: 'Ver carrito',
+                        label: 'Ver cotización',
                         textColor: Colors.white,
                         onPressed: () async {
                           final authProvider = Provider.of<AuthProvider>(context, listen: false);

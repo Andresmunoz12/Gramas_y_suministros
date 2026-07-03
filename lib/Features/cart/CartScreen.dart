@@ -32,7 +32,7 @@
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
-            'Mi Carrito',
+            'Mi Cotización',
             style: TextStyle(
               color: Color(0xFF1F3D24),
               fontWeight: FontWeight.w800,
@@ -47,8 +47,8 @@
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Vaciar carrito'),
-                      content: const Text('¿Estás seguro de que quieres vaciar el carrito?'),
+                      title: const Text('Vaciar cotización'),
+                      content: const Text('¿Estás seguro de que quieres vaciar los productos seleccionados?'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
@@ -98,7 +98,7 @@
             ),
             AppSpaces.verticalMedium,
             const Text(
-              'Tu carrito está vacío',
+              'No tienes productos a cotizar',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@
             ),
             AppSpaces.verticalSmall,
             const Text(
-              'Explora nuestro catálogo y agrega tus productos favoritos.',
+              'Explora nuestro catálogo y agrega productos para cotizar.',
               style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               textAlign: TextAlign.center,
             ),

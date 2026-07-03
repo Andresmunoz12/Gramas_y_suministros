@@ -162,6 +162,9 @@ class CotizacionService {
       final uri = Uri.parse('${ApiConfig.cotizaciones}/admin/todas')
           .replace(queryParameters: queryParams);
 
+      print('🔍 DEBUG: GET $uri');
+      print('🔍 DEBUG: Headers: {"Authorization": "Bearer $token"}');
+
       final response = await _client.get(
         uri,
         headers: {
@@ -170,13 +173,19 @@ class CotizacionService {
         },
       );
 
+      print('🔍 DEBUG: Response Code: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('🔍 DEBUG: Response Body: ${response.body}');
+      }
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => Cotizacion.fromJson(json)).toList();
       } else {
-        throw Exception('Error al obtener cotizaciones: ${response.statusCode}');
+        throw Exception('Error al obtener cotizaciones: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
+      print('🔍 DEBUG: Exception in obtenerTodasCotizaciones: $e');
       throw Exception('Error de conexión: $e');
     }
   }
@@ -211,20 +220,28 @@ class CotizacionService {
   // Obtener estadísticas (Admin)
   Future<Map<String, dynamic>> obtenerEstadisticas(String token) async {
     try {
+      final uri = Uri.parse('${ApiConfig.cotizaciones}/admin/estadisticas');
+      print('🔍 DEBUG: GET $uri');
       final response = await _client.get(
-        Uri.parse('${ApiConfig.cotizaciones}/admin/estadisticas'),
+        uri,
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
 
+      print('🔍 DEBUG: Response Code: ${response.statusCode}');
+      if (response.statusCode != 200) {
+        print('🔍 DEBUG: Response Body: ${response.body}');
+      }
+
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Error al obtener estadísticas: ${response.statusCode}');
+        throw Exception('Error al obtener estadísticas: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
+      print('🔍 DEBUG: Exception in obtenerEstadisticas: $e');
       throw Exception('Error de conexión: $e');
     }
   }

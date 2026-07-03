@@ -122,7 +122,7 @@ class _CotizacionScreenState extends State<CotizacionScreen> {
 
     if (cartProvider.items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El carrito está vacío')),
+        const SnackBar(content: Text('No hay productos seleccionados para cotizar')),
       );
       return;
     }
