@@ -1,0 +1,13 @@
+// tsconfig.spec.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist-test",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "types": ["jest", "node"],
+    "resolvePackageJsonExports": false 
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
