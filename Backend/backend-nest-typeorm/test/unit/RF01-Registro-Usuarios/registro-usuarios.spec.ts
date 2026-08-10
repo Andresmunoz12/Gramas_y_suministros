@@ -16,10 +16,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { UsuariosService } from '../../../../src/Usuarios/usuarios.service';
-import { UsuariosController } from '../../../../src/Usuarios/usuarios.controller';
-import { usuario } from '../../../../src/Usuarios/usuarios.entity';
-import { CreateUsuarioDto } from '../../../../src/Usuarios/dto/create-usurio-dto';
+import { UsuariosService } from '../../../src/Usuarios/usuarios.service';
+import { UsuariosController } from '../../../src/Usuarios/usuarios.controller';
+import { usuario } from '../../../src/Usuarios/usuarios.entity';
+import { CreateUsuarioDto } from '../../../src/Usuarios/dto/create-usurio-dto';
 import * as bcrypt from 'bcryptjs';
 import {
   usuarioValido,
