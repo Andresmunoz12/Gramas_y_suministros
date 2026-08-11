@@ -1,5 +1,5 @@
 // src/cotizaciones/cotizaciones.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Cotizacion } from './cotizacion.entity';
@@ -99,7 +99,7 @@ export class CotizacionesService {
     return this.obtenerCotizacionCompleta(cotizacionId);
   }
 
-  async obtenerCotizacionCompleta(idCotizacion: number) {
+  async obtenerCotizacionCompleta(idCotizacion: number, user?: any) {
     const cotizacion = await this.cotizacionRepo.findOne({
       where: { idCotizacion },
       relations: ['usuario', 'detalles', 'detalles.producto'],
@@ -107,6 +107,10 @@ export class CotizacionesService {
 
     if (!cotizacion) {
       throw new NotFoundException('Cotización no encontrada');
+    }
+
+    if (user && Number(user.rol) !== 1 && Number(cotizacion.idUsuario) !== Number(user.userId)) {
+      throw new ForbiddenException('No tienes permiso para acceder a esta cotización');
     }
 
     return cotizacion;
@@ -144,8 +148,14 @@ export class CotizacionesService {
     };
   }
 
-  async generarPDF(idCotizacion: number, res: Response) {
+  async generarPDF(idCotizacion: number, user: any, res: Response) {
     const cotizacion = await this.obtenerCotizacionCompleta(idCotizacion);
+
+    if (Number(user.rol) !== 1 && Number(cotizacion.idUsuario) !== Number(user.userId)) {
+      throw new ForbiddenException('No tienes permiso para descargar esta cotización');
+    }
+
+    console.log(`[AUDIT] Descarga de PDF de cotización #${idCotizacion} por usuario #${user.userId} (Rol: ${user.rol})`);
 
     const doc = new PDFDocument({ margin: 50 });
 
@@ -535,6 +545,15 @@ export class CotizacionesService {
       },
     });
 
+    const usuariosRegistrados = await this.cotizacionRepo.manager.count(usuario);
+    const productosRegistrados = await this.productoRepo.count();
+
+    const stockTotalResult = await this.stockRepo
+      .createQueryBuilder('stock')
+      .select('SUM(stock.cantidad_actual)', 'total')
+      .getRawOne();
+    const stockTotal = Number(stockTotalResult?.total || 0);
+
     return {
       total,
       pendiente,
@@ -544,6 +563,9 @@ export class CotizacionesService {
       ventasTotales,
       ultimoMes,
       ultimaSemana,
+      usuariosRegistrados,
+      productosRegistrados,
+      stockTotal,
     };
   }
 }
