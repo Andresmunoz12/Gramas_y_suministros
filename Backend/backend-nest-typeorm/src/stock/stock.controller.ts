@@ -1,4 +1,5 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, ParseIntPipe } from '@nestjs/common';
+import { UpdateStockMinimoDto } from './dto/update-stock-minimo.dto';
 import { StockService } from './stock.service';
 import {
   ApiTags,
@@ -77,5 +78,28 @@ export class StockController {
   })
   async verUno(@Param('id_producto', ParseIntPipe) id: number) {
     return await this.stockService.findOne(id);
+  }
+
+  // --- PATCH: CONFIGURAR NIVEL MÍNIMO ---
+  @Roles(1)
+  @Patch(':id_producto/minimo')
+  @ApiOperation({ summary: 'Configurar stock mínimo de un producto (RF-028)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Nivel mínimo actualizado correctamente.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Datos inválidos (ej. número negativo).',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Producto no encontrado.',
+  })
+  async actualizarStockMinimo(
+    @Param('id_producto', ParseIntPipe) id: number,
+    @Body() dto: UpdateStockMinimoDto,
+  ) {
+    return await this.stockService.actualizarNivelMinimo(id, dto.nivel_minimo);
   }
 }

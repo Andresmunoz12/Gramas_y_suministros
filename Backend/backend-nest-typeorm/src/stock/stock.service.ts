@@ -62,7 +62,22 @@ export class StockService {
       registro.cantidad_actual =
         Number(registro.cantidad_actual) + Number(cantidad);
     }
-
     return await manager.save(registro);
+  }
+
+  // Configurar el nivel mínimo de stock para un producto
+  async actualizarNivelMinimo(id_producto: number, nivel_minimo: number) {
+    const registro = await this.stockRepo.findOne({
+      where: { id_producto },
+    });
+
+    if (!registro) {
+      throw new NotFoundException(
+        `No se encontró registro de stock para el producto con ID ${id_producto}. Primero registre una entrada.`,
+      );
+    }
+
+    registro.nivel_minimo = nivel_minimo;
+    return await this.stockRepo.save(registro);
   }
 }

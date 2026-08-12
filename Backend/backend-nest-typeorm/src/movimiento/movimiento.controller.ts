@@ -181,6 +181,8 @@ export class MovimientoController {
   // =====================================================
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(1)
   @ApiOperation({
     summary: 'Ver historial de movimientos',
   })
