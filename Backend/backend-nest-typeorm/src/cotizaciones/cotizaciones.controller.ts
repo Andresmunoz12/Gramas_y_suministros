@@ -44,8 +44,11 @@ export class CotizacionesController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener detalle de una cotización específica' })
-  async obtenerCotizacion(@Param('id', ParseIntPipe) id: number) {
-    return this.cotizacionesService.obtenerCotizacionCompleta(id);
+  async obtenerCotizacion(
+    @Req() req: any,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.cotizacionesService.obtenerCotizacionCompleta(id, req.user);
   }
 
   @Post(':id/pagar')
@@ -57,10 +60,11 @@ export class CotizacionesController {
   @Get(':id/pdf')
   @ApiOperation({ summary: 'Descargar cotización en PDF' })
   async descargarPDF(
+    @Req() req: any,
     @Param('id', ParseIntPipe) id: number,
     @Res() res: Response,
   ) {
-    return this.cotizacionesService.generarPDF(id, res);
+    return this.cotizacionesService.generarPDF(id, req.user, res);
   }
 
   // 👇 ENDPOINTS PARA ADMINISTRADOR
