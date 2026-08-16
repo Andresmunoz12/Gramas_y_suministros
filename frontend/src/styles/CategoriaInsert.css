@@ -1,0 +1,38 @@
+/* src/styles/CategoriaInsert.css */
+
+.categoria-grid {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.categoria-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.categoria-grid .field textarea {
+  min-height: 100px;
+}
+
+.btn-cancel {
+  background: #e5e7eb !important;
+  color: #1e293b !important;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #d1d5db !important;
+}
+
+.btn-submit {
+  background: #2d5a27 !important;
+  color: white !important;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #1a3c34 !important;
+}
+
+@media (max-width: 768px) {
+  .categoria-grid {
+    max-width: 100%;
+  }
+}

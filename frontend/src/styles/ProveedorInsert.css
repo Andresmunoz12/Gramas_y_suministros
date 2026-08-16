@@ -1,0 +1,48 @@
+/* src/styles/ProveedorInsert.css */
+
+.proveedor-grid {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.proveedor-grid .full-width {
+  grid-column: 1 / -1;
+}
+
+.proveedor-grid .row {
+  display: flex;
+  gap: 20px;
+}
+
+.proveedor-grid .row .field {
+  flex: 1;
+}
+
+.btn-cancel {
+  background: #e5e7eb !important;
+  color: #1e293b !important;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #d1d5db !important;
+}
+
+.btn-submit {
+  background: #2d5a27 !important;
+  color: white !important;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #1a3c34 !important;
+}
+
+@media (max-width: 768px) {
+  .proveedor-grid .row {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .proveedor-grid {
+    max-width: 100%;
+  }
+}

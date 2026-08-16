@@ -32,6 +32,12 @@ import EliminarProducto from "./pages/AdminPages/Remove-Product.jsx";
 import Usuarios from "./pages/AdminPages/PRUEBAusuarios.jsx";
 import Panel from "./pages/AdminPages/Panel.jsx"
 import Reportes from './pages/AdminPages/Reportes.jsx';
+import Proveedores from "./pages/AdminPages/Proveedores";
+import InsertarProveedor from "./pages/AdminPages/InsertarProveedor";
+import EditarProveedor from "./pages/AdminPages/EditarProveedor";
+import Categorias from "./pages/AdminPages/Categorias";
+import InsertarCategoria from "./pages/AdminPages/InsertarCategoria";
+import EditarCategoria from "./pages/AdminPages/EditarCategoria";
 
 // 👇 Componente separado que usa hooks de router y auth
 function AppRoutesContent() {
@@ -190,6 +196,61 @@ function AppRoutesContent() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/proveedores"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <Proveedores />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/insertar-proveedor"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <InsertarProveedor />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/editar-proveedor/:id"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <EditarProveedor />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/categorias"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <Categorias />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/insertar-categoria"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <InsertarCategoria />
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/editar-categoria/:id"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <EditarCategoria />
+          </ProtectedRoute>
+        }
+      />
+
     </Routes>
     
   );

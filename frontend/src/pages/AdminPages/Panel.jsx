@@ -137,6 +137,8 @@ export default function AdminDashboard() {
           <nav>
             <button onClick={() => navigate("/panel")}>Inventario</button>
             <button onClick={() => navigate("/usuarios")}>Usuarios</button>
+            <button onClick={() => navigate("/proveedores")}>Proveedores</button>
+            <button onClick={() => navigate("/categorias")}>Categorías</button>
             <button onClick={() => navigate("/stock")}>Stock</button>
             <button onClick={() => navigate("/reportes")}>Reportes</button>
             <button onClick={() => navigate("/gestion-cotizaciones")}>Cotizaciones</button>
