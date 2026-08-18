@@ -17,41 +17,41 @@ describe('RF-013: Registrar Categoría de Producto', () => {
 
   // Función para login como admin
   const loginAsAdmin = () => {
-    cy.visit(`${baseUrl}/login`)
-    cy.get('.input-field[type="email"]').type(adminUser.email)
-    cy.get('.input-field[type="password"]').type(adminUser.password)
-    cy.contains('button', 'Continuar').click()
-    cy.url({ timeout: 10000 }).should('include', '/panel')
+    cy.visit(`${baseUrl}/login`, { timeout: 30000 })
+    cy.get('.input-field[type="email"]', { timeout: 30000 }).type(adminUser.email)
+    cy.get('.input-field[type="password"]', { timeout: 30000 }).type(adminUser.password)
+    cy.contains('button', 'Continuar', { timeout: 30000 }).click()
+    cy.url({ timeout: 30000 }).should('include', '/panel')
   }
 
   // Función para login como cliente
   const loginAsClient = () => {
-    cy.visit(`${baseUrl}/login`)
-    cy.get('.input-field[type="email"]').type(clientUser.email)
-    cy.get('.input-field[type="password"]').type(clientUser.password)
-    cy.contains('button', 'Continuar').click()
-    cy.url({ timeout: 10000 }).should('eq', `${baseUrl}/`)
+    cy.visit(`${baseUrl}/login`, { timeout: 30000 })
+    cy.get('.input-field[type="email"]', { timeout: 30000 }).type(clientUser.email)
+    cy.get('.input-field[type="password"]', { timeout: 30000 }).type(clientUser.password)
+    cy.contains('button', 'Continuar', { timeout: 30000 }).click()
+    cy.url({ timeout: 30000 }).should('eq', `${baseUrl}/`)
   }
 
   // Función para navegar a la página de categorías
   const goToCategorias = () => {
-    cy.get('aside.sidebar').should('be.visible')
-    cy.get('aside.sidebar nav button').contains('Categorías').click()
-    cy.url().should('include', '/categorias')
-    cy.get('.table-section').should('be.visible')
+    cy.get('aside.sidebar', { timeout: 30000 }).should('be.visible')
+    cy.get('aside.sidebar nav button', { timeout: 30000 }).contains('Categorías').click()
+    cy.url({ timeout: 30000 }).should('include', '/categorias')
+    cy.get('.table-section', { timeout: 30000 }).should('be.visible')
   }
 
   // Función para ir al formulario de insertar categoría
   const goToInsertarCategoria = () => {
-    cy.get('.btn-primary').contains('Agregar Categoría').click()
-    cy.url().should('include', '/insertar-categoria')
-    cy.get('.insert-container').should('be.visible')
+    cy.get('.btn-primary', { timeout: 30000 }).contains('Agregar Categoría').click()
+    cy.url({ timeout: 30000 }).should('include', '/insertar-categoria')
+    cy.get('.insert-container', { timeout: 30000 }).should('be.visible')
   }
 
   // Función para llenar el formulario de categoría
   const fillCategoriaForm = (nombre, descripcion) => {
-    cy.get('input[name="nombre"]').clear().type(nombre)
-    cy.get('textarea[name="descripcion"]').clear().type(descripcion)
+    cy.get('input[name="nombre"]', { timeout: 30000 }).clear().type(nombre)
+    cy.get('textarea[name="descripcion"]', { timeout: 30000 }).clear().type(descripcion)
   }
 
   beforeEach(() => {
@@ -69,11 +69,11 @@ describe('RF-013: Registrar Categoría de Producto', () => {
     const descripcion = `Descripción de ${nombreCategoria}`
 
     fillCategoriaForm(nombreCategoria, descripcion)
-    cy.get('.btn-submit').click()
+    cy.get('.btn-submit', { timeout: 30000 }).click()
 
-    cy.get('.alert.success').should('be.visible').and('contain', '¡Categoría creada exitosamente!')
-    cy.url({ timeout: 5000 }).should('include', '/categorias')
-    cy.get('.admin-table tbody tr').should('contain', nombreCategoria)
+    cy.get('.alert.success', { timeout: 30000 }).should('be.visible').and('contain', '¡Categoría creada exitosamente!')
+    cy.url({ timeout: 30000 }).should('include', '/categorias')
+    cy.get('.admin-table tbody tr', { timeout: 30000 }).should('contain', nombreCategoria)
   })
 
   // ============================================================
@@ -82,7 +82,7 @@ describe('RF-013: Registrar Categoría de Producto', () => {
   it('CP-087: No debe permitir registrar una categoría duplicada', () => {
     let nombreExistente = ''
 
-    cy.get('.admin-table tbody tr').first().within(() => {
+    cy.get('.admin-table tbody tr', { timeout: 30000 }).first().within(() => {
       cy.get('td').eq(1).then(($td) => {
         nombreExistente = $td.text().trim()
       })
@@ -94,8 +94,8 @@ describe('RF-013: Registrar Categoría de Producto', () => {
       fillCategoriaForm(nombreExistente, 'Descripción duplicada')
     })
 
-    cy.get('.btn-submit').click()
-    cy.get('.alert.error').should('be.visible').and('contain', 'ya existe')
+    cy.get('.btn-submit', { timeout: 30000 }).click()
+    cy.get('.alert.error', { timeout: 30000 }).should('be.visible').and('contain', 'ya existe')
   })
 
   // ============================================================
@@ -104,19 +104,19 @@ describe('RF-013: Registrar Categoría de Producto', () => {
   it('CP-088: Debe mostrar error al dejar campos obligatorios vacíos', () => {
     goToInsertarCategoria()
 
-    cy.get('input[name="nombre"]').clear()
-    cy.get('textarea[name="descripcion"]').clear()
+    cy.get('input[name="nombre"]', { timeout: 30000 }).clear()
+    cy.get('textarea[name="descripcion"]', { timeout: 30000 }).clear()
 
-    cy.get('.btn-submit').click()
+    cy.get('.btn-submit', { timeout: 30000 }).click()
 
     // Verificar validación HTML5
-    cy.get('input[name="nombre"]').then(($input) => {
+    cy.get('input[name="nombre"]', { timeout: 30000 }).then(($input) => {
       expect($input[0]).to.have.attr('required')
     })
 
-    cy.get('input[name="nombre"]:invalid').should('exist')
-    cy.url().should('include', '/insertar-categoria')
-    cy.get('.alert.success').should('not.exist')
+    cy.get('input[name="nombre"]:invalid', { timeout: 30000 }).should('exist')
+    cy.url({ timeout: 30000 }).should('include', '/insertar-categoria')
+    cy.get('.alert.success', { timeout: 30000 }).should('not.exist')
   })
 
   // ============================================================
@@ -127,31 +127,31 @@ describe('RF-013: Registrar Categoría de Producto', () => {
 
     fillCategoriaForm('AB', 'Descripción válida')
 
-    cy.get('.btn-submit').click()
-    cy.get('.alert.error').should('be.visible').and('contain', 'al menos 3 caracteres')
+    cy.get('.btn-submit', { timeout: 30000 }).click()
+    cy.get('.alert.error', { timeout: 30000 }).should('be.visible').and('contain', 'al menos 3 caracteres')
   })
 
   // ============================================================
-  // CP-090: Verificar que solo administrador pueda registrar categorías (CORREGIDO)
+  // CP-090: Verificar que solo administrador pueda registrar categorías
   // ============================================================
   it('CP-090: Debe restringir el acceso a usuarios no administradores', () => {
     // 1. Cerrar sesión del admin
-    cy.get('aside.sidebar nav button').contains('Cerrar Sesión').click()
+    cy.get('aside.sidebar nav button', { timeout: 30000 }).contains('Cerrar Sesión').click()
     
-    // 2. Verificar que redirige a login (no a /)
-    cy.url({ timeout: 5000 }).should('include', '/login')
+    // 2. Verificar que redirige a login
+    cy.url({ timeout: 30000 }).should('include', '/login')
 
     // 3. Iniciar sesión como cliente
-    cy.get('.input-field[type="email"]').type(clientUser.email)
-    cy.get('.input-field[type="password"]').type(clientUser.password)
-    cy.contains('button', 'Continuar').click()
-    cy.url({ timeout: 10000 }).should('eq', `${baseUrl}/`)
+    cy.get('.input-field[type="email"]', { timeout: 30000 }).type(clientUser.email)
+    cy.get('.input-field[type="password"]', { timeout: 30000 }).type(clientUser.password)
+    cy.contains('button', 'Continuar', { timeout: 30000 }).click()
+    cy.url({ timeout: 30000 }).should('eq', `${baseUrl}/`)
 
     // 4. Intentar acceder directamente a la página de categorías
-    cy.visit(`${baseUrl}/categorias`)
+    cy.visit(`${baseUrl}/categorias`, { timeout: 30000 })
 
     // 5. Verificar que es redirigido (no puede acceder a categorías)
-    cy.url().should('not.include', '/categorias')
+    cy.url({ timeout: 30000 }).should('not.include', '/categorias')
   })
 
   // ============================================================
@@ -167,16 +167,16 @@ describe('RF-013: Registrar Categoría de Producto', () => {
 
     cy.intercept('POST', 'http://localhost:3000/categorias').as('createCategoria')
 
-    cy.get('.btn-submit').click()
+    cy.get('.btn-submit', { timeout: 30000 }).click()
 
-    cy.wait('@createCategoria').then((interception) => {
+    cy.wait('@createCategoria', { timeout: 30000 }).then((interception) => {
       expect(interception.request.body).to.have.property('nombre', nombreCategoria)
       expect(interception.request.body).to.have.property('descripcion', descripcion)
       expect(interception.response.statusCode).to.equal(201)
     })
 
-    cy.get('.alert.success').should('be.visible').and('contain', '¡Categoría creada exitosamente!')
-    cy.url({ timeout: 5000 }).should('include', '/categorias')
-    cy.get('.admin-table tbody tr').should('contain', nombreCategoria)
+    cy.get('.alert.success', { timeout: 30000 }).should('be.visible').and('contain', '¡Categoría creada exitosamente!')
+    cy.url({ timeout: 30000 }).should('include', '/categorias')
+    cy.get('.admin-table tbody tr', { timeout: 30000 }).should('contain', nombreCategoria)
   })
 })

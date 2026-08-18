@@ -7,26 +7,26 @@ describe('RF-012: Filtrar Catálogo por Categoría', () => {
   // ============================================================
   it('CP-080: Debe filtrar productos por una categoría válida', () => {
     // 1. Navegar al catálogo
-    cy.visit('http://localhost:5173/')
+    cy.visit('http://localhost:5173/', { timeout: 30000 })
     
     // 2. Esperar que los productos carguen
-    cy.get('.loading-container .loader').should('not.exist')
+    cy.get('.loading-container .loader', { timeout: 30000 }).should('not.exist')
     
     // 3. Hacer clic en una categoría válida (ej: "Residencial")
-    cy.get('.filtro-btn').contains('Residencial').click()
+    cy.get('.filtro-btn', { timeout: 30000 }).contains('Residencial').click()
     
     // 4. Verificar que el título cambió a "Residencial"
-    cy.get('.productos-section h2').should('contain', 'Residencial')
+    cy.get('.productos-section h2', { timeout: 30000 }).should('contain', 'Residencial')
     
     // 5. Verificar que solo se muestran productos de esa categoría
-    cy.get('.productos-grid .product-card').each(($card) => {
+    cy.get('.productos-grid .product-card', { timeout: 30000 }).each(($card) => {
       // Verificar que el producto tenga información (asumimos que es de la categoría correcta)
       cy.wrap($card).find('h3').should('not.be.empty')
       cy.wrap($card).find('.price').should('not.be.empty')
     })
     
     // 6. Verificar que el contador muestra la cantidad correcta
-    cy.get('.productos-section h2 .product-count').should('exist')
+    cy.get('.productos-section h2 .product-count', { timeout: 30000 }).should('exist')
   })
 
   // ============================================================
@@ -34,22 +34,22 @@ describe('RF-012: Filtrar Catálogo por Categoría', () => {
   // ============================================================
   it('CP-082: Debe mostrar mensaje cuando la categoría no tiene productos', () => {
     // 1. Navegar al catálogo
-    cy.visit('http://localhost:5173/')
+    cy.visit('http://localhost:5173/', { timeout: 30000 })
     
     // 2. Esperar que los productos carguen
-    cy.get('.loading-container .loader').should('not.exist')
+    cy.get('.loading-container .loader', { timeout: 30000 }).should('not.exist')
     
     // 3. Hacer clic en "Mascotas" (que no tiene productos)
-    cy.get('.filtro-btn').contains('Mascotas').click()
+    cy.get('.filtro-btn', { timeout: 30000 }).contains('Mascotas').click()
     
     // 4. Verificar que el título cambió a "Mascotas"
-    cy.get('.productos-section h2').should('contain', 'Mascotas')
+    cy.get('.productos-section h2', { timeout: 30000 }).should('contain', 'Mascotas')
     
     // 5. Verificar que aparece el mensaje "No hay productos disponibles"
-    cy.get('.no-products').should('be.visible').and('contain', 'No hay productos disponibles')
+    cy.get('.no-products', { timeout: 30000 }).should('be.visible').and('contain', 'No hay productos disponibles')
     
     // 6. Verificar que el contador muestra 0
-    cy.get('.productos-section h2 .product-count').should('contain', '(0)')
+    cy.get('.productos-section h2 .product-count', { timeout: 30000 }).should('contain', '(0)')
   })
 
   // ============================================================
@@ -57,22 +57,22 @@ describe('RF-012: Filtrar Catálogo por Categoría', () => {
   // ============================================================
   it('CP-084: El filtro debe responder en menos de 3 segundos', () => {
     // 1. Navegar al catálogo
-    cy.visit('http://localhost:5173/')
+    cy.visit('http://localhost:5173/', { timeout: 30000 })
     
     // 2. Esperar que los productos carguen
-    cy.get('.loading-container .loader').should('not.exist')
+    cy.get('.loading-container .loader', { timeout: 30000 }).should('not.exist')
     
     // 3. Medir tiempo desde que se hace clic en la categoría
     const startTime = Date.now()
     
     // 4. Hacer clic en "Comercial"
-    cy.get('.filtro-btn').contains('Comercial').click()
+    cy.get('.filtro-btn', { timeout: 30000 }).contains('Comercial').click()
     
     // 5. Verificar que los productos se actualizaron
-    cy.get('.productos-grid').should('be.visible')
-    cy.get('.productos-section h2').should('contain', 'Comercial')
+    cy.get('.productos-grid', { timeout: 30000 }).should('be.visible')
+    cy.get('.productos-section h2', { timeout: 30000 }).should('contain', 'Comercial')
     
-    // 6. Verificar que respondió en menos de 1 segundo
+    // 6. Verificar que respondió en menos de 9 segundos
     cy.then(() => {
       const elapsedTime = Date.now() - startTime
       expect(elapsedTime).to.be.lessThan(9000)

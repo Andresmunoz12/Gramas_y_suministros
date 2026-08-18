@@ -159,6 +159,7 @@ const InsertarProveedor = () => {
                   name="contacto"
                   value={formData.contacto}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: Juan Pérez"
                 />
               </div>
@@ -170,6 +171,7 @@ const InsertarProveedor = () => {
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: 3001234567"
                 />
               </div>
@@ -183,6 +185,7 @@ const InsertarProveedor = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: contacto@vivero.com"
                 />
               </div>
@@ -194,6 +197,7 @@ const InsertarProveedor = () => {
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: Calle 10 #45-12, Bogotá"
                 />
               </div>

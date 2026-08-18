@@ -186,6 +186,7 @@ const EditarProveedor = () => {
                   name="contacto"
                   value={formData.contacto}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: Juan Pérez"
                 />
               </div>
@@ -197,6 +198,7 @@ const EditarProveedor = () => {
                   name="telefono"
                   value={formData.telefono}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: 3001234567"
                 />
               </div>
@@ -210,6 +212,7 @@ const EditarProveedor = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: contacto@vivero.com"
                 />
               </div>
@@ -221,6 +224,7 @@ const EditarProveedor = () => {
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleChange}
+                  required
                   placeholder="Ej: Calle 10 #45-12, Bogotá"
                 />
               </div>
