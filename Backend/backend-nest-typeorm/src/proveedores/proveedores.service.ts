@@ -1,3 +1,5 @@
+// src/proveedores/proveedores.service.ts
+
 import {
   ConflictException,
   Injectable,
@@ -40,7 +42,30 @@ export class ProveedoresService {
     return p;
   }
 
+  // Nuevo método para verificar nombre duplicado
+  private async verificarNombreUnico(nombre: string, idExcluir?: number) {
+    const query = this.repo.createQueryBuilder('proveedor')
+      .where('proveedor.nombre = :nombre', { nombre });
+
+    if (idExcluir) {
+      query.andWhere('proveedor.id_proveedor != :idExcluir', { idExcluir });
+    }
+
+    const existe = await query.getOne();
+
+    if (existe) {
+      throw new ConflictException(
+        `El proveedor con nombre "${nombre}" ya existe`,
+      );
+    }
+  }
+
   async create(data: Partial<proveedor>) {
+    // Verificar que el nombre no exista
+    if (data.nombre) {
+      await this.verificarNombreUnico(data.nombre);
+    }
+
     return await this.repo.save(
       this.repo.create(data),
     );
@@ -51,7 +76,12 @@ export class ProveedoresService {
     dto: UpdateProveedorDto,
   ) {
     // Primero comprobar que existe
-    await this.findOne(id);
+    const proveedorExistente = await this.findOne(id);
+
+    // Verificar que el nombre no exista (excluyendo el proveedor actual)
+    if (dto.nombre && dto.nombre !== proveedorExistente.nombre) {
+      await this.verificarNombreUnico(dto.nombre, id);
+    }
 
     // Actualizar
     await this.repo.update(id, dto);
