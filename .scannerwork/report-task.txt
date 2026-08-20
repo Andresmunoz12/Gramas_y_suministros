@@ -1,0 +1,6 @@
+projectKey=Gramas-y-suministros
+serverUrl=http://localhost:9000
+serverVersion=26.8.0.126808
+dashboardUrl=http://localhost:9000/dashboard?id=Gramas-y-suministros
+ceTaskId=fd3703a3-442f-4467-92f6-004f4a9ff13c
+ceTaskUrl=http://localhost:9000/api/ce/task?id=fd3703a3-442f-4467-92f6-004f4a9ff13c

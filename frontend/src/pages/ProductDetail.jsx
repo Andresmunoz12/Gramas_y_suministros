@@ -12,6 +12,7 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const { addToCart } = useCart(); // ✅ Obtener la función addToCart
   const [producto, setProducto] = useState(null);
+  const [cantidad, setCantidad] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,13 +35,22 @@ export default function ProductDetail() {
     }
   }, [id]);
 
-  // ✅ Función para agregar al carrito
+  const stockDisponible = producto?.stock?.cantidad_actual ?? producto?.stock_disponible ?? (typeof producto?.stock === 'number' ? producto?.stock : undefined);
+  const sinStock = stockDisponible !== undefined && stockDisponible <= 0;
+
+  // ✅ Función para agregar al carrito con validación de stock
   const handleAddToCart = () => {
-    if (producto) {
-      addToCart(producto);
-      // Opcional: mostrar un mensaje o notificación
-      alert(`✅ "${producto.nombre}" agregado a la cotización`);
+    if (!producto) return;
+    if (sinStock) {
+      alert(`El producto "${producto.nombre}" no tiene stock disponible.`);
+      return;
     }
+    if (stockDisponible !== undefined && cantidad > stockDisponible) {
+      alert(`La cantidad solicitada del producto "${producto.nombre}" supera el stock disponible (Máximo: ${stockDisponible})`);
+      return;
+    }
+    addToCart(producto, cantidad);
+    alert(`✅ "${producto.nombre}" (${cantidad}) agregado a la cotización`);
   };
 
   if (cargando) {
@@ -119,20 +129,56 @@ export default function ProductDetail() {
                   <strong>Altura:</strong> {producto.altura} mm
                 </p>
               )}
+              {stockDisponible !== undefined && (
+                <p>
+                  <strong>Stock disponible:</strong>{' '}
+                  <span style={{ color: sinStock ? '#d32f2f' : '#2e7d32', fontWeight: 'bold' }}>
+                    {sinStock ? 'Sin stock disponible' : `${stockDisponible} unidades`}
+                  </span>
+                </p>
+              )}
             </div>
 
             <p className="product-detail-description">
               {producto.descripcion || "Sin descripción disponible"}
             </p>
 
+            {!sinStock && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '15px 0' }}>
+                <label htmlFor="cantidad-detail"><strong>Cantidad a cotizar:</strong></label>
+                <input
+                  id="cantidad-detail"
+                  type="number"
+                  min="1"
+                  max={stockDisponible !== undefined ? stockDisponible : 999}
+                  value={cantidad}
+                  onChange={(e) => {
+                    const val = Math.max(1, Number(e.target.value));
+                    if (stockDisponible !== undefined && val > stockDisponible) {
+                      setCantidad(stockDisponible);
+                      alert(`La cantidad solicitada no puede superar el stock disponible (${stockDisponible})`);
+                    } else {
+                      setCantidad(val);
+                    }
+                  }}
+                  style={{ width: '80px', padding: '6px 10px', borderRadius: '8px', border: '1px solid #ccc' }}
+                />
+              </div>
+            )}
+
             <div className="product-detail-footer">
               <span className="product-detail-price">
                 ${new Intl.NumberFormat("es-CO").format(producto.precio || 0)}
               </span>
 
-              {/* ✅ Botón corregido */}
-              <button className="btn-add-cart" onClick={handleAddToCart}>
-                Agregar a cotización 🛒
+              {/* ✅ Botón con validación */}
+              <button
+                className="btn-add-cart"
+                onClick={handleAddToCart}
+                disabled={sinStock}
+                style={sinStock ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+              >
+                {sinStock ? 'Sin stock disponible' : 'Agregar a cotización 🛒'}
               </button>
             </div>
           </div>

@@ -34,10 +34,10 @@ export default function Cotizacion() {
       return;
     }
 
-    if (cart.length === 0) {
+    if (cart.length === 0 && !exito) {
       navigate('/');
     }
-  }, [isAuthenticated, cart, navigate]);
+  }, [isAuthenticated, cart, navigate, exito]);
 
   // ✅ Cuando cambia el método de venta, ajustar método de pago
   useEffect(() => {
@@ -96,6 +96,16 @@ export default function Cotizacion() {
       return;
     }
 
+    // ✅ Validar stock disponible antes de enviar
+    for (const item of cart) {
+      const stockDisponible = item.stock?.cantidad_actual ?? item.stock_disponible ?? (typeof item.stock === 'number' ? item.stock : undefined);
+      if (stockDisponible !== undefined && item.cantidad > stockDisponible) {
+        setError(`La cantidad solicitada del producto "${item.nombre}" supera el stock disponible (Máximo: ${stockDisponible})`);
+        setCargando(false);
+        return;
+      }
+    }
+
     try {
       const items = cart.map((item) => ({
         idProducto: item.id_producto,
@@ -148,7 +158,8 @@ export default function Cotizacion() {
       }, 8000);
     } catch (err) {
       console.error('Error:', err);
-      setError(err.response?.data?.message || 'Error al crear la cotización');
+      const errorMessage = err.response?.data?.message || err.message || (typeof err === 'string' ? err : 'Error al crear la cotización');
+      setError(errorMessage);
     } finally {
       setCargando(false);
     }
@@ -175,7 +186,7 @@ export default function Cotizacion() {
             <h3>{exito.message}</h3>
             <p>Cotización #{exito.id}</p>
             <p>
-              <strong>Total:</strong> ${exito.total.toLocaleString()}
+              <strong>Total:</strong> ${new Intl.NumberFormat('es-CO').format(exito.total)}
             </p>
             <p>
               <strong>Estado:</strong>{' '}
@@ -198,29 +209,44 @@ export default function Cotizacion() {
             {/* Productos */}
             <div className="cotizacion-productos">
               <h2>Productos</h2>
-              {cart.map((item) => (
-                <div key={item.id_producto} className="cotizacion-item">
-                  <div className="item-info">
-                    <h4>{item.nombre}</h4>
-                    <p>${new Intl.NumberFormat('es-CO').format(item.precio)}</p>
-                  </div>
-                  <div className="item-cantidad">
-                    <button onClick={() => updateQuantity(item.id_producto, item.cantidad - 1)}>
-                      -
+              {cart.map((item) => {
+                const stockDisponible = item.stock?.cantidad_actual ?? item.stock_disponible ?? (typeof item.stock === 'number' ? item.stock : undefined);
+                const maxAlcanzado = stockDisponible !== undefined && item.cantidad >= stockDisponible;
+
+                return (
+                  <div key={item.id_producto} className="cotizacion-item">
+                    <div className="item-info">
+                      <h4>{item.nombre}</h4>
+                      <p>${new Intl.NumberFormat('es-CO').format(item.precio)}</p>
+                      {stockDisponible !== undefined && (
+                        <small style={{ color: maxAlcanzado ? '#e65100' : '#2e7d32', fontWeight: '600', display: 'block', marginTop: '2px' }}>
+                          Stock disponible: {stockDisponible}
+                        </small>
+                      )}
+                    </div>
+                    <div className="item-cantidad">
+                      <button onClick={() => updateQuantity(item.id_producto, item.cantidad - 1)}>
+                        -
+                      </button>
+                      <span>{item.cantidad}</span>
+                      <button
+                        onClick={() => updateQuantity(item.id_producto, item.cantidad + 1)}
+                        disabled={maxAlcanzado}
+                        style={maxAlcanzado ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        title={maxAlcanzado ? `Stock máximo alcanzado (${stockDisponible})` : ''}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <div className="item-subtotal">
+                      ${new Intl.NumberFormat('es-CO').format(item.precio * item.cantidad)}
+                    </div>
+                    <button className="item-remove" onClick={() => removeFromCart(item.id_producto)}>
+                      ✕
                     </button>
-                    <span>{item.cantidad}</span>
-                    <button onClick={() => updateQuantity(item.id_producto, item.cantidad + 1)}>
-                      +
-                    </button>
                   </div>
-                  <div className="item-subtotal">
-                    ${new Intl.NumberFormat('es-CO').format(item.precio * item.cantidad)}
-                  </div>
-                  <button className="item-remove" onClick={() => removeFromCart(item.id_producto)}>
-                    ✕
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Formulario */}

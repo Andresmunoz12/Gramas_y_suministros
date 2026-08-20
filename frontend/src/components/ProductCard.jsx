@@ -10,6 +10,9 @@ function ProductCard({ producto }) {
 
   if (!producto) return null;
 
+  const stockDisponible = producto.stock?.cantidad_actual ?? producto.stock_disponible ?? (typeof producto.stock === 'number' ? producto.stock : undefined);
+  const sinStock = stockDisponible !== undefined && stockDisponible <= 0;
+
   const imagenUrl = producto.imagen
     ? `http://localhost:3000/uploads/img_products/${producto.imagen}`
     : '/placeholder-producto.png';
@@ -20,6 +23,10 @@ function ProductCard({ producto }) {
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
+    if (sinStock) {
+      alert(`El producto "${producto.nombre}" no tiene stock disponible.`);
+      return;
+    }
     addToCart(producto);
   };
 
@@ -43,6 +50,11 @@ function ProductCard({ producto }) {
       <div className="card-content">
         <h3>{producto.nombre || 'Producto sin nombre'}</h3>
         <p>{producto.descripcion || 'Sin descripción disponible'}</p>
+        {stockDisponible !== undefined && (
+          <small style={{ color: sinStock ? '#d32f2f' : '#2e7d32', fontWeight: '600', display: 'block', marginTop: '4px' }}>
+            {sinStock ? '⚠️ Sin stock disponible' : `📦 Stock: ${stockDisponible}`}
+          </small>
+        )}
       </div>
 
       <div className="card-footer">
@@ -54,8 +66,13 @@ function ProductCard({ producto }) {
           <button className="btn-ver" onClick={handleVerClick}>
             Ver
           </button>
-          <button className="btn-add" onClick={handleAddToCart}>
-            Agregar
+          <button
+            className="btn-add"
+            onClick={handleAddToCart}
+            disabled={sinStock}
+            style={sinStock ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+          >
+            {sinStock ? 'Agotado' : 'Agregar'}
           </button>
         </div>
       </div>

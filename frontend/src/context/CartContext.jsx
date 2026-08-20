@@ -12,18 +12,17 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cart, setCart] = useState([]);
-
-  useEffect(() => {
+  const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart));
+        return JSON.parse(savedCart);
       } catch (e) {
         console.error('Error al cargar carrito:', e);
       }
     }
-  }, []);
+    return [];
+  });
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -32,10 +31,34 @@ export const CartProvider = ({ children }) => {
   const addToCart = (producto, cantidad = 1) => {
     setCart((prev) => {
       const existingItem = prev.find((item) => item.id_producto === producto.id_producto);
+      const currentQty = existingItem ? existingItem.cantidad : 0;
+      const requestedQty = currentQty + cantidad;
+
+      const stockDisponible = producto.stock?.cantidad_actual ?? producto.stock_disponible ?? (typeof producto.stock === 'number' ? producto.stock : undefined);
+
+      if (stockDisponible !== undefined) {
+        if (stockDisponible <= 0) {
+          alert(`El producto "${producto.nombre}" no tiene stock disponible.`);
+          return prev;
+        }
+        if (requestedQty > stockDisponible) {
+          alert(`La cantidad solicitada del producto "${producto.nombre}" supera el stock disponible (Máximo: ${stockDisponible})`);
+          if (existingItem) {
+            return prev.map((item) =>
+              item.id_producto === producto.id_producto
+                ? { ...item, cantidad: stockDisponible }
+                : item
+            );
+          } else {
+            return [...prev, { ...producto, cantidad: stockDisponible }];
+          }
+        }
+      }
+
       if (existingItem) {
         return prev.map((item) =>
           item.id_producto === producto.id_producto
-            ? { ...item, cantidad: item.cantidad + cantidad }
+            ? { ...item, cantidad: requestedQty }
             : item
         );
       }
@@ -53,9 +76,17 @@ export const CartProvider = ({ children }) => {
       return;
     }
     setCart((prev) =>
-      prev.map((item) =>
-        item.id_producto === id ? { ...item, cantidad } : item
-      )
+      prev.map((item) => {
+        if (item.id_producto === id) {
+          const stockDisponible = item.stock?.cantidad_actual ?? item.stock_disponible ?? (typeof item.stock === 'number' ? item.stock : undefined);
+          if (stockDisponible !== undefined && cantidad > stockDisponible) {
+            alert(`La cantidad solicitada del producto "${item.nombre}" supera el stock disponible (Máximo: ${stockDisponible})`);
+            return { ...item, cantidad: stockDisponible };
+          }
+          return { ...item, cantidad };
+        }
+        return item;
+      })
     );
   };
 
