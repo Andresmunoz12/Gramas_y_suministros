@@ -97,6 +97,10 @@ export class UsuariosService {
       return { mensaje: 'Usuario no encontrado', actualizado: false };
     }
 
+    if (datos.id_rol) {
+      console.log(`[AUDIT] Cambio de rol para el usuario #${id} a Rol: ${datos.id_rol}`);
+    }
+
     return { mensaje: 'Usuario actualizado con éxito', actualizado: true };
   }
 

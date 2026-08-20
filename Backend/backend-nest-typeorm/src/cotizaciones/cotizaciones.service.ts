@@ -52,6 +52,19 @@ export class CotizacionesService {
         throw new BadRequestException(`El producto "${producto.nombre}" está inactivo`);
       }
 
+      // ✅ Validar control de stock disponible
+      const stockRegistro = await this.stockRepo.findOne({
+        where: { id_producto: item.idProducto },
+      });
+
+      const stockDisponible = stockRegistro ? stockRegistro.cantidad_actual : 0;
+
+      if (item.cantidad > stockDisponible) {
+        throw new BadRequestException(
+          `La cantidad solicitada del producto "${producto.nombre}" supera el stock disponible (Máximo: ${stockDisponible})`,
+        );
+      }
+
       const precioUnitario = producto.precio;
       const subtotalItem = precioUnitario * item.cantidad;
       subtotal += subtotalItem;

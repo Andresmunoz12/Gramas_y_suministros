@@ -38,21 +38,23 @@ export class ProductosService {
       estado: createProductoDto.estado ?? 1, // Por defecto activo
     });
 
-    return await this.productoRepository.save(nuevoProducto);
+    const guardado = await this.productoRepository.save(nuevoProducto);
+    console.log(`[AUDIT] Producto registrado: #${guardado.id_producto || 'nuevo'} - ${guardado.nombre} por administrador`);
+    return guardado;
   }
 
-  // ✅ MODIFICADO: Obtener SOLO productos activos para el catálogo público
+  // ✅ MODIFICADO: Obtener SOLO productos activos para el catálogo público con su stock
   async findAll() {
     return await this.productoRepository.find({
       where: { estado: 1 }, // Solo activos
-      relations: ['categoria'],
+      relations: ['categoria', 'stock'],
     });
   }
 
   // ✅ AGREGADO: Obtener TODOS los productos (incluyendo inactivos) para el panel de administración
   async findAllAdmin() {
     return await this.productoRepository.find({
-      relations: ['categoria'],
+      relations: ['categoria', 'stock'],
       order: { estado: 'DESC', id_producto: 'ASC' }, // Activos primero
     });
   }
@@ -60,7 +62,7 @@ export class ProductosService {
   async findOne(id: number) {
     const producto = await this.productoRepository.findOne({
       where: { id_producto: id },
-      relations: ['categoria'],
+      relations: ['categoria', 'stock'],
     });
 
     if (!producto) {
@@ -94,21 +96,27 @@ export class ProductosService {
     }
 
     this.productoRepository.merge(producto, updateProductoDto);
-    return await this.productoRepository.save(producto);
+    const guardado = await this.productoRepository.save(producto);
+    console.log(`[AUDIT] Producto modificado: #${guardado.id_producto} - ${guardado.nombre} por administrador`);
+    return guardado;
   }
 
   // ✅ AGREGADO: Método para desactivar producto
   async desactivar(id: number) {
     const producto = await this.findOne(id);
     producto.estado = 0;
-    return await this.productoRepository.save(producto);
+    const guardado = await this.productoRepository.save(producto);
+    console.log(`[AUDIT] Producto desactivado: #${guardado.id_producto} - ${guardado.nombre} por administrador`);
+    return guardado;
   }
 
   // ✅ AGREGADO: Método para activar producto
   async activar(id: number) {
     const producto = await this.findOne(id);
     producto.estado = 1;
-    return await this.productoRepository.save(producto);
+    const guardado = await this.productoRepository.save(producto);
+    console.log(`[AUDIT] Producto activado: #${guardado.id_producto} - ${guardado.nombre} por administrador`);
+    return guardado;
   }
 
   async remove(id: number) {

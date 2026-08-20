@@ -1,4 +1,7 @@
 // src/app.module.ts
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 import {
   Module,
   NestModule,
@@ -41,13 +44,11 @@ import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true, // ✅ Crear tablas automáticamente
       ssl: {
-        ca: fs.readFileSync(join(__dirname, '..', 'ca.pem')),
-        rejectUnauthorized: true,
+        rejectUnauthorized: false,
       },
       extra: {
         ssl: {
-          ca: fs.readFileSync(join(__dirname, '..', 'ca.pem')).toString(),
-          rejectUnauthorized: true,
+          rejectUnauthorized: false,
         },
       },
     }),

@@ -11,6 +11,7 @@ import {
   UseInterceptors, 
   UploadedFile,
   Patch,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer'; 
@@ -39,6 +40,15 @@ const storage = diskStorage({
   },
 });
 
+const fileFilter = (req, file, callback) => {
+  const ext = extname(file.originalname).toLowerCase();
+  const allowedExtensions = ['.png', '.jpg', '.jpeg', '.webp'];
+  if (!allowedExtensions.includes(ext)) {
+    return callback(new BadRequestException('Formato de imagen no permitido'), false);
+  }
+  callback(null, true);
+};
+
 @ApiTags('Productos e Inventario')
 @Controller('productos')
 export class ProductosController {
@@ -49,7 +59,7 @@ export class ProductosController {
   @Roles(1)
   @Post()
   @ApiConsumes('multipart/form-data') 
-  @UseInterceptors(FileInterceptor('imagen', { storage })) 
+  @UseInterceptors(FileInterceptor('imagen', { storage, fileFilter })) 
   @ApiOperation({ summary: 'Registrar un nuevo producto' })
   @ApiResponse({
     status: 201,
@@ -182,7 +192,7 @@ export class ProductosController {
   @Roles(1)
   @Put(':id')
   @ApiConsumes('multipart/form-data') 
-  @UseInterceptors(FileInterceptor('imagen', { storage })) 
+  @UseInterceptors(FileInterceptor('imagen', { storage, fileFilter })) 
   @ApiOperation({ summary: 'Actualizar datos de un producto existente' })
   @ApiResponse({
     status: 200,

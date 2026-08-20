@@ -4,9 +4,11 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  OneToOne,
   JoinColumn,
 } from 'typeorm';
 import { categoria } from '../categoria/categoria.entity';
+import { stock } from '../stock/stock.entity';
 
 @Entity('producto')
 export class productos {
@@ -55,6 +57,9 @@ export class productos {
   @ManyToOne(() => categoria, (c) => c.productos)
   @JoinColumn({ name: 'id_categoria' })
   categoria: categoria;
+
+  @OneToOne(() => stock, (s) => s.producto)
+  stock: stock;
 
   @Column({ name: 'imagen', type: 'varchar', length: 255, nullable: true })
   imagen: string;
