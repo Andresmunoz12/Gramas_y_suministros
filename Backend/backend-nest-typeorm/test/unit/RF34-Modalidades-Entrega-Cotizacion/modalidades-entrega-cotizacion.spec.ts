@@ -29,7 +29,7 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO CON STOCK
 // ============================================
 
 const mockCotizacionRepository = {
@@ -37,9 +37,18 @@ const mockCotizacionRepository = {
   findOne: jest.fn(),
   find: jest.fn(),
   count: jest.fn(),
-  createQueryBuilder: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
   manager: {
     findOne: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -57,8 +66,17 @@ const mockMovimientoRepository = {
   save: jest.fn(),
 };
 
+// ✅ Stock mock con cantidad suficiente
 const mockStockRepository = {
   findOne: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
 };
 
 // ============================================
@@ -112,15 +130,32 @@ describe('Modalidades de Entrega - Casos de Prueba', () => {
   describe('CP-227 - Verificar que generar una cotización con modalidad Entrega Física', () => {
     it('debería generar una cotización con metodoVenta = "fisico" y costo de envío en 0', async () => {
       // Arrange
+      // ✅ Configurar stock disponible (100 unidades)
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
+      const reqMock = { user: { userId: usuarioExistente.id_usuario } };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionFisicaCreadaMock);
-      mockDetalleRepository.create.mockReturnValue({});
+      mockDetalleRepository.create.mockReturnValue({
+        idDetalle: 1,
+        idCotizacion: 80,
+        idProducto: 1,
+        cantidad: 2,
+        precioUnitario: 30000,
+        subtotal: 60000,
+      });
       mockDetalleRepository.save.mockResolvedValue({});
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionFisicaCreadaMock);
 
       // Act
-      const result = await controller.crearCotizacion({ user: { id: 1 } }, cotizacionFisicaDto);
+      const result = await controller.crearCotizacion(reqMock, cotizacionFisicaDto);
 
       // Assert
       expect(mockCotizacionRepository.save).toHaveBeenCalledWith(
@@ -143,15 +178,32 @@ describe('Modalidades de Entrega - Casos de Prueba', () => {
   describe('CP-228 - Verificar que generar una cotización con modalidad Entrega a Domicilio', () => {
     it('debería generar una cotización con metodoVenta = "envio", sumando $8000 de costo de envío', async () => {
       // Arrange
+      // ✅ Configurar stock disponible (100 unidades)
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
+      const reqMock = { user: { userId: usuarioExistente.id_usuario } };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionEnvioCreadaMock);
-      mockDetalleRepository.create.mockReturnValue({});
+      mockDetalleRepository.create.mockReturnValue({
+        idDetalle: 2,
+        idCotizacion: 81,
+        idProducto: 1,
+        cantidad: 2,
+        precioUnitario: 30000,
+        subtotal: 60000,
+      });
       mockDetalleRepository.save.mockResolvedValue({});
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionEnvioCreadaMock);
 
       // Act
-      const result = await controller.crearCotizacion({ user: { id: 1 } }, cotizacionEnvioDto);
+      const result = await controller.crearCotizacion(reqMock, cotizacionEnvioDto);
 
       // Assert
       expect(mockCotizacionRepository.save).toHaveBeenCalledWith(

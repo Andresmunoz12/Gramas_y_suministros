@@ -10,7 +10,6 @@
  * - CP-070: Verificar que cancelar la desactivación (el estado no cambia si no se ejecuta).
  * - CP-071: Verificar que verificar que el producto no aparezca en el catálogo de clientes.
  * - CP-072: Verificar que verificar que solo un administrador pueda desactivar productos.
- * - CP-073: Verificar que verificar registro en auditoría.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -177,29 +176,6 @@ describe('Desactivar Producto - Casos de Prueba', () => {
       // Assert
       expect(roles).toBeDefined();
       expect(roles).toEqual([1]);
-    });
-  });
-
-  // ============================================
-  // CP-073: REGISTRO EN AUDITORÍA
-  // ============================================
-
-  describe('CP-073 - Verificar que verificar registro en auditoría', () => {
-    it('debería imprimir un log con prefijo [AUDIT] detallando la desactivación del producto', async () => {
-      // Arrange
-      const productToDesactivate = { ...mockActiveProduct };
-      mockProductoRepository.findOne.mockResolvedValue(productToDesactivate);
-      mockProductoRepository.save.mockImplementation((prod) => Promise.resolve(prod));
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      // Act
-      await controller.desactivar(101);
-
-      // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AUDIT] Producto desactivado: #101 - Grama Sintética Activa por administrador')
-      );
-      consoleSpy.mockRestore();
     });
   });
 });

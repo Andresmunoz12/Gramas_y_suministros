@@ -42,7 +42,7 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO CON STOCK
 // ============================================
 
 const mockCotizacionRepository = {
@@ -50,9 +50,15 @@ const mockCotizacionRepository = {
   findOne: jest.fn(),
   find: jest.fn(),
   count: jest.fn(),
-  createQueryBuilder: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+  })),
   manager: {
     findOne: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -63,6 +69,7 @@ const mockDetalleRepository = {
 
 const mockProductoRepository = {
   findOne: jest.fn(),
+  count: jest.fn(),
 };
 
 const mockMovimientoRepository = {
@@ -70,8 +77,17 @@ const mockMovimientoRepository = {
   save: jest.fn(),
 };
 
+// ✅ Stock mock con cantidad suficiente
 const mockStockRepository = {
   findOne: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
 };
 
 // ============================================
@@ -133,9 +149,17 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
 
       const reqMock = { user: { userId: usuarioExistente.id_usuario } };
 
+      // ✅ Configurar stock disponible (100 unidades)
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
       // Configuración de Mocks
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaMock);
       mockDetalleRepository.create.mockReturnValue({
         idDetalle: 1,
@@ -169,6 +193,9 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         where: { id_usuario: reqMock.user.userId },
       });
       expect(mockProductoRepository.findOne).toHaveBeenCalledWith({
+        where: { id_producto: 1 },
+      });
+      expect(mockStockRepository.findOne).toHaveBeenCalledWith({
         where: { id_producto: 1 },
       });
       expect(mockCotizacionRepository.save).toHaveBeenCalledWith({
@@ -205,11 +232,26 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
 
       const reqMock = { user: { userId: usuarioExistente.id_usuario } };
 
+      // ✅ Configurar stock disponible para ambos productos
+      const stockGrama = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+      const stockAdhesivo = {
+        id_stock: 2,
+        id_producto: 2,
+        cantidad_actual: 50,
+      };
+
       // Configuración de Mocks
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne
         .mockResolvedValueOnce(productoGrama)
         .mockResolvedValueOnce(productoAdhesivo);
+      mockStockRepository.findOne
+        .mockResolvedValueOnce(stockGrama)
+        .mockResolvedValueOnce(stockAdhesivo);
       
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaVariosMock);
       mockDetalleRepository.create.mockImplementation((data) => data);
@@ -229,6 +271,8 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
       // Assert
       expect(mockProductoRepository.findOne).toHaveBeenNthCalledWith(1, { where: { id_producto: 1 } });
       expect(mockProductoRepository.findOne).toHaveBeenNthCalledWith(2, { where: { id_producto: 2 } });
+      expect(mockStockRepository.findOne).toHaveBeenNthCalledWith(1, { where: { id_producto: 1 } });
+      expect(mockStockRepository.findOne).toHaveBeenNthCalledWith(2, { where: { id_producto: 2 } });
       expect(mockCotizacionRepository.save).toHaveBeenCalledWith({
         idUsuario: reqMock.user.userId,
         metodoVenta: dto.metodoVenta,
@@ -259,17 +303,24 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionSinProductosDto.items,
       };
 
-      // Act & Assert
-      // Simulamos la validación de class-validator de que no puede estar vacío el array
-      try {
-        if (!dto.items || dto.items.length === 0) {
-          throw new BadRequestException(mensajesCotizacion.sinProductos);
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe(mensajesCotizacion.sinProductos);
-      }
+      // Act & Assert usando class-validator
+      const { validate } = await import('class-validator');
+      const { plainToClass } = await import('class-transformer');
+      
+      const dtoClass = plainToClass(CrearCotizacionDto, dto);
+      const errors = await validate(dtoClass);
+      
+      // El DTO tiene @IsArray() y debería fallar si está vacío
+      // Pero también verificamos la lógica del negocio
+      expect(dto.items.length).toBe(0);
+      
+      // Verificamos que el servicio lance la excepción
+      mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
+      
+      await expect(service.crearCotizacion(1, dto)).rejects.toThrow(
+        new BadRequestException('Debe seleccionar al menos un producto')
+      );
+      
       expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
     });
   });
@@ -287,18 +338,17 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionCantidadNegativaDto.items,
       };
 
-      // Act & Assert
-      try {
-        for (const item of dto.items) {
-          if (item.cantidad < 1) {
-            throw new BadRequestException(mensajesCotizacion.cantidadInvalida);
-          }
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe(mensajesCotizacion.cantidadInvalida);
-      }
+      // Act & Assert usando class-validator
+      const { validate } = await import('class-validator');
+      const { plainToClass } = await import('class-transformer');
+      
+      const dtoClass = plainToClass(CrearCotizacionDto, dto);
+      const errors = await validate(dtoClass);
+      
+      // El DTO tiene @Min(1) para cantidad
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('items');
+      
       expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
     });
 
@@ -310,18 +360,16 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionCantidadCeroDto.items,
       };
 
-      // Act & Assert
-      try {
-        for (const item of dto.items) {
-          if (item.cantidad < 1) {
-            throw new BadRequestException(mensajesCotizacion.cantidadInvalida);
-          }
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe(mensajesCotizacion.cantidadInvalida);
-      }
+      // Act & Assert usando class-validator
+      const { validate } = await import('class-validator');
+      const { plainToClass } = await import('class-transformer');
+      
+      const dtoClass = plainToClass(CrearCotizacionDto, dto);
+      const errors = await validate(dtoClass);
+      
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('items');
+      
       expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
     });
   });
@@ -341,6 +389,7 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
 
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoInactivo);
+      // No se llega a verificar stock porque el producto está inactivo
 
       // Act & Assert
       await expect(service.crearCotizacion(1, dto)).rejects.toThrow(
@@ -366,6 +415,34 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
       );
       expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
     });
+
+    it('debería lanzar BadRequestException si el stock es insuficiente', async () => {
+      // Arrange
+      const dto: CrearCotizacionDto = {
+        metodoVenta: 'fisico',
+        metodoPago: 'efectivo',
+        items: [{ idProducto: 1, cantidad: 50 }],
+      };
+
+      // Stock insuficiente (solo 10 unidades)
+      const stockInsuficiente = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 10,
+      };
+
+      mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
+      mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockInsuficiente);
+
+      // Act & Assert
+      await expect(service.crearCotizacion(1, dto)).rejects.toThrow(
+        new BadRequestException(
+          `La cantidad solicitada del producto "${productoGrama.nombre}" supera el stock disponible (Máximo: 10)`
+        )
+      );
+      expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   // ============================================
@@ -381,8 +458,15 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionUnProductoDto.items,
       };
 
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});
@@ -411,10 +495,24 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionVariosProductosDto.items,
       };
 
+      const stockGrama = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+      const stockAdhesivo = {
+        id_stock: 2,
+        id_producto: 2,
+        cantidad_actual: 50,
+      };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne
         .mockResolvedValueOnce(productoGrama)
         .mockResolvedValueOnce(productoAdhesivo);
+      mockStockRepository.findOne
+        .mockResolvedValueOnce(stockGrama)
+        .mockResolvedValueOnce(stockAdhesivo);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaVariosMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});
@@ -451,10 +549,24 @@ describe('Generación de Cotizaciones - Casos de Prueba', () => {
         items: cotizacionVariosProductosDto.items,
       };
 
+      const stockGrama = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+      const stockAdhesivo = {
+        id_stock: 2,
+        id_producto: 2,
+        cantidad_actual: 50,
+      };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne
         .mockResolvedValueOnce(productoGrama)
         .mockResolvedValueOnce(productoAdhesivo);
+      mockStockRepository.findOne
+        .mockResolvedValueOnce(stockGrama)
+        .mockResolvedValueOnce(stockAdhesivo);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaVariosMock);
       mockDetalleRepository.create.mockImplementation((data) => data);
       mockDetalleRepository.save.mockResolvedValue({});

@@ -41,7 +41,7 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO CON STOCK
 // ============================================
 
 const mockCotizacionRepository = {
@@ -49,9 +49,18 @@ const mockCotizacionRepository = {
   findOne: jest.fn(),
   find: jest.fn(),
   count: jest.fn(),
-  createQueryBuilder: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
   manager: {
     findOne: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -69,8 +78,17 @@ const mockMovimientoRepository = {
   save: jest.fn(),
 };
 
+// ✅ Stock mock con cantidad suficiente
 const mockStockRepository = {
   findOne: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
 };
 
 // ============================================
@@ -130,10 +148,25 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
         items: cotizacionVariosProductosDto.items,
       };
 
+      // ✅ Configurar stock disponible para ambos productos
+      const stockProductoA = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+      const stockProductoB = {
+        id_stock: 2,
+        id_producto: 2,
+        cantidad_actual: 100,
+      };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne
         .mockResolvedValueOnce(productoA)
         .mockResolvedValueOnce(productoB);
+      mockStockRepository.findOne
+        .mockResolvedValueOnce(stockProductoA)
+        .mockResolvedValueOnce(stockProductoB);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaVariosMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});
@@ -163,6 +196,13 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
 
   describe('CP-210 - Verificar el recálculo automático al modificar cantidades', () => {
     it('debería calcular el total inicial y recalcular proporcionalmente cuando cambian las cantidades', async () => {
+      // ✅ Configurar stock disponible
+      const stockProductoA = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
       // --- PASO 1: Cantidad Inicial (2 unidades del Producto A) ---
       const dtoInicial: CrearCotizacionDto = {
         metodoVenta: cotizacionCantidadInicialDto.metodoVenta,
@@ -172,6 +212,7 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
 
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoA);
+      mockStockRepository.findOne.mockResolvedValue(stockProductoA);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaInicialMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});
@@ -197,6 +238,8 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
 
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaModificadaMock);
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionCreadaModificadaMock);
+      // El stock sigue siendo suficiente para 5 unidades
+      mockStockRepository.findOne.mockResolvedValue(stockProductoA);
 
       const resultModificado = await service.crearCotizacion(1, dtoModificado);
 
@@ -217,6 +260,18 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
 
   describe('CP-211 - Verificar el recálculo al agregar o eliminar productos', () => {
     it('debería recalcular correctamente el total de la cotización cuando se añaden o remueven productos del listado', async () => {
+      // ✅ Configurar stock disponible
+      const stockProductoA = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+      const stockProductoB = {
+        id_stock: 2,
+        id_producto: 2,
+        cantidad_actual: 100,
+      };
+
       // --- PASO 1: Un solo producto (Producto A * 2) ---
       const dtoUnProducto: CrearCotizacionDto = {
         metodoVenta: cotizacionUnSoloProductoDto.metodoVenta,
@@ -226,6 +281,7 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
 
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoA);
+      mockStockRepository.findOne.mockResolvedValue(stockProductoA);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaInicialMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});
@@ -245,6 +301,10 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
         .mockReset()
         .mockResolvedValueOnce(productoA)
         .mockResolvedValueOnce(productoB);
+      mockStockRepository.findOne
+        .mockReset()
+        .mockResolvedValueOnce(stockProductoA)
+        .mockResolvedValueOnce(stockProductoB);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaDosProductosMock);
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionCreadaDosProductosMock);
 
@@ -269,6 +329,9 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
       mockProductoRepository.findOne
         .mockReset()
         .mockResolvedValueOnce(productoB);
+      mockStockRepository.findOne
+        .mockReset()
+        .mockResolvedValueOnce(stockProductoB);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaProductoEliminadoMock);
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionCreadaProductoEliminadoMock);
 
@@ -331,8 +394,16 @@ describe('Cálculo Automático de Totales - Casos de Prueba', () => {
         subtotal: cotizacionConTotalManualDto.subtotal, // 300
       };
 
+      // ✅ Configurar stock disponible
+      const stockProductoA = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoA);
+      mockStockRepository.findOne.mockResolvedValue(stockProductoA);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionCreadaInicialMock);
       mockDetalleRepository.create.mockReturnValue({});
       mockDetalleRepository.save.mockResolvedValue({});

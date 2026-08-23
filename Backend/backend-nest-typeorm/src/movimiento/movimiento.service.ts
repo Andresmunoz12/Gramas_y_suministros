@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { movimiento } from './movimiento.entity';
 import { entrada } from './entrada.entity';
 import { salida } from './salida.entity';
-import { stock } from '../stock/stock.entity'; // IMPORTANTE: Agregamos la entidad stock
+import { stock } from '../stock/stock.entity';
 import { StockService } from '../stock/stock.service';
 import { CreateMovimientoEntradaDto } from './dto/create-movimiento-entrada.dto';
 import { CreateMovimientoSalidaDto } from './dto/create-movimiento-salida.dto';
@@ -89,6 +89,11 @@ export class MovimientosService {
     // Validaciones previas
     const productoExistente = await this.prodRepo.findOne({ where: { id_producto: dto.id_producto } });
     if (!productoExistente) throw new NotFoundException('Producto no encontrado');
+
+    // ✅ VALIDACIÓN NUEVA: Verificar que el producto esté activo
+    if (productoExistente.estado === 0) {
+      throw new BadRequestException('El producto no está activo. No se puede registrar una salida.');
+    }
 
     const usuarioExistente = await this.userRepo.findOne({ where: { id_usuario: dto.id_usuario } });
     if (!usuarioExistente) throw new NotFoundException('Usuario no encontrado');

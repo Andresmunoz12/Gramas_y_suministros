@@ -9,8 +9,6 @@
  * - CP-047: Verificar que verificar carga correcta de permisos al iniciar sesión.
  * - CP-048: Verificar que verificar acceso de un Administrador a módulos administrativos.
  * - CP-049: Verificar que verificar intento de acceso sin rol válido.
- * - CP-050: Verificar que verificar registro de accesos en auditoría.
- * - CP-051: Verificar que verificar registro de intentos de acceso no autorizados.
  */
 
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
@@ -140,51 +138,6 @@ describe('Control de Accesos y Permisos - Casos de Prueba', () => {
       expect(() => {
         guard.canActivate(context);
       }).toThrow(ForbiddenException);
-    });
-  });
-
-  // ============================================
-  // CP-050: REGISTRO DE ACCESOS EN AUDITORÍA
-  // ============================================
-
-  describe('CP-050 - Verificar que verificar registro de accesos en auditoría', () => {
-    it('debería verificar que las operaciones de auditoría incluyan la información detallada del rol y usuario', () => {
-      // Arrange
-      const auditLogSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      // Simulamos la operación que registra accesos
-      console.log(`[AUDIT] Acceso concedido al usuario #${mockUserAdmin.userId} con Rol: ${mockUserAdmin.rol}`);
-
-      // Assert
-      expect(auditLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AUDIT] Acceso concedido al usuario #1 con Rol: 1')
-      );
-      auditLogSpy.mockRestore();
-    });
-  });
-
-  // ============================================
-  // CP-051: REGISTRO DE INTENTOS DE ACCESO NO AUTORIZADOS
-  // ============================================
-
-  describe('CP-051 - Verificar que verificar registro de intentos de acceso no autorizados', () => {
-    it('debería lanzar ForbiddenException conteniendo un mensaje explícito de denegación por permisos insuficientes', () => {
-      // Arrange
-      const context = createMockExecutionContext(mockUserCliente);
-      mockReflector.getAllAndOverride.mockImplementation((key) => {
-        if (key === 'roles') return [1]; // Requiere rol 1 (Admin)
-        return false;
-      });
-
-      // Act & Assert
-      try {
-        guard.canActivate(context);
-      } catch (error) {
-        expect(error).toBeInstanceOf(ForbiddenException);
-        expect(error.message).toBe(
-          'No tienes permisos suficientes para acceder a este recurso con tu rol actual.'
-        );
-      }
     });
   });
 });

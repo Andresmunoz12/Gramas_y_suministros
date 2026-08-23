@@ -25,7 +25,8 @@
  */
 
 import * as dotenv from 'dotenv';
-dotenv.config();
+import { resolve } from 'path';
+dotenv.config({ path: resolve(__dirname, '../../../../../.env') });
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { TypeOrmModule, getRepositoryToken } from '@nestjs/typeorm';

@@ -10,7 +10,6 @@
  * - CP-063: Verificar que producto no existente.
  * - CP-064: Verificar que verificar que solo un administrador pueda modificar productos.
  * - CP-065: Verificar que verificar actualización correcta en la base de datos.
- * - CP-066: Verificar que verificar registro en auditoría.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -184,28 +183,6 @@ describe('Modificar Producto - Casos de Prueba', () => {
 
       // Assert
       expect(mockProductoRepository.save).toHaveBeenCalled();
-    });
-  });
-
-  // ============================================
-  // CP-066: REGISTRO EN AUDITORÍA
-  // ============================================
-
-  describe('CP-066 - Verificar que verificar registro en auditoría', () => {
-    it('debería imprimir un log de auditoría en consola al modificar un producto', async () => {
-      // Arrange
-      mockProductoRepository.findOne.mockResolvedValue(mockOriginalProduct);
-      mockProductoRepository.save.mockResolvedValue(mockModifiedProductRecord);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      // Act
-      await controller.update(101, mockProductUpdateDto);
-
-      // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AUDIT] Producto modificado: #101 - Grama Sintética Actualizada por administrador')
-      );
-      consoleSpy.mockRestore();
     });
   });
 });

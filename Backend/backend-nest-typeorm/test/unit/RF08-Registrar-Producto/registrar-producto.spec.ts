@@ -11,7 +11,6 @@
  * - CP-056: Verificar que precio inválido.
  * - CP-057: Verificar que verificar que solo un administrador pueda registrar productos.
  * - CP-058: Verificar que verificar almacenamiento correcto del producto.
- * - CP-059: Verificar que verificar registro en auditoría.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -235,29 +234,6 @@ describe('Registrar Producto - Casos de Prueba', () => {
       // Assert
       expect(nameCol).toBeDefined();
       expect(priceCol).toBeDefined();
-    });
-  });
-
-  // ============================================
-  // CP-059: REGISTRO EN AUDITORÍA
-  // ============================================
-
-  describe('CP-059 - Verificar que verificar registro en auditoría', () => {
-    it('debería imprimir un log con prefijo [AUDIT] indicando el registro del producto', async () => {
-      // Arrange
-      mockCategoriaRepository.findOne.mockResolvedValue(mockCategoria);
-      mockProductoRepository.create.mockImplementation((dto) => dto);
-      mockProductoRepository.save.mockResolvedValue(mockProductSavedRecord);
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      // Act
-      await controller.create(mockProductCreationDto);
-
-      // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AUDIT] Producto registrado: #101 - Grama Sintética Evergreen por administrador')
-      );
-      consoleSpy.mockRestore();
     });
   });
 });

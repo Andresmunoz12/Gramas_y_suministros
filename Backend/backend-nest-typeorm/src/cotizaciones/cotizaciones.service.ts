@@ -28,6 +28,11 @@ export class CotizacionesService {
   ) {}
 
   async crearCotizacion(usuarioId: number, dto: CrearCotizacionDto) {
+    // ✅ VALIDACIÓN: Verificar que hay al menos un producto
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException('Debe seleccionar al menos un producto');
+    }
+
     const usuarioExistente = await this.cotizacionRepo.manager.findOne(usuario, {
       where: { id_usuario: usuarioId },
     });

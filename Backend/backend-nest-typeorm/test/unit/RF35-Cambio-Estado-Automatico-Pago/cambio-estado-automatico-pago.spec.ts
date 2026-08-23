@@ -27,18 +27,27 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO CON STOCK
 // ============================================
 
 const mockCotizacionRepository = {
-  create: jest.fn().mockImplementation((data) => data), // Retorna el objeto que se intentó crear
+  create: jest.fn().mockImplementation((data) => data),
   save: jest.fn(),
   findOne: jest.fn(),
   find: jest.fn(),
   count: jest.fn(),
-  createQueryBuilder: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
   manager: {
     findOne: jest.fn(),
+    count: jest.fn(),
   },
 };
 
@@ -56,8 +65,17 @@ const mockMovimientoRepository = {
   save: jest.fn(),
 };
 
+// ✅ Stock mock con cantidad suficiente
 const mockStockRepository = {
   findOne: jest.fn(),
+  createQueryBuilder: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    set: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    execute: jest.fn(),
+    select: jest.fn().mockReturnThis(),
+    getRawOne: jest.fn(),
+  })),
 };
 
 // ============================================
@@ -111,15 +129,32 @@ describe('Cambio de Estado Automático por Pago - Casos de Prueba', () => {
   describe('CP-233 - Verificar que una cotización nueva se registre con estado "Pendiente"', () => {
     it('debería inicializar el estado como "pendiente" al crear cualquier cotización nueva', async () => {
       // Arrange
+      // ✅ Configurar stock disponible (100 unidades)
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
+      const reqMock = { user: { userId: usuarioExistente.id_usuario } };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionNuevaMock);
-      mockDetalleRepository.create.mockReturnValue({});
+      mockDetalleRepository.create.mockReturnValue({
+        idDetalle: 1,
+        idCotizacion: 90,
+        idProducto: 1,
+        cantidad: 2,
+        precioUnitario: 30000,
+        subtotal: 60000,
+      });
       mockDetalleRepository.save.mockResolvedValue({});
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionNuevaMock);
 
       // Act
-      const result = await controller.crearCotizacion({ user: { id: 1 } }, cotizacionNuevaDto);
+      const result = await controller.crearCotizacion(reqMock, cotizacionNuevaDto);
 
       // Assert
       // Verificar que el repositorio reciba 'pendiente' explícitamente al guardar
@@ -139,15 +174,32 @@ describe('Cambio de Estado Automático por Pago - Casos de Prueba', () => {
   describe('CP-236 - Verificar que generar una cotización con Entrega a Domicilio y un método de pago diferente a tarjeta, verificando que permanezca en "Pendiente"', () => {
     it('debería permanecer en estado "pendiente" si el método de venta es "envio" y el método de pago es "efectivo"', async () => {
       // Arrange
+      // ✅ Configurar stock disponible (100 unidades)
+      const stockDisponible = {
+        id_stock: 1,
+        id_producto: 1,
+        cantidad_actual: 100,
+      };
+
+      const reqMock = { user: { userId: usuarioExistente.id_usuario } };
+
       mockCotizacionRepository.manager.findOne.mockResolvedValue(usuarioExistente);
       mockProductoRepository.findOne.mockResolvedValue(productoGrama);
+      mockStockRepository.findOne.mockResolvedValue(stockDisponible);
       mockCotizacionRepository.save.mockResolvedValue(cotizacionDomicilioEfectivoMock);
-      mockDetalleRepository.create.mockReturnValue({});
+      mockDetalleRepository.create.mockReturnValue({
+        idDetalle: 2,
+        idCotizacion: 91,
+        idProducto: 1,
+        cantidad: 2,
+        precioUnitario: 30000,
+        subtotal: 60000,
+      });
       mockDetalleRepository.save.mockResolvedValue({});
       mockCotizacionRepository.findOne.mockResolvedValue(cotizacionDomicilioEfectivoMock);
 
       // Act
-      const result = await controller.crearCotizacion({ user: { id: 1 } }, cotizacionDomicilioEfectivoDto);
+      const result = await controller.crearCotizacion(reqMock, cotizacionDomicilioEfectivoDto);
 
       // Assert
       expect(mockCotizacionRepository.save).toHaveBeenCalledWith(

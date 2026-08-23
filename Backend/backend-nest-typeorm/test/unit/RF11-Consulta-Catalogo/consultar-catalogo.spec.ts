@@ -88,9 +88,10 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       const result = await controller.findAll();
 
       // Assert
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.find).toHaveBeenCalledWith({
         where: { estado: 1 },
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
       });
       expect(result).toEqual(productosActivos);
       expect(result.length).toBe(3);
@@ -123,9 +124,10 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       const result = await service.findAll();
 
       // Assert
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.find).toHaveBeenCalledWith({
         where: { estado: 1 },
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
       });
       
       // Verificar que todos los productos tengan estado = 1
@@ -179,9 +181,10 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       const result = await service.findAll();
 
       // Assert
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.find).toHaveBeenCalledWith({
         where: { estado: 1 },
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
       });
       expect(result).toEqual([]);
       expect(result.length).toBe(0);
@@ -210,9 +213,10 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       const result = await controller.findOne(1);
 
       // Assert
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.findOne).toHaveBeenCalledWith({
         where: { id_producto: 1 },
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
       });
       
       // Verificar que todos los campos importantes estén presentes
@@ -254,9 +258,10 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       await expect(controller.findOne(999)).rejects.toThrow(
         new NotFoundException('Producto con ID 999 no encontrado'),
       );
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.findOne).toHaveBeenCalledWith({
         where: { id_producto: 999 },
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
       });
     });
   });
@@ -390,8 +395,9 @@ describe('Consultar Catálogo de Productos - Casos de Prueba', () => {
       const result = await service.findAllAdmin();
 
       // Assert
+      // ✅ CORREGIDO: Incluir 'stock' en las relaciones
       expect(mockProductoRepository.find).toHaveBeenCalledWith({
-        relations: ['categoria'],
+        relations: ['categoria', 'stock'],
         order: { estado: 'DESC', id_producto: 'ASC' },
       });
       

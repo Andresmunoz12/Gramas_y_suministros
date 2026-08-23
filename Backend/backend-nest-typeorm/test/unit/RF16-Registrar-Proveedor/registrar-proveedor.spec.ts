@@ -1,4 +1,4 @@
-// test/unit/R16-Registrar-Proveedor/registrar-proveedor.spec.ts
+// test/unit/RF16-Registrar-Proveedor/registrar-proveedor.spec.ts
 
 /**
  * MÓDULO: REGISTRAR PROVEEDOR
@@ -13,7 +13,9 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToClass } from 'class-transformer';
 import { ProveedoresService } from '../../../src/proveedores/proveedores.service';
 import { ProveedoresController } from '../../../src/proveedores/proveedores.controller';
 import { proveedor } from '../../../src/proveedores/proveedores.entity';
@@ -28,16 +30,24 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO
 // ============================================
+
+const mockQueryBuilder = {
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  getOne: jest.fn(),
+};
 
 const mockProveedorRepository = {
   create: jest.fn(),
   save: jest.fn(),
   find: jest.fn(),
+  findOne: jest.fn(),
   findOneBy: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
+  createQueryBuilder: jest.fn(() => mockQueryBuilder), // ✅ Agregar este método
 };
 
 // ============================================
@@ -62,10 +72,10 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
 
     service = module.get<ProveedoresService>(ProveedoresService);
     controller = module.get<ProveedoresController>(ProveedoresController);
-  });
-
-  afterEach(() => {
+    
+    // Resetear mocks antes de cada prueba
     jest.clearAllMocks();
+    mockQueryBuilder.getOne.mockReset();
   });
 
   // ============================================
@@ -83,6 +93,9 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         direccion: proveedorValido.direccion,
       };
 
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.create.mockReturnValue(proveedorRegistrado);
       mockProveedorRepository.save.mockResolvedValue(proveedorRegistrado);
 
@@ -112,6 +125,9 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         ...proveedorMinimo,
       };
 
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.create.mockReturnValue(proveedorRegistradoMinimo);
       mockProveedorRepository.save.mockResolvedValue(proveedorRegistradoMinimo);
 
@@ -122,6 +138,32 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
       expect(result.nombre).toBe('Proveedor Mínimo');
       expect(result.id_proveedor).toBe(2);
     });
+
+    it('debería lanzar ConflictException si el nombre ya existe', async () => {
+      // Arrange
+      const createProveedorDto: CreateProveedorDto = {
+        nombre: 'Vivero El Rosal',
+        contacto: 'Juan Pérez',
+        telefono: '3001234567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      };
+
+      // Mock: ya existe un proveedor con ese nombre
+      mockQueryBuilder.getOne.mockResolvedValue({
+        id_proveedor: 1,
+        nombre: 'Vivero El Rosal',
+      });
+
+      // Act & Assert
+      await expect(controller.crear(createProveedorDto)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(controller.crear(createProveedorDto)).rejects.toThrow(
+        `El proveedor con nombre "Vivero El Rosal" ya existe`,
+      );
+      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   // ============================================
@@ -131,48 +173,72 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
   describe('CP-108 - Verificar campos obligatorios vacíos', () => {
     it('debería rechazar el registro si el nombre está vacío', async () => {
       // Arrange
-      const createProveedorDto: CreateProveedorDto = {
+      const dto = plainToClass(CreateProveedorDto, {
         nombre: proveedorSinNombre.nombre,
         contacto: proveedorSinNombre.contacto,
         telefono: proveedorSinNombre.telefono,
         email: proveedorSinNombre.email,
         direccion: proveedorSinNombre.direccion,
-      };
+      });
 
-      // Act & Assert
-      try {
-        if (!createProveedorDto.nombre || createProveedorDto.nombre.trim() === '') {
-          throw new BadRequestException('El nombre del proveedor es obligatorio');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre del proveedor es obligatorio');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('isNotEmpty');
       expect(mockProveedorRepository.save).not.toHaveBeenCalled();
     });
 
     it('debería rechazar el registro si el nombre es muy corto', async () => {
       // Arrange
-      const createProveedorDto: CreateProveedorDto = {
+      const dto = plainToClass(CreateProveedorDto, {
         nombre: 'Ab',
         contacto: 'Juan Pérez',
         telefono: '3001234567',
         email: 'contacto@vivero.com',
         direccion: 'Calle 10 #45-12, Bogotá',
+      });
+
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('isLength');
+      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debería permitir el registro si el contacto está vacío (es opcional)', async () => {
+      // Arrange
+      const dto = plainToClass(CreateProveedorDto, {
+        nombre: 'Proveedor Sin Contacto',
+        contacto: proveedorSinContacto.contacto,
+        telefono: '3001234567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      });
+
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
+      const proveedorSinContactoRegistrado = {
+        id_proveedor: 3,
+        ...dto,
       };
 
-      // Act & Assert
-      try {
-        if (createProveedorDto.nombre.length < 3) {
-          throw new BadRequestException('El nombre debe tener al menos 3 caracteres');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre debe tener al menos 3 caracteres');
-      }
-      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+      mockProveedorRepository.create.mockReturnValue(proveedorSinContactoRegistrado);
+      mockProveedorRepository.save.mockResolvedValue(proveedorSinContactoRegistrado);
+
+      // Act
+      const result = await controller.crear(dto);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.nombre).toBe('Proveedor Sin Contacto');
+      expect(result.contacto).toBe('');
     });
   });
 
@@ -183,48 +249,101 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
   describe('CP-109 - Verificar información inválida', () => {
     it('debería rechazar el registro si el email tiene formato inválido', async () => {
       // Arrange
-      const createProveedorDto: CreateProveedorDto = {
+      const dto = plainToClass(CreateProveedorDto, {
         nombre: proveedorEmailInvalido.nombre,
         contacto: proveedorEmailInvalido.contacto,
         telefono: proveedorEmailInvalido.telefono,
         email: proveedorEmailInvalido.email,
         direccion: proveedorEmailInvalido.direccion,
-      };
+      });
 
-      // Act & Assert
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      try {
-        if (!emailRegex.test(createProveedorDto.email)) {
-          throw new BadRequestException('El formato del email no es válido');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El formato del email no es válido');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('email');
+      expect(errors[0].constraints).toHaveProperty('isEmail');
       expect(mockProveedorRepository.save).not.toHaveBeenCalled();
     });
 
     it('debería rechazar el registro si el teléfono es demasiado corto', async () => {
       // Arrange
-      const createProveedorDto: CreateProveedorDto = {
+      const dto = plainToClass(CreateProveedorDto, {
         nombre: proveedorTelefonoCorto.nombre,
         contacto: proveedorTelefonoCorto.contacto,
         telefono: proveedorTelefonoCorto.telefono,
         email: proveedorTelefonoCorto.email,
         direccion: proveedorTelefonoCorto.direccion,
-      };
+      });
 
-      // Act & Assert
-      try {
-        if (createProveedorDto.telefono.length < 7) {
-          throw new BadRequestException('El teléfono debe tener al menos 7 caracteres');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El teléfono debe tener al menos 7 caracteres');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('telefono');
+      expect(errors[0].constraints).toHaveProperty('isLength');
+      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debería rechazar el registro si el nombre contiene números', async () => {
+      // Arrange
+      const dto = plainToClass(CreateProveedorDto, {
+        nombre: 'Vivero 123',
+        contacto: 'Juan Pérez',
+        telefono: '3001234567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      });
+
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('matches');
+      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debería rechazar el registro si el nombre contiene caracteres especiales', async () => {
+      // Arrange
+      const dto = plainToClass(CreateProveedorDto, {
+        nombre: 'Vivero@ElRosal',
+        contacto: 'Juan Pérez',
+        telefono: '3001234567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      });
+
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('matches');
+      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('debería rechazar el registro si el teléfono contiene letras', async () => {
+      // Arrange
+      const dto = plainToClass(CreateProveedorDto, {
+        nombre: 'Vivero El Rosal',
+        contacto: 'Juan Pérez',
+        telefono: '300ABC4567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      });
+
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('telefono');
+      expect(errors[0].constraints).toHaveProperty('matches');
       expect(mockProveedorRepository.save).not.toHaveBeenCalled();
     });
   });
@@ -234,9 +353,16 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
   // ============================================
 
   describe('CP-110 - Verificar que solo un administrador pueda registrar proveedores', () => {
+    it('el controlador debería tener el decorador @Roles(1) a nivel de clase', () => {
+      const controllerClass = ProveedoresController;
+      const roles = Reflect.getMetadata('roles', controllerClass);
+      
+      expect(roles).toBeDefined();
+      expect(roles).toEqual([1]);
+    });
+
     it('debería permitir el registro si el usuario es administrador (rol 1)', async () => {
       // Arrange
-      const user = { id_usuario: 1, rol: 1 };
       const createProveedorDto: CreateProveedorDto = {
         nombre: proveedorValido.nombre,
         contacto: proveedorValido.contacto,
@@ -245,6 +371,9 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         direccion: proveedorValido.direccion,
       };
 
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.create.mockReturnValue(proveedorRegistrado);
       mockProveedorRepository.save.mockResolvedValue(proveedorRegistrado);
 
@@ -256,37 +385,8 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
       expect(result.nombre).toBe(proveedorValido.nombre);
     });
 
-    it('debería denegar el acceso si el usuario no es administrador', async () => {
-      // Arrange
-      const user = { id_usuario: 2, rol: 2 };
-
-      // Act & Assert
-      try {
-        if (user.rol !== 1) {
-          throw new Error('Acceso denegado');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error.message).toBe('Acceso denegado');
-      }
-      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
-    });
-
-    it('debería denegar el acceso si el usuario no está autenticado', async () => {
-      // Arrange
-      const user = null;
-
-      // Act & Assert
-      try {
-        if (!user) {
-          throw new Error('No autenticado');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error.message).toBe('No autenticado');
-      }
-      expect(mockProveedorRepository.save).not.toHaveBeenCalled();
-    });
+    // Nota: Las pruebas de denegación de acceso deberían probarse a nivel de guard
+    // pero podemos verificar que el decorador está presente
   });
 
   // ============================================
@@ -309,6 +409,9 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         ...createProveedorDto,
       };
 
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.create.mockReturnValue(proveedorGuardado);
       mockProveedorRepository.save.mockResolvedValue(proveedorGuardado);
 
@@ -337,6 +440,9 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         ...createProveedorDto,
       };
 
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.create.mockReturnValue(proveedorGuardado);
       mockProveedorRepository.save.mockResolvedValue(proveedorGuardado);
 
@@ -352,6 +458,38 @@ describe('Registrar Proveedor - Casos de Prueba', () => {
         email: 'maria@test.com',
         direccion: 'Av. Test #456',
       });
+    });
+
+    it('debería verificar que el proveedor se guarda con la fecha de creación', async () => {
+      // Arrange
+      const createProveedorDto: CreateProveedorDto = {
+        nombre: 'Proveedor Con Fecha',
+        contacto: 'Juan Pérez',
+        telefono: '3001234567',
+        email: 'contacto@vivero.com',
+        direccion: 'Calle 10 #45-12, Bogotá',
+      };
+
+      const proveedorConFecha = {
+        id_proveedor: 12,
+        ...createProveedorDto,
+        fecha_creacion: new Date(),
+      };
+
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
+      mockProveedorRepository.create.mockReturnValue(proveedorConFecha);
+      mockProveedorRepository.save.mockResolvedValue(proveedorConFecha);
+
+      // Act
+      const result = await controller.crear(createProveedorDto);
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.id_proveedor).toBe(12);
+      expect(result.fecha_creacion).toBeDefined();
+      expect(result.fecha_creacion).toBeInstanceOf(Date);
     });
   });
 });

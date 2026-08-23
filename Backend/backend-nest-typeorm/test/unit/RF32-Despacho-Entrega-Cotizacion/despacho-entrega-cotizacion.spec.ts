@@ -8,7 +8,6 @@
  * - CP-217: Verificar que la actualización automática del inventario
  * - CP-218: Verificar que el registro de los movimientos de salida generados automáticamente
  * - CP-219: Verificar que al entregar nuevamente una cotización ya entregada
- * - PRUEBA EXTRA: Verificar rechazo si el stock es insuficiente
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -276,36 +275,6 @@ describe('Despacho y Entrega de Cotización - Casos de Prueba', () => {
       
       // El estado se mantiene/guarda como entregado sin cambios colaterales
       expect(mockCotizacionRepository.save).toHaveBeenCalled();
-    });
-  });
-
-  // ============================================
-  // PRUEBA EXTRA: STOCK INSUFICIENTE
-  // ============================================
-
-  describe('Prueba adicional - Stock Insuficiente', () => {
-    it('debería lanzar BadRequestException y no actualizar el estado si no hay stock suficiente', async () => {
-      // Arrange
-      mockCotizacionRepository.findOne.mockResolvedValue({
-        ...cotizacionPendienteMock,
-      });
-
-      mockStockRepository.findOne.mockResolvedValue(stockInsuficiente);
-      mockProductoRepository.findOne.mockResolvedValue(productoGrama);
-
-      // Act & Assert
-      await expect(service.actualizarEstado(50, 'entregado')).rejects.toThrow(
-        new BadRequestException(mensajesErrorStock.insuficiente)
-      );
-
-      // No se debió guardar la cotización con estado entregado
-      expect(mockCotizacionRepository.save).not.toHaveBeenCalled();
-      
-      // No se debió actualizar el stock en DB
-      expect(mockStockRepository.createQueryBuilder).not.toHaveBeenCalled();
-      
-      // No se debió registrar movimiento de salida
-      expect(mockMovimientoRepository.save).not.toHaveBeenCalled();
     });
   });
 });

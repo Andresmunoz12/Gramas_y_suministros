@@ -1,20 +1,10 @@
 // test/unit/RF17-Actualizar-Proveedor/actualizar-proveedor.spec.ts
 
-/**
- * MÓDULO: ACTUALIZAR PROVEEDOR
- * 
- * Casos de prueba implementados:
- * - CP-113: Verificar actualización exitosa del proveedor
- * - CP-114: Verificar campos obligatorios vacíos
- * - CP-115: Verificar información inválida
- * - CP-117: Verificar intentar registrar un ID duplicado (no aplica)
- * - CP-118: Verificar que solo administrador pueda actualizar proveedores
- * - CP-119: Verificar actualización en la base de datos
- */
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToClass } from 'class-transformer';
 import { ProveedoresService } from '../../../src/proveedores/proveedores.service';
 import { ProveedoresController } from '../../../src/proveedores/proveedores.controller';
 import { proveedor } from '../../../src/proveedores/proveedores.entity';
@@ -36,8 +26,14 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS
+// MOCKS - ACTUALIZADO
 // ============================================
+
+const mockQueryBuilder = {
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  getOne: jest.fn(),
+};
 
 const mockProveedorRepository = {
   create: jest.fn(),
@@ -46,6 +42,7 @@ const mockProveedorRepository = {
   findOne: jest.fn(),
   update: jest.fn(),
   remove: jest.fn(),
+  createQueryBuilder: jest.fn(() => mockQueryBuilder),
 };
 
 // ============================================
@@ -70,10 +67,10 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
 
     service = module.get<ProveedoresService>(ProveedoresService);
     controller = module.get<ProveedoresController>(ProveedoresController);
-  });
-
-  afterEach(() => {
+    
+    // Resetear mocks antes de cada prueba
     jest.clearAllMocks();
+    mockQueryBuilder.getOne.mockReset();
   });
 
   // ============================================
@@ -91,11 +88,13 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         direccion: proveedorActualizadoValido.direccion,
       };
 
-      // ✅ Configurar mocks correctamente
+      // Mock para verificarNombreUnico (no hay duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       // Primera llamada a findOne: obtener el proveedor existente
       mockProveedorRepository.findOne
-        .mockResolvedValueOnce(proveedorExistente) // findOne para verificar existencia
-        .mockResolvedValueOnce(proveedorActualizado); // findOne para devolver actualizado
+        .mockResolvedValueOnce(proveedorExistente) // Para verificar existencia
+        .mockResolvedValueOnce(proveedorActualizado); // Para devolver actualizado
       
       mockProveedorRepository.update.mockResolvedValue({ affected: 1 });
 
@@ -120,6 +119,9 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         nombre: actualizarNombre.nombre,
       };
 
+      // Mock para verificarNombreUnico (nombre diferente, no duplicado)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.findOne
         .mockResolvedValueOnce(proveedorExistente)
         .mockResolvedValueOnce(proveedorConNombreActualizado);
@@ -145,6 +147,9 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         contacto: actualizarContacto.contacto,
       };
 
+      // Mock para verificarNombreUnico (no se verifica porque no se actualiza nombre)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.findOne
         .mockResolvedValueOnce(proveedorExistente)
         .mockResolvedValueOnce(proveedorConContactoActualizado);
@@ -170,6 +175,9 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         telefono: actualizarTelefono.telefono,
       };
 
+      // Mock para verificarNombreUnico (no se verifica porque no se actualiza nombre)
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.findOne
         .mockResolvedValueOnce(proveedorExistente)
         .mockResolvedValueOnce(proveedorConTelefonoActualizado);
@@ -191,47 +199,42 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
   describe('CP-114 - Verificar campos obligatorios vacíos', () => {
     it('debería rechazar la actualización si el nombre está vacío', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorNombreVacio.nombre,
         contacto: proveedorNombreVacio.contacto,
         telefono: proveedorNombreVacio.telefono,
         email: proveedorNombreVacio.email,
         direccion: proveedorNombreVacio.direccion,
-      };
+      });
 
-      // Act & Assert
-      try {
-        if (!updateProveedorDto.nombre || updateProveedorDto.nombre.trim() === '') {
-          throw new BadRequestException('El nombre del proveedor es obligatorio');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre del proveedor es obligatorio');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('isNotEmpty');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
 
     it('debería rechazar la actualización si el nombre es demasiado corto', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorNombreCorto.nombre,
         contacto: 'Juan Pérez',
         telefono: '3001234567',
         email: 'contacto@vivero.com',
         direccion: 'Calle 10 #45-12, Bogotá',
-      };
+      });
 
-      // Act & Assert
-      try {
-        if (updateProveedorDto.nombre.length < 3) {
-          throw new BadRequestException('El nombre debe tener entre 3 y 150 caracteres');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre debe tener entre 3 y 150 caracteres');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      // ✅ CORREGIDO: usar 'isLength' en lugar de 'length'
+      expect(errors[0].constraints).toHaveProperty('isLength');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
   });
@@ -243,120 +246,102 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
   describe('CP-115 - Verificar información inválida', () => {
     it('debería rechazar la actualización si el nombre contiene números', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorNombreConNumeros.nombre,
         contacto: proveedorNombreConNumeros.contacto,
         telefono: proveedorNombreConNumeros.telefono,
         email: proveedorNombreConNumeros.email,
         direccion: proveedorNombreConNumeros.direccion,
-      };
+      });
 
-      // Act & Assert
-      const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
-      try {
-        if (!regex.test(updateProveedorDto.nombre)) {
-          throw new BadRequestException('El nombre solo puede contener letras y espacios');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre solo puede contener letras y espacios');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('matches');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
 
     it('debería rechazar la actualización si el nombre contiene caracteres especiales', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorNombreConSimbolos.nombre,
         contacto: proveedorNombreConSimbolos.contacto,
         telefono: proveedorNombreConSimbolos.telefono,
         email: proveedorNombreConSimbolos.email,
         direccion: proveedorNombreConSimbolos.direccion,
-      };
+      });
 
-      // Act & Assert
-      const regex = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
-      try {
-        if (!regex.test(updateProveedorDto.nombre)) {
-          throw new BadRequestException('El nombre solo puede contener letras y espacios');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El nombre solo puede contener letras y espacios');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('nombre');
+      expect(errors[0].constraints).toHaveProperty('matches');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
 
     it('debería rechazar la actualización si el email tiene formato inválido', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorEmailInvalido.nombre,
         contacto: proveedorEmailInvalido.contacto,
         telefono: proveedorEmailInvalido.telefono,
         email: proveedorEmailInvalido.email,
         direccion: proveedorEmailInvalido.direccion,
-      };
+      });
 
-      // Act & Assert
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      try {
-        if (!emailRegex.test(updateProveedorDto.email)) {
-          throw new BadRequestException('El formato del email no es válido');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El formato del email no es válido');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('email');
+      expect(errors[0].constraints).toHaveProperty('isEmail');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
 
     it('debería rechazar la actualización si el teléfono es demasiado corto', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorTelefonoCorto.nombre,
         contacto: proveedorTelefonoCorto.contacto,
         telefono: proveedorTelefonoCorto.telefono,
         email: proveedorTelefonoCorto.email,
         direccion: proveedorTelefonoCorto.direccion,
-      };
+      });
 
-      // Act & Assert
-      try {
-        if (updateProveedorDto.telefono.length < 7) {
-          throw new BadRequestException('El teléfono debe tener entre 7 y 20 dígitos');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El teléfono debe tener entre 7 y 20 dígitos');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('telefono');
+      // ✅ CORREGIDO: usar 'isLength' en lugar de 'length'
+      expect(errors[0].constraints).toHaveProperty('isLength');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
 
     it('debería rechazar la actualización si el teléfono contiene letras', async () => {
       // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
+      const dto = plainToClass(UpdateProveedorDto, {
         nombre: proveedorTelefonoConLetras.nombre,
         contacto: proveedorTelefonoConLetras.contacto,
         telefono: proveedorTelefonoConLetras.telefono,
         email: proveedorTelefonoConLetras.email,
         direccion: proveedorTelefonoConLetras.direccion,
-      };
+      });
 
-      // Act & Assert
-      const regex = /^\d+$/;
-      try {
-        if (!regex.test(updateProveedorDto.telefono)) {
-          throw new BadRequestException('El teléfono solo puede contener números');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        expect(error.message).toBe('El teléfono solo puede contener números');
-      }
+      // Act
+      const errors = await validate(dto);
+
+      // Assert
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('telefono');
+      expect(errors[0].constraints).toHaveProperty('matches');
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });
   });
@@ -377,14 +362,12 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
 
   describe('CP-118 - Verificar que solo un administrador pueda actualizar proveedores', () => {
     it('el controlador debería tener el decorador @Roles(1) a nivel de clase', () => {
-      // ✅ El decorador @Roles(1) está a nivel de clase
-      // Podemos verificar que el controlador tiene la metadata
       const controllerClass = ProveedoresController;
       const roles = Reflect.getMetadata('roles', controllerClass);
       
-      // Como el decorador está a nivel de clase, debe existir
-      // Si no existe, la prueba fallará
       expect(roles).toBeDefined();
+      // ✅ CORREGIDO: Roles devuelve un array [1], no 1
+      expect(roles).toEqual([1]);
     });
 
     it('debería permitir la actualización si el usuario es administrador (simulación)', async () => {
@@ -398,6 +381,9 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         nombre: 'Actualizado Admin',
       };
 
+      // Mock para verificarNombreUnico
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.findOne
         .mockResolvedValueOnce(proveedorExistente)
         .mockResolvedValueOnce(proveedorActualizadoAdmin);
@@ -412,25 +398,7 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
       expect(mockProveedorRepository.update).toHaveBeenCalled();
     });
 
-    it('debería denegar el acceso si el usuario no es administrador (simulación)', async () => {
-      // Arrange
-      const updateProveedorDto: UpdateProveedorDto = {
-        nombre: 'Actualizado Cliente',
-      };
-
-      // Act & Assert
-      try {
-        const user = { id_usuario: 2, rol: 2 };
-        if (user.rol !== 1) {
-          throw new Error('Acceso denegado: Se requiere rol de Administrador');
-        }
-        expect(true).toBe(false);
-      } catch (error) {
-        expect(error.message).toContain('Acceso denegado');
-        expect(error.message).toContain('Administrador');
-      }
-      expect(mockProveedorRepository.update).not.toHaveBeenCalled();
-    });
+    // Nota: La prueba de denegación de acceso debería probarse a nivel de guard, no en el servicio
   });
 
   // ============================================
@@ -454,6 +422,9 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         entradas: [],
       };
 
+      // Mock para verificarNombreUnico
+      mockQueryBuilder.getOne.mockResolvedValue(null);
+      
       mockProveedorRepository.findOne
         .mockResolvedValueOnce(proveedorExistente)
         .mockResolvedValueOnce(proveedorActualizadoBD);
@@ -478,11 +449,42 @@ describe('Actualizar Proveedor - Casos de Prueba', () => {
         nombre: 'Proveedor Inexistente',
       };
 
+      // Mock: el proveedor no existe
       mockProveedorRepository.findOne.mockResolvedValue(null);
 
       // Act & Assert
       await expect(controller.actualizar(999, updateProveedorDto)).rejects.toThrow(
-        new NotFoundException('Proveedor no encontrado'),
+        NotFoundException,
+      );
+      await expect(controller.actualizar(999, updateProveedorDto)).rejects.toThrow(
+        'Proveedor no encontrado',
+      );
+      expect(mockProveedorRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('debería lanzar ConflictException si el nombre ya existe', async () => {
+      // Arrange
+      const updateProveedorDto: UpdateProveedorDto = {
+        nombre: 'Otro Proveedor Existente',
+      };
+
+      // Primero, el proveedor existe (findOne para verificar existencia)
+      mockProveedorRepository.findOne
+        .mockResolvedValueOnce(proveedorExistente) // Para verificar que existe
+        .mockResolvedValueOnce(proveedorExistente); // Para la segunda llamada (no se usa porque lanza excepción)
+      
+      // Mock para verificarNombreUnico: hay otro proveedor con el mismo nombre
+      mockQueryBuilder.getOne.mockResolvedValue({
+        id_proveedor: 2,
+        nombre: 'Otro Proveedor Existente',
+      });
+
+      // Act & Assert
+      await expect(controller.actualizar(1, updateProveedorDto)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(controller.actualizar(1, updateProveedorDto)).rejects.toThrow(
+        `El proveedor con nombre "Otro Proveedor Existente" ya existe`,
       );
       expect(mockProveedorRepository.update).not.toHaveBeenCalled();
     });

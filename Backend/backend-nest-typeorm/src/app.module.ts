@@ -39,10 +39,10 @@ import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
 
     TypeOrmModule.forRoot({
       type: 'mysql',
-      // ✅ Usar la URL directamente desde las variables de entorno
+      // Usar la URL directamente desde las variables de entorno
       url: process.env.DATABASE_URL,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // ✅ Crear tablas automáticamente
+      synchronize: true, // Crear tablas automáticamente
       ssl: {
         rejectUnauthorized: false,
       },

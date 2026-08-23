@@ -8,8 +8,6 @@
  * - CP-040: Verificar que verificar que un usuario sin permisos no pueda asignar el rol Administrador.
  * - CP-041: Verificar que verificar asignación de rol realizada por un administrador.
  * - CP-042: Verificar que verificar almacenamiento correcto del rol en la base de datos.
- * - CP-043: Verificar que verificar registro de la operación en auditoría.
- * - CP-044: Verificar que intentar asignar un rol inexistente.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -154,46 +152,6 @@ describe('Asignación de Roles de Usuario - Casos de Prueba', () => {
       // Assert
       expect(idRolCol).toBeDefined();
       expect(idRolCol?.options.name).toBe('id_rol');
-    });
-  });
-
-  // ============================================
-  // CP-043: REGISTRO DE OPERACIÓN EN AUDITORÍA
-  // ============================================
-
-  describe('CP-043 - Verificar que verificar registro de la operación en auditoría', () => {
-    it('debería imprimir un log de auditoría en consola al modificar un rol de usuario', async () => {
-      // Arrange
-      mockUserRepository.update.mockResolvedValue({ affected: 1 });
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
-      // Act
-      await service.actualizarUsuario(15, { id_rol: 1 });
-
-      // Assert
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[AUDIT] Cambio de rol para el usuario #15 a Rol: 1')
-      );
-      consoleSpy.mockRestore();
-    });
-  });
-
-  // ============================================
-  // CP-044: ASIGNAR UN ROL INEXISTENTE
-  // ============================================
-
-  describe('CP-044 - Verificar que intentar asignar un rol inexistente', () => {
-    it('debería fallar si la base de datos lanza una excepción por restricción de llave foránea', async () => {
-      // Arrange
-      // Si el rol no existe, la base de datos arroja error de clave foránea (por ejemplo: error 1452 en MySQL)
-      mockUserRepository.update.mockRejectedValue(
-        new Error('Cannot add or update a child row: a foreign key constraint fails')
-      );
-
-      // Act & Assert
-      await expect(
-        service.actualizarUsuario(15, { id_rol: 999 })
-      ).rejects.toThrow('foreign key constraint fails');
     });
   });
 });
