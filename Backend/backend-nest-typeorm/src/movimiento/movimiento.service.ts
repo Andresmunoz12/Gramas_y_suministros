@@ -27,6 +27,11 @@ export class MovimientosService {
 
   // 1. REGISTRAR ENTRADA
   async registrarEntrada(dto: CreateMovimientoEntradaDto) {
+    // ✅ VALIDACIÓN: Cantidad debe ser positiva
+    if (dto.cantidad <= 0) {
+      throw new BadRequestException('La cantidad debe ser mayor a 0');
+    }
+
     // Validaciones previas
     const productoExistente = await this.prodRepo.findOne({ where: { id_producto: dto.id_producto } });
     if (!productoExistente) throw new NotFoundException('Producto no encontrado');
@@ -86,11 +91,16 @@ export class MovimientosService {
 
   // 2. REGISTRAR SALIDA
   async registrarSalida(dto: CreateMovimientoSalidaDto) {
+    // ✅ VALIDACIÓN: Cantidad debe ser positiva
+    if (dto.cantidad <= 0) {
+      throw new BadRequestException('La cantidad debe ser mayor a 0');
+    }
+
     // Validaciones previas
     const productoExistente = await this.prodRepo.findOne({ where: { id_producto: dto.id_producto } });
     if (!productoExistente) throw new NotFoundException('Producto no encontrado');
 
-    // ✅ VALIDACIÓN NUEVA: Verificar que el producto esté activo
+    // Validar que el producto esté activo
     if (productoExistente.estado === 0) {
       throw new BadRequestException('El producto no está activo. No se puede registrar una salida.');
     }
