@@ -11,6 +11,7 @@ export default function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState(""); // ✅ Para mensajes de éxito
     const [accionando, setAccionando] = useState(null);
 
     // Estadísticas
@@ -28,12 +29,21 @@ export default function Usuarios() {
         const fetchUsuarios = async () => {
             try {
                 setLoading(true);
+                setError("");
                 const data = await UsuariosService.getAll();
                 setUsuarios(data);
                 calcularEstadisticas(data);
             } catch (error) {
                 console.error("Error cargando usuarios:", error);
-                setError("No se pudieron cargar los usuarios");
+                if (error.response?.status === 401) {
+                    setError("Sesión expirada. Por favor, inicia sesión nuevamente.");
+                    setTimeout(() => {
+                        logout();
+                        navigate("/login");
+                    }, 3000);
+                } else {
+                    setError("No se pudieron cargar los usuarios");
+                }
             } finally {
                 setLoading(false);
             }
@@ -61,48 +71,38 @@ export default function Usuarios() {
         });
     };
 
-    // 🗑️ Eliminar usuario real usando axios
-    const handleDelete = async (id) => {
-        if (accionando) return;
-        if (!window.confirm("¿Seguro que quieres eliminar este usuario?")) return;
-
-        try {
-            setAccionando(id);
-            await UsuariosService.delete(id);
-
-            // Actualizar la lista sin recargar
-            const nuevosUsuarios = usuarios.filter(u => u.id_usuario !== id);
-            setUsuarios(nuevosUsuarios);
-            calcularEstadisticas(nuevosUsuarios);
-
-        } catch (error) {
-            console.error("Error eliminando usuario:", error);
-            setError("Error al eliminar el usuario");
-        } finally {
-            setAccionando(null);
-        }
-    };
-
-    // Función para cambiar estado
+    // ✅ Función para cambiar estado (ACTIVAR/DESACTIVAR)
     const handleToggleStatus = async (id, estadoActual) => {
         if (accionando) return;
         
         let nuevoEstado;
+        let accionTexto;
+        
         if (estadoActual === 'activo') {
             nuevoEstado = 'inactivo';
+            accionTexto = 'DESACTIVAR';
         } else if (estadoActual === 'inactivo') {
             nuevoEstado = 'activo';
+            accionTexto = 'ACTIVAR';
         } else {
+            // Para usuarios suspendidos, los activamos
             nuevoEstado = 'activo';
+            accionTexto = 'ACTIVAR (desde suspensión)';
         }
 
+        const usuario = usuarios.find(u => u.id_usuario === id);
         const confirmar = window.confirm(
-            `¿Estás seguro de ${estadoActual === 'activo' ? 'DESACTIVAR' : 'ACTIVAR'} este usuario?`
+            `¿Estás seguro de ${accionTexto} al usuario "${usuario?.nombre} ${usuario?.apellido || ''}"?\n\n` +
+            `Estado actual: ${estadoActual.toUpperCase()}\n` +
+            `Nuevo estado: ${nuevoEstado.toUpperCase()}`
         );
         if (!confirmar) return;
 
         try {
             setAccionando(id);
+            setError("");
+            setSuccess("");
+            
             await UsuariosService.cambiarEstado(id, nuevoEstado);
 
             // Actualizar el estado en la lista
@@ -113,10 +113,24 @@ export default function Usuarios() {
             );
             setUsuarios(usuariosActualizados);
             calcularEstadisticas(usuariosActualizados);
+            
+            setSuccess(`Usuario ${estadoActual === 'activo' ? 'desactivado' : 'activado'} correctamente`);
+            setTimeout(() => setSuccess(""), 3000);
 
         } catch (error) {
             console.error("Error cambiando estado:", error);
-            setError("Error al cambiar el estado del usuario");
+            
+            if (error.response?.status === 401) {
+                setError("Sesión expirada. Inicia sesión nuevamente.");
+                setTimeout(() => {
+                    logout();
+                    navigate("/login");
+                }, 2000);
+            } else if (error.response?.status === 403) {
+                setError("No tienes permisos para cambiar el estado de usuarios.");
+            } else {
+                setError(error.response?.data?.mensaje || error.response?.data?.message || "Error al cambiar el estado del usuario");
+            }
         } finally {
             setAccionando(null);
         }
@@ -134,6 +148,24 @@ export default function Usuarios() {
             suspendido: '#ef4444',
         };
         return colores[estado] || '#64748b';
+    };
+
+    const getEstadoLabel = (estado) => {
+        const labels = {
+            activo: 'Activo',
+            inactivo: 'Inactivo',
+            suspendido: 'Suspendido'
+        };
+        return labels[estado] || estado;
+    };
+
+    const getRolLabel = (id_rol) => {
+        const roles = {
+            1: 'Administrador',
+            2: 'Cliente',
+            3: 'Almacenista'
+        };
+        return roles[id_rol] || 'Desconocido';
     };
 
     if (error) {
@@ -171,6 +203,7 @@ export default function Usuarios() {
                 <h2>Dashboard</h2>
                 <div className="user-info">
                     <p>Bienvenido, {user?.nombre}</p>
+                    <small>Rol: {getRolLabel(user?.id_rol)}</small>
                 </div>
                 <nav>
                     <button onClick={() => navigate("/panel")}>Inventario</button>
@@ -187,6 +220,51 @@ export default function Usuarios() {
 
             {/* MAIN */}
             <div className="main-area">
+
+                {/* ✅ Mensajes de éxito/error */}
+                {success && (
+                    <div className="success-message" style={{
+                        backgroundColor: '#d4edda',
+                        color: '#155724',
+                        padding: '12px 20px',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        border: '1px solid #c3e6cb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
+                        <span>✅ {success}</span>
+                        <button 
+                            onClick={() => setSuccess("")}
+                            style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="error-message" style={{
+                        backgroundColor: '#f8d7da',
+                        color: '#721c24',
+                        padding: '12px 20px',
+                        borderRadius: '8px',
+                        marginBottom: '20px',
+                        border: '1px solid #f5c6cb',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                    }}>
+                        <span>❌ {error}</span>
+                        <button 
+                            onClick={() => setError("")}
+                            style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer' }}
+                        >
+                            ×
+                        </button>
+                    </div>
+                )}
 
                 {/* STATS CARDS */}
                 <section className="stats-row">
@@ -280,40 +358,83 @@ export default function Usuarios() {
                                                     <span className="status-badge" style={{
                                                         backgroundColor: getEstadoColor(user.estado) + '20',
                                                         color: getEstadoColor(user.estado),
+                                                        padding: '4px 12px',
+                                                        borderRadius: '20px',
+                                                        display: 'inline-block',
+                                                        fontWeight: '500',
+                                                        fontSize: '0.85rem'
                                                     }}>
-                                                        ● {user.estado}
+                                                        ● {getEstadoLabel(user.estado)}
                                                     </span>
                                                 </td>
 
                                                 <td>
-                                                    <div className="acciones-container">
+                                                    <div className="acciones-container" style={{
+                                                        display: 'flex',
+                                                        gap: '8px',
+                                                        flexWrap: 'wrap'
+                                                    }}>
                                                         <button
                                                             className="btn-extra"
                                                             onClick={() =>
                                                                 navigate(`/editar-usuario/${user.id_usuario}`)
                                                             }
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                borderRadius: '6px',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                fontSize: '0.85rem',
+                                                                backgroundColor: '#3b82f6',
+                                                                color: 'white'
+                                                            }}
                                                         >
                                                             Editar
                                                         </button>
 
+                                                        {/* ✅ Botón ACTIVAR/DESACTIVAR - MEJORADO */}
                                                         <button
-                                                            className={`btn-${user.estado === 'activo' ? 'warning' : 'success'}`}
                                                             onClick={() =>
                                                                 handleToggleStatus(user.id_usuario, user.estado)
                                                             }
                                                             disabled={accionando === user.id_usuario}
+                                                            style={{
+                                                                padding: '6px 12px',
+                                                                borderRadius: '6px',
+                                                                border: 'none',
+                                                                cursor: accionando === user.id_usuario ? 'not-allowed' : 'pointer',
+                                                                fontSize: '0.85rem',
+                                                                backgroundColor: user.estado === 'activo' ? '#f59e0b' : '#22c55e',
+                                                                color: 'white',
+                                                                opacity: accionando === user.id_usuario ? 0.6 : 1,
+                                                                transition: 'all 0.3s ease'
+                                                            }}
+                                                            onMouseEnter={(e) => {
+                                                                if (!accionando) {
+                                                                    e.target.style.transform = 'scale(1.05)';
+                                                                }
+                                                            }}
+                                                            onMouseLeave={(e) => {
+                                                                e.target.style.transform = 'scale(1)';
+                                                            }}
                                                         >
-                                                            {accionando === user.id_usuario ? '...' : 
-                                                             user.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                                                            {accionando === user.id_usuario ? (
+                                                                <span>⏳</span>
+                                                            ) : user.estado === 'activo' ? (
+                                                                '🔴 Desactivar'
+                                                            ) : (
+                                                                '🟢 Activar'
+                                                            )}
                                                         </button>
 
-                                                        <button
+                                                        {/* ❌ ELIMINAMOS EL BOTÓN DE ELIMINAR */}
+                                                        {/* <button
                                                             className="btn-danger"
                                                             onClick={() => handleDelete(user.id_usuario)}
                                                             disabled={accionando === user.id_usuario}
                                                         >
                                                             {accionando === user.id_usuario ? '...' : 'Eliminar'}
-                                                        </button>
+                                                        </button> */}
                                                     </div>
                                                 </td>
                                             </tr>
