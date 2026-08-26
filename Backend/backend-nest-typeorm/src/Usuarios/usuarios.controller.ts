@@ -10,6 +10,7 @@ import {
   Query,
   Patch,
   BadRequestException,
+  NotFoundException, // 👈 AGREGADO
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -31,7 +32,7 @@ export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   // --- POST: CREAR (SIN TOKEN) ---
-  @Public() // 👈 Importante: Esto lo hace libre
+  @Public()
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo usuario (Registro público)' })
   @ApiResponse({
@@ -67,7 +68,7 @@ export class UsuariosController {
   }
 
   // --- GET: LISTAR (CON TOKEN) ---
-  @ApiBearerAuth('access-token') // 👈 El candado solo aparece aquí
+  @ApiBearerAuth('access-token')
   @Roles(1)
   @Get()
   @ApiOperation({ summary: 'Obtener lista de todos los usuarios (Solo Admin)' })
@@ -88,39 +89,52 @@ export class UsuariosController {
   })
   @ApiResponse({
     status: 401,
-    description: 'No autorizado.Token faltante o invalido',
+    description: 'No autorizado. Token faltante o inválido',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Prohibido. Se requiere rol de Administrador.',
+  })
+  listarTodos() {
+    return this.usuariosService.obtenerUsuarios();
+  }
+
+  // --- ✅ NUEVO: GET POR ID (CON TOKEN) ---
+  @ApiBearerAuth('access-token')
+  @Roles(1)
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener un usuario por ID (Solo Admin)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuario encontrado.',
     schema: {
-      example: [
-        {
-          statusCode: 401,
-          timestamp: '2026-03-18T00:08:50.305Z',
-          path: '/usuarios',
-          message:
-            'No tienes permiso para acceder a este recurso. Debes iniciar sesión.',
-          errorName: 'UnauthorizedException',
-        },
-      ],
+      example: {
+        id_usuario: 1,
+        nombre: 'Juan',
+        apellido: 'Pérez',
+        email: 'juan@ejemplo.com',
+        id_rol: 2,
+        estado: 'activo',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Usuario no encontrado.',
+    schema: {
+      example: {
+        statusCode: 404,
+        message: 'Usuario con ID 2 no encontrado',
+        error: 'Not Found',
+      },
     },
   })
   @ApiResponse({
     status: 403,
-    description:
-      'Prohibido. Se requiere rol de Administrador para ver esta lista.',
-    schema: {
-      example: [
-        {
-          statusCode: 403,
-          timestamp: '2026-03-18T00:16:02.206Z',
-          path: '/usuarios',
-          message:
-            'No tienes permisos suficientes para acceder a este recurso.',
-          errorName: 'ForbiddenException',
-        },
-      ],
-    },
+    description: 'Prohibido. Se requiere rol de Administrador.',
   })
-  listarTodos() {
-    return this.usuariosService.obtenerUsuarios();
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.findOne(id);
   }
 
   // --- PUT: ACTUALIZAR (CON TOKEN) ---
@@ -146,27 +160,11 @@ export class UsuariosController {
   })
   @ApiResponse({
     status: 403,
-    description:
-      'Prohibido. Se requiere rol de Administrador para ver esta lista.',
-    schema: {
-      example: [
-        {
-          statusCode: 403,
-          timestamp: '2026-03-18T00:16:02.206Z',
-          path: '/usuarios',
-          message:
-            'No tienes permisos suficientes para acceder a este recurso.',
-          errorName: 'ForbiddenException',
-        },
-      ],
-    },
+    description: 'Prohibido. No tienes permisos suficientes.',
   })
   @ApiResponse({
     status: 400,
     description: 'Datos enviados incorrectos.',
-    schema: {
-      example: { statusCode: 400, message: 'Error en los datos enviados.' },
-    },
   })
   actualizar(
     @Param('id', ParseIntPipe) id: number,
@@ -190,12 +188,6 @@ export class UsuariosController {
   @ApiResponse({
     status: 404,
     description: 'Usuario no encontrado.',
-    schema: {
-      example: {
-        mensaje: 'El usuario no existe',
-        borrado: false,
-      },
-    },
   })
   eliminar(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.eliminarUsuario(id);

@@ -11,7 +11,7 @@ export class UsuariosService {
   constructor(
     @InjectRepository(usuario)
     private readonly userRepository: Repository<usuario>,
-  ) { }
+  ) {}
 
   async crearUsuario(datos: CreateUsuarioDto) {
     const salt = await bcrypt.genSalt(10);
@@ -31,6 +31,20 @@ export class UsuariosService {
     return await this.userRepository.find({
       relations: ['rol'],
     });
+  }
+
+  // ✅ NUEVO: OBTENER USUARIO POR ID
+  async findOne(id: number): Promise<usuario> {
+    const usuario = await this.userRepository.findOne({
+      where: { id_usuario: id },
+      relations: ['rol'],
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+
+    return usuario;
   }
 
   async buscarUsuarioFiltro(query: {
@@ -59,11 +73,9 @@ export class UsuariosService {
     return usuarioEncontrado;
   }
 
-  // ✅ ELIMINAR - YA NO SE USA, PERO LO DEJAMOS POR SI ACASO
   async eliminarUsuario(id: number) {
-    // Verificar si el usuario existe
     const usuario = await this.userRepository.findOne({
-      where: { id_usuario: id }
+      where: { id_usuario: id },
     });
 
     if (!usuario) {
@@ -73,16 +85,15 @@ export class UsuariosService {
     // No permitir eliminar el último administrador
     if (usuario.id_rol === 1) {
       const adminCount = await this.userRepository.count({
-        where: { id_rol: 1 }
+        where: { id_rol: 1 },
       });
       if (adminCount <= 1) {
         throw new BadRequestException(
-          'No se puede eliminar el último administrador del sistema. En su lugar, puedes desactivarlo.'
+          'No se puede eliminar el último administrador del sistema. En su lugar, puedes desactivarlo.',
         );
       }
     }
 
-    // En lugar de eliminar, cambiar a estado 'inactivo'
     usuario.estado = 'inactivo';
     await this.userRepository.save(usuario);
 
@@ -94,61 +105,77 @@ export class UsuariosService {
   }
 
   async actualizarUsuario(id: number, datos: Partial<CreateUsuarioDto>) {
-    if (datos.password_hash) {
-      const salt = await bcrypt.genSalt(10);
-      datos.password_hash = await bcrypt.hash(datos.password_hash, salt);
-    }
+  // Buscar el usuario primero
+  const usuario = await this.userRepository.findOne({
+    where: { id_usuario: id }
+  });
 
-    const resultado = await this.userRepository.update(id, {
-      nombre: datos.nombre,
-      apellido: datos.apellido,
-      email: datos.email,
-      passwordHash: datos.password_hash,
-      rol: datos.id_rol ? ({ id_rol: datos.id_rol } as any) : undefined,
-    });
-
-    if (resultado.affected === 0) {
-      return { mensaje: 'Usuario no encontrado', actualizado: false };
-    }
-
-    if (datos.id_rol) {
-      console.log(`[AUDIT] Cambio de rol para el usuario #${id} a Rol: ${datos.id_rol}`);
-    }
-
-    return { mensaje: 'Usuario actualizado con éxito', actualizado: true };
+  if (!usuario) {
+    throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
   }
+
+  // Si hay contraseña, hashearla
+  if (datos.password_hash) {
+    const salt = await bcrypt.genSalt(10);
+    datos.password_hash = await bcrypt.hash(datos.password_hash, salt);
+  }
+
+  // Actualizar los campos
+  if (datos.nombre) usuario.nombre = datos.nombre;
+  if (datos.apellido) usuario.apellido = datos.apellido;
+  if (datos.email) usuario.email = datos.email;
+  if (datos.id_rol) usuario.id_rol = datos.id_rol;
+  if (datos.password_hash) usuario.passwordHash = datos.password_hash;
+
+  // Guardar cambios
+  await this.userRepository.save(usuario);
+
+  // ✅ Devolver el usuario actualizado COMPLETO
+  return {
+    ...usuario,
+    mensaje: 'Usuario actualizado con éxito',
+    actualizado: true
+  };
+}
 
   async findByEmailWithPassword(email: string) {
     return await this.userRepository.findOne({
       where: { email },
-      select: ['id_usuario', 'nombre', 'email', 'passwordHash', 'id_rol', 'estado'], // ✅ Incluir estado
+      select: [
+        'id_usuario',
+        'nombre',
+        'email',
+        'passwordHash',
+        'id_rol',
+        'estado',
+      ],
     });
   }
 
-  // ✅ CAMBIAR ESTADO - MEJORADO
   async cambiarEstado(id: number, estado: string) {
     const usuario = await this.userRepository.findOne({
-      where: { id_usuario: id }
+      where: { id_usuario: id },
     });
 
     if (!usuario) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
 
-    // Validar estados
     const estadosValidos = ['activo', 'inactivo', 'suspendido'];
     if (!estadosValidos.includes(estado)) {
-      throw new BadRequestException(`Estado no válido. Debe ser: ${estadosValidos.join(', ')}`);
+      throw new BadRequestException(
+        `Estado no válido. Debe ser: ${estadosValidos.join(', ')}`,
+      );
     }
 
     // No permitir desactivar al último administrador
     if (estado === 'inactivo' && usuario.id_rol === 1) {
       const adminCount = await this.userRepository.count({
-        where: { id_rol: 1, estado: 'activo' }
+        where: { id_rol: 1, estado: 'activo' },
       });
       if (adminCount <= 1) {
         throw new BadRequestException(
-          'No puedes desactivar al último administrador activo del sistema.'
+          'No puedes desactivar al último administrador activo del sistema.',
         );
       }
     }
