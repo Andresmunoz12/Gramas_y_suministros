@@ -38,6 +38,8 @@ import EditarProveedor from "./pages/AdminPages/EditarProveedor";
 import Categorias from "./pages/AdminPages/Categorias";
 import InsertarCategoria from "./pages/AdminPages/InsertarCategoria";
 import EditarCategoria from "./pages/AdminPages/EditarCategoria";
+import InsertarUsuario from "./pages/AdminPages/InsertarUsuario";
+import EditarUsuario from "./pages/AdminPages/EditarUsuario";
 
 // 👇 Componente separado que usa hooks de router y auth
 function AppRoutesContent() {
@@ -247,6 +249,24 @@ function AppRoutesContent() {
         element={
           <ProtectedRoute requiredRole={1}>
             <EditarCategoria />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/insertar_usuario"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <InsertarUsuario />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/editar_usuario/:id"
+        element={
+          <ProtectedRoute requiredRole={1}>
+            <EditarUsuario />
           </ProtectedRoute>
         }
       />
