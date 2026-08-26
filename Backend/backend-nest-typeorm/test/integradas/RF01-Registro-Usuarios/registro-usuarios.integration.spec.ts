@@ -1,28 +1,3 @@
-// test/integradas/RF01-Registro-Usuarios/registro-usuarios.integration.spec.ts
-
-/**
- * ============================================================================
- * PRUEBAS DE INTEGRACIÓN DIRECTAS A BASE DE DATOS
- * REQUERIMIENTO FUNCIONAL: RF-001 Registrar Usuario / Registro de Clientes
- * ============================================================================
- * 
- * Restricciones técnicas aplicadas:
- * 1. Sin servidor HTTP (No app.listen(), no supertest, no Axios).
- * 2. Sin frontend.
- * 3. Invocación directa de Servicios / Repositorios del código fuente.
- * 4. Conexión directa a la base de datos real configurada en .env.
- * 5. Verificación directa en BD con expect/assert mediante TypeORM.
- * 6. Los usuarios registrados PERMANECEN guardados en la base de datos.
- * 
- * Casos de Prueba Cubiertos (RF-001):
- * - CP-001: Verificar que registro exitoso.
- * - CP-002: Verificar que correo duplicado.
- * - CP-003: Verificar que campos obligatorios.
- * - CP-004: Verificar validación de contraseñas (longitud / formato erróneo).
- * - CP-005: Verificar que correo inválido.
- * - CP-006: Verificar asignación del rol Cliente (id_rol = 2).
- * - CP-007: Verificar cifrado de contraseña en BD.
- */
 
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
@@ -322,7 +297,7 @@ describe('RF-001: Pruebas de Integración - Registrar Usuario / Registro de Clie
 
       expect(usuarioEnBd).not.toBeNull();
       expect(usuarioEnBd?.passwordHash).toBeDefined();
-      
+
       // Aserción 1: La contraseña en BD NO coincide con la contraseña plana original
       expect(usuarioEnBd?.passwordHash).not.toBe(passwordPlana);
 
