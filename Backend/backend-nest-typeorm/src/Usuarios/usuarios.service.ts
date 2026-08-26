@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// src/Usuarios/usuarios.service.ts
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { usuario } from './usuarios.entity';
@@ -20,9 +21,7 @@ export class UsuariosService {
       nombre: datos.nombre,
       apellido: datos.apellido,
       email: datos.email,
-      // Usamos el nombre de la clase entidad: passwordHash
       passwordHash: hash,
-      // Vinculamos el objeto rol con el ID que viene del DTO
       id_rol: datos.id_rol,
     });
     return await this.userRepository.save(nuevoUsuario);
@@ -42,7 +41,6 @@ export class UsuariosService {
   }) {
     const { nombre, apellido, email, id } = query;
 
-    // Construimos el objeto de búsqueda dinámicamente
     const busqueda: any = {};
     if (id) busqueda.id_usuario = id;
     if (nombre) busqueda.nombre = nombre;
@@ -51,7 +49,7 @@ export class UsuariosService {
 
     const usuarioEncontrado = await this.userRepository.findOne({
       where: busqueda,
-      relations: ['rol'], // Para que también traiga su rol
+      relations: ['rol'],
     });
 
     if (!usuarioEncontrado) {
@@ -61,35 +59,51 @@ export class UsuariosService {
     return usuarioEncontrado;
   }
 
+  // ✅ ELIMINAR - YA NO SE USA, PERO LO DEJAMOS POR SI ACASO
   async eliminarUsuario(id: number) {
-    // El método delete es el más directo para borrar por ID
-    const resultado = await this.userRepository.delete(id);
+    // Verificar si el usuario existe
+    const usuario = await this.userRepository.findOne({
+      where: { id_usuario: id }
+    });
 
-    // Verificamos si se borró algo (affected será 1 si tuvo éxito, 0 si el ID no existía)
-    if (resultado.affected === 0) {
-      return { mensaje: `El usuario con ID ${id} no existe`, borrado: false };
+    if (!usuario) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
 
+    // No permitir eliminar el último administrador
+    if (usuario.id_rol === 1) {
+      const adminCount = await this.userRepository.count({
+        where: { id_rol: 1 }
+      });
+      if (adminCount <= 1) {
+        throw new BadRequestException(
+          'No se puede eliminar el último administrador del sistema. En su lugar, puedes desactivarlo.'
+        );
+      }
+    }
+
+    // En lugar de eliminar, cambiar a estado 'inactivo'
+    usuario.estado = 'inactivo';
+    await this.userRepository.save(usuario);
+
     return {
-      mensaje: `Usuario con ID ${id} eliminado correctamente`,
-      borrado: true,
+      mensaje: `Usuario con ID ${id} ha sido desactivado (no eliminado)`,
+      borrado: false,
+      desactivado: true,
     };
   }
 
   async actualizarUsuario(id: number, datos: Partial<CreateUsuarioDto>) {
-    // Si el usuario envía una nueva contraseña, hay que hashearla de nuevo
     if (datos.password_hash) {
       const salt = await bcrypt.genSalt(10);
       datos.password_hash = await bcrypt.hash(datos.password_hash, salt);
     }
 
-    // Actualizamos en la DB usando el ID
     const resultado = await this.userRepository.update(id, {
       nombre: datos.nombre,
       apellido: datos.apellido,
       email: datos.email,
       passwordHash: datos.password_hash,
-      // Si envían un nuevo rol, lo mapeamos
       rol: datos.id_rol ? ({ id_rol: datos.id_rol } as any) : undefined,
     });
 
@@ -107,13 +121,12 @@ export class UsuariosService {
   async findByEmailWithPassword(email: string) {
     return await this.userRepository.findOne({
       where: { email },
-      select: ['id_usuario', 'nombre', 'email', 'passwordHash', 'id_rol'],
+      select: ['id_usuario', 'nombre', 'email', 'passwordHash', 'id_rol', 'estado'], // ✅ Incluir estado
     });
   }
 
-  // 👇 NUEVO MÉTODO AGREGADO - CAMBIAR ESTADO
+  // ✅ CAMBIAR ESTADO - MEJORADO
   async cambiarEstado(id: number, estado: string) {
-    // Buscar el usuario primero para verificar que existe
     const usuario = await this.userRepository.findOne({
       where: { id_usuario: id }
     });
@@ -122,16 +135,31 @@ export class UsuariosService {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
 
-    // Validar que el estado sea válido (opcional pero recomendado)
+    // Validar estados
     const estadosValidos = ['activo', 'inactivo', 'suspendido'];
     if (!estadosValidos.includes(estado)) {
-      throw new Error(`Estado no válido. Debe ser: ${estadosValidos.join(', ')}`);
+      throw new BadRequestException(`Estado no válido. Debe ser: ${estadosValidos.join(', ')}`);
     }
 
-    // Actualizar solo el estado
-    usuario.estado = estado;
+    // No permitir desactivar al último administrador
+    if (estado === 'inactivo' && usuario.id_rol === 1) {
+      const adminCount = await this.userRepository.count({
+        where: { id_rol: 1, estado: 'activo' }
+      });
+      if (adminCount <= 1) {
+        throw new BadRequestException(
+          'No puedes desactivar al último administrador activo del sistema.'
+        );
+      }
+    }
 
-    // Guardar los cambios
-    return await this.userRepository.save(usuario);
+    usuario.estado = estado;
+    await this.userRepository.save(usuario);
+
+    return {
+      mensaje: `Usuario ${usuario.nombre} ${estado === 'activo' ? 'activado' : 'desactivado'} correctamente`,
+      id_usuario: usuario.id_usuario,
+      nuevo_estado: estado,
+    };
   }
 }

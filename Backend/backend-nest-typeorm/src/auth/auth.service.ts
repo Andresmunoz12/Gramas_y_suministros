@@ -1,5 +1,5 @@
 // src/auth/auth.service.ts
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { UsuariosService } from '../Usuarios/usuarios.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -21,6 +21,19 @@ export class AuthService {
 
         if (!user || !pass) {
             throw new UnauthorizedException('Credenciales inválidas');
+        }
+
+        // ✅ VERIFICAR EL ESTADO DEL USUARIO ANTES DE VALIDAR CONTRASEÑA
+        if (user.estado === 'inactivo') {
+            throw new BadRequestException(
+                'Tu cuenta ha sido desactivada temporalmente. Comunícate con la línea de atención al cliente para más información.'
+            );
+        }
+
+        if (user.estado === 'suspendido') {
+            throw new BadRequestException(
+                'Tu cuenta ha sido suspendida. Por favor, contacta al administrador del sistema.'
+            );
         }
 
         const isMatch = await bcrypt.compare(pass, user.passwordHash);
