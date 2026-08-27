@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/LoginAndRegister.css";
 import GlobalButton from "../components/GlobalButton";
-import NavComponent from "../components/GlobalNav";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,7 +10,6 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [adminCode, setAdminCode] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +19,11 @@ export default function Login() {
 
     try {
       console.log("1. Intentando login con:", { email });
-      const data = await login({ email, password_hash: password });
+
+      const data = await login({
+        email,
+        password_hash: password,
+      });
 
       console.log("2. Respuesta completa:", data);
       console.log("3. User recibido:", data.user);
@@ -43,117 +45,347 @@ export default function Login() {
 
     } catch (error) {
       console.error("❌ Error completo:", error);
-      
-      // ✅ Manejar errores de cuenta desactivada/suspendida
+
       if (error.response?.status === 400) {
         const errorMessage = error.response?.data?.message || "";
-        
-        if (errorMessage.toLowerCase().includes("desactivada")) {
-          setMsg("🔒 Tu cuenta ha sido desactivada temporalmente. Comunícate con la línea de atención al cliente para más información.");
-        } else if (errorMessage.toLowerCase().includes("suspendida")) {
-          setMsg("⛔ Tu cuenta ha sido suspendida. Por favor, contacta al administrador del sistema.");
-        } else if (errorMessage.toLowerCase().includes("credenciales")) {
-          setMsg("❌ Credenciales inválidas. Por favor, verifica tu email y contraseña.");
+
+        if (
+          errorMessage
+            .toLowerCase()
+            .includes("desactivada")
+        ) {
+          setMsg(
+            "🔒 Tu cuenta ha sido desactivada temporalmente. Comunícate con la línea de atención al cliente para más información."
+          );
+        } else if (
+          errorMessage
+            .toLowerCase()
+            .includes("suspendida")
+        ) {
+          setMsg(
+            "⛔ Tu cuenta ha sido suspendida. Por favor, contacta al administrador del sistema."
+          );
+        } else if (
+          errorMessage
+            .toLowerCase()
+            .includes("credenciales")
+        ) {
+          setMsg(
+            "❌ Credenciales inválidas. Por favor, verifica tu email y contraseña."
+          );
         } else {
           setMsg(errorMessage);
         }
+
       } else if (error.response?.status === 401) {
-        setMsg("❌ Credenciales inválidas. Por favor, verifica tu email y contraseña.");
+        setMsg(
+          "❌ Credenciales inválidas. Por favor, verifica tu email y contraseña."
+        );
+
       } else {
-        setMsg(error.message || "Error al iniciar sesión");
+        setMsg(
+          error.message || "Error al iniciar sesión"
+        );
       }
+
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!loading) {
+      handleLogin();
+    }
+  };
+
+  const isWarning =
+    msg.toLowerCase().includes("desactivada") ||
+    msg.toLowerCase().includes("suspendida");
+
+  const isError =
+    msg.toLowerCase().includes("error") ||
+    msg.toLowerCase().includes("inválidas") ||
+    msg.toLowerCase().includes("inválido") ||
+    msg.toLowerCase().includes("credenciales");
+
   return (
-    <>
-      <NavComponent />
-      <div className="auth-container">
+    <div className="auth-page">
 
-        <div className="auth-card">
+      {/* =====================================================
+          PANEL IZQUIERDO
+          ===================================================== */}
 
-          <h1 className="auth-title">Iniciar sesión</h1>
+      <section className="auth-showcase">
 
-          {/* Correo */}
-          <label className="auth-label">Dirección de correo <span>(Correo electrónico)</span></label>
+        {/* BRAND */}
+
+        <div className="auth-brand">
+
+          <div className="auth-brand-icon">
+            🌱
+          </div>
+
+          <div className="auth-brand-text">
+
+            <span className="auth-brand-name">
+              Gramas y Suministros
+            </span>
+
+            <span className="auth-brand-subtitle">
+              Calidad para cada espacio
+            </span>
+
+          </div>
+
+        </div>
+
+
+        {/* CONTENIDO PRINCIPAL */}
+
+        <div className="auth-showcase-content">
+
+          <h2>
+            Todo para crear
+            <br />
+            espacios <span>increíbles.</span>
+          </h2>
+
+          <p>
+            Encuentra soluciones de calidad en gramas
+            sintéticas y suministros para transformar
+            cualquier espacio en un lugar increíble.
+          </p>
+
+
+          {/* BENEFICIOS */}
+
+          <div className="auth-benefits">
+
+            <span className="auth-benefit">
+              🌿 Productos de calidad
+            </span>
+
+            <span className="auth-benefit">
+              📦 Inventario actualizado
+            </span>
+
+            <span className="auth-benefit">
+              🛒 Compra fácil y rápida
+            </span>
+
+          </div>
+
+          <button
+            type="button"
+            className="showcase-explore-button"
+            onClick={() => navigate("/")}
+          >
+            <span>
+              🌿
+            </span>
+
+            <span>
+              Explorar catálogo
+            </span>
+
+            <strong>
+              →
+            </strong>
+          </button>
+
+        </div>
+
+
+        {/* FOOTER */}
+
+        <div className="auth-showcase-footer">
+
+          <span>
+            © 2026 Gramas y Suministros
+          </span>
+
+          <span>•</span>
+
+          <span>
+            Tu espacio, nuestra calidad
+          </span>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          PANEL DERECHO
+          ===================================================== */}
+
+      <main className="auth-container">
+
+        <form
+          className="auth-card"
+          onSubmit={handleSubmit}
+        >
+
+          {/* TITULO */}
+
+          <h1 className="auth-title">
+            Bienvenido de nuevo 👋
+          </h1>
+
+          <p className="auth-subtitle">
+            Ingresa a tu cuenta para continuar
+            disfrutando de nuestros productos.
+          </p>
+
+
+          {/* =================================================
+              CORREO
+              ================================================= */}
+
+          <label className="auth-label">
+            Dirección de correo
+            <span>(Correo electrónico)</span>
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/email.png" alt="correo" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/email.png"
+              alt="Correo electrónico"
+            />
+
             <input
               type="email"
               className="input-field"
+              placeholder="ejemplo@correo.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (msg) setMsg("");
+              }}
               disabled={loading}
+              autoComplete="email"
+              required
             />
+
           </div>
 
-          {/* Contraseña */}
-          <label className="auth-label">Contraseña</label>
+
+          {/* =================================================
+              CONTRASEÑA
+              ================================================= */}
+
+          <label className="auth-label">
+            Contraseña
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/contraseña.png" alt="password" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/contraseña.png"
+              alt="Contraseña"
+            />
+
             <input
               type="password"
               className="input-field"
+              placeholder="Ingresa tu contraseña"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (msg) setMsg("");
+              }}
               disabled={loading}
+              autoComplete="current-password"
+              required
             />
+
           </div>
 
+
+          {/* =================================================
+              BOTÓN
+              ================================================= */}
+
           <GlobalButton
-            onClick={handleLogin}
-            style={{ width: "100%", marginBottom: "15px" }}
+            type="submit"
+            style={{
+              width: "100%",
+              marginBottom: "10px",
+            }}
             disabled={loading}
           >
-            {loading ? "Iniciando sesión..." : "Continuar"}
+            {loading
+              ? "Iniciando sesión..."
+              : "Continuar"}
           </GlobalButton>
 
-          <p className="auth-link" onClick={() => !loading && navigate("/forgot-password")}>
+
+          {/* =================================================
+              RECUPERAR CONTRASEÑA
+              ================================================= */}
+
+          <p
+            className="auth-link"
+            onClick={() =>
+              !loading &&
+              navigate("/forgot-password")
+            }
+          >
             ¿Olvidaste tu contraseña?
           </p>
 
-          <br />
 
-          <p className="auth-link" onClick={() => !loading && navigate("/register")}>
+          {/* =================================================
+              REGISTRO
+              ================================================= */}
+
+          <p
+            className="auth-link"
+            onClick={() =>
+              !loading &&
+              navigate("/register")
+            }
+          >
             ¿No tienes cuenta? Regístrate aquí
           </p>
 
-          {/* ✅ Mensaje mejorado con estilos según el tipo */}
-          <p 
-            className="auth-message" 
-            style={{
-              color: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida") 
-                ? '#856404' 
-                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas") 
-                ? '#dc3545' 
-                : '#28a745',
-              backgroundColor: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida")
-                ? '#fff3cd'
-                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas")
-                ? '#f8d7da'
-                : '#d4edda',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              border: '1px solid',
-              borderColor: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida")
-                ? '#ffc107'
-                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas")
-                ? '#f5c6cb'
-                : '#c3e6cb',
-              marginTop: '16px',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              whiteSpace: 'pre-line',
-              textAlign: 'center',
-              display: msg ? 'block' : 'none'
-            }}
-          >
-            {msg}
-          </p>
-        </div>
-      </div>
-    </>
+
+          {/* =================================================
+              MENSAJE
+              ================================================= */}
+
+          {msg && (
+            <div
+              className={`auth-message ${
+                isWarning
+                  ? ""
+                  : isError
+                  ? "error"
+                  : "success"
+              }`}
+              style={
+                isWarning
+                  ? {
+                      color: "#856404",
+                      backgroundColor: "#fff3cd",
+                      border:
+                        "1px solid #ffc107",
+                    }
+                  : undefined
+              }
+            >
+              {msg}
+            </div>
+          )}
+
+        </form>
+
+      </main>
+
+    </div>
   );
 }

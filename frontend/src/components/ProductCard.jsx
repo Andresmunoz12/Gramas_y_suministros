@@ -66,6 +66,7 @@ function ProductCard({ producto }) {
           <button className="btn-ver" onClick={handleVerClick}>
             Ver
           </button>
+
           <button
             className="btn-add"
             onClick={handleAddToCart}

@@ -5,13 +5,13 @@ import UsuariosService from "../api/services/usuarios.service";
 import NavComponent from "../components/GlobalNav";
 import { secureStorage } from "../utils/secureStorage";
 import "../styles/EditarPerfil.css";
-import "../styles/Perfil.css";
 
 export default function EditarPerfil() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, login } = useAuth(); // login para refrescar el contexto si es necesario
-  const [message, setMessage] = useState("");
+  const { user, isAuthenticated, updateUser, refreshUser } = useAuth(); // 👈 AGREGAR updateUser y refreshUser
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -20,143 +20,233 @@ export default function EditarPerfil() {
   });
 
   useEffect(() => {
-    // Verificar autenticación
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    // Cargar datos del usuario desde el contexto
-    if (user) {
-      setFormData({
-        nombre: user.nombre || "",
-        apellido: user.apellido || "",
-        email: user.email || "",
-      });
-    }
+    // Cargar datos desde el backend para asegurar que tenemos el apellido
+    const cargarDatos = async () => {
+      try {
+        const data = await UsuariosService.getById(user.id_usuario);
+        setFormData({
+          nombre: data.nombre || "",
+          apellido: data.apellido || "",
+          email: data.email || "",
+        });
+      } catch (error) {
+        // Fallback a los datos del contexto
+        setFormData({
+          nombre: user.nombre || "",
+          apellido: user.apellido || "",
+          email: user.email || "",
+        });
+      }
+    };
+
+    cargarDatos();
   }, [user, isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (message.text) setMessage({ type: "", text: "" });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("");
+    setMessage({ type: "", text: "" });
+
+    if (!formData.nombre.trim() || !formData.apellido.trim() || !formData.email.trim()) {
+      setMessage({
+        type: "error",
+        text: "Todos los campos son obligatorios",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setMessage({
+        type: "error",
+        text: "Por favor ingresa un correo electrónico válido",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
-      // Usar el servicio de usuarios para actualizar
       const response = await UsuariosService.update(user.id_usuario, {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        email: formData.email,
+        nombre: formData.nombre.trim(),
+        apellido: formData.apellido.trim(),
+        email: formData.email.trim().toLowerCase(),
       });
 
       if (response.actualizado) {
-        setMessage("✅ " + (response.mensaje || "Perfil actualizado exitosamente"));
+        setSuccess(true);
+        setMessage({
+          type: "success",
+          text: response.mensaje || "¡Perfil actualizado exitosamente!",
+        });
 
-        // Actualizar el usuario en localStorage a través del contexto
-        // Recargar los datos del usuario
+        // ✅ ACTUALIZAR EL CONTEXTO y localStorage
         const updatedUser = {
-          ...user,
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          email: formData.email,
+          id_usuario: user.id_usuario,
+          nombre: formData.nombre.trim(),
+          apellido: formData.apellido.trim(),
+          email: formData.email.trim().toLowerCase(),
+          id_rol: user.id_rol,
         };
 
-        // Actualizar localStorage directamente (el contexto se actualizará al recargar)
+        // Actualizar contexto usando updateUser
+        updateUser(updatedUser);
+
+        // También actualizar localStorage (updateUser ya lo hace, pero por si acaso)
         secureStorage.setItem("user", JSON.stringify(updatedUser));
 
-        // Opcional: Emitir evento para que el contexto se actualice sin recargar
-        window.dispatchEvent(new Event("storage"));
-
+        // Redirigir después de 2 segundos
         setTimeout(() => navigate("/perfil"), 2000);
       } else {
-        setMessage("❌ " + (response.mensaje || "Error al actualizar el perfil"));
+        setMessage({
+          type: "error",
+          text: response.mensaje || "Error al actualizar el perfil",
+        });
       }
     } catch (error) {
       console.error("Error al actualizar perfil:", error);
 
-      let errorMsg = "❌ Error al conectar con el servidor";
+      let errorMsg = "Error al conectar con el servidor";
       if (error.response?.data?.message) {
         if (Array.isArray(error.response.data.message)) {
-          errorMsg = "❌ " + error.response.data.message.join(", ");
+          errorMsg = error.response.data.message.join(", ");
         } else {
-          errorMsg = "❌ " + error.response.data.message;
+          errorMsg = error.response.data.message;
         }
       } else if (error.message) {
-        errorMsg = "❌ " + error.message;
+        errorMsg = error.message;
       }
 
-      setMessage(errorMsg);
+      setMessage({
+        type: "error",
+        text: errorMsg,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Mostrar nada mientras verifica autenticación
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
 
   return (
     <div className="dashboard">
       <NavComponent />
-      <main>
-        <div className="edit-profile-card glass-effect">
-          <h2>Editar mi Perfil</h2>
-          <p className="subtitle">Actualiza tu información personal para mejores pedidos</p>
+      <main className="edit-perfil-main">
+        <div className="edit-perfil-container">
+          <div className="edit-perfil-card">
+            <div className="edit-perfil-header">
+              <div className="header-icon">✏️</div>
+              <div className="header-text">
+                <h2>Editar Perfil</h2>
+                <p>Actualiza tu información personal</p>
+              </div>
+            </div>
 
-          <form onSubmit={handleSubmit} className="edit-form">
-            <div className="edit-grid">
-              <div className="input-block">
-                <label>Nombre *</label>
-                <input
-                  name="nombre"
-                  placeholder="Tu nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-                />
+            {message.text && (
+              <div className={`edit-message ${message.type}`}>
+                <span>{message.type === "success" ? "✅" : "❌"}</span>
+                {message.text}
               </div>
-              <div className="input-block">
-                <label>Apellido</label>
-                <input
-                  name="apellido"
-                  placeholder="Tu apellido"
-                  value={formData.apellido}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="input-block">
-                <label>Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="correo@ejemplo.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+            )}
 
-              {message && (
-                <div className={`status-message ${message.includes('✅') ? 'success' : 'error'}`}>
-                  {message}
+            {success && (
+              <div className="edit-message success">
+                <span>✅</span> ¡Perfil actualizado! Redirigiendo...
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="edit-form">
+              <div className="edit-grid">
+                <div className="input-group">
+                  <label htmlFor="nombre">
+                    Nombre <span className="required">*</span>
+                  </label>
+                  <input
+                    id="nombre"
+                    name="nombre"
+                    type="text"
+                    placeholder="Tu nombre"
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    disabled={loading || success}
+                  />
                 </div>
-              )}
-            </div>
 
-            <div className="form-actions">
-              <button type="submit" className="btn-save" disabled={loading}>
-                {loading ? "Procesando..." : "Guardar Cambios"}
-              </button>
-              <button type="button" className="btn-cancel" onClick={() => navigate("/perfil")}>
-                Cancelar
-              </button>
-            </div>
-          </form>
+                <div className="input-group">
+                  <label htmlFor="apellido">
+                    Apellido <span className="required">*</span>
+                  </label>
+                  <input
+                    id="apellido"
+                    name="apellido"
+                    type="text"
+                    placeholder="Tu apellido"
+                    value={formData.apellido}
+                    onChange={handleChange}
+                    disabled={loading || success}
+                  />
+                </div>
+
+                <div className="input-group full-width">
+                  <label htmlFor="email">
+                    Correo Electrónico <span className="required">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="correo@ejemplo.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={loading || success}
+                  />
+                </div>
+
+                <div className="input-group full-width">
+                  <div className="info-box">
+                    <span>🔒</span>
+                    <p>La contraseña no se puede cambiar aquí. Si necesitas cambiarla, utiliza la opción "Olvidé mi contraseña" en el inicio de sesión.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="submit"
+                  className="btn-save"
+                  disabled={loading || success}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-small"></span> Guardando...
+                    </>
+                  ) : success ? (
+                    "✅ Guardado"
+                  ) : (
+                    "Guardar Cambios"
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => navigate("/perfil")}
+                  disabled={loading}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </main>
     </div>

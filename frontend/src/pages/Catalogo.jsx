@@ -20,7 +20,6 @@ export default function Index() {
     "Decorativa",
     "Eventos",
     "Suministro",
-    "Mascotas"
   ];
 
   useEffect(() => {

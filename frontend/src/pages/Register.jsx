@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import UsuariosService from "../api/services/usuarios.service";
 import "../styles/LoginAndRegister.css";
 import GlobalButton from "../components/GlobalButton";
-import NavComponent from "../components/GlobalNav";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -12,39 +11,85 @@ export default function Register() {
     nombre: "",
     apellido: "",
     email: "",
-    password_hash: "", // ⚠️ Importante: El backend espera "password_hash"
-    id_rol: 2, // Por defecto, rol de cliente (2)
+    password_hash: "",
+    id_rol: 2,
   });
 
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState({ texto: "", tipo: "" });
+
+  const [msg, setMsg] = useState({
+    texto: "",
+    tipo: "",
+  });
+
+
+  /* ==========================================================
+     MANEJAR CAMBIOS
+     ========================================================== */
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // Mapear 'password' del input a 'password_hash' que espera el backend
-    const fieldName = name === "password" ? "password_hash" : name;
-    setForm({ ...form, [fieldName]: value });
-    // Limpiar mensaje cuando el usuario empieza a escribir
-    if (msg.texto) setMsg({ texto: "", tipo: "" });
+
+    const fieldName =
+      name === "password"
+        ? "password_hash"
+        : name;
+
+    setForm({
+      ...form,
+      [fieldName]: value,
+    });
+
+    if (msg.texto) {
+      setMsg({
+        texto: "",
+        tipo: "",
+      });
+    }
   };
+
+
+  /* ==========================================================
+     REGISTRO
+     ========================================================== */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setMsg({ texto: "", tipo: "" });
 
-    // Validar que la contraseña tenga al menos 8 caracteres
+    if (loading) return;
+
+    setLoading(true);
+
+    setMsg({
+      texto: "",
+      tipo: "",
+    });
+
+
+    /* --------------------------------------------------------
+       VALIDACIÓN DE CONTRASEÑA
+       -------------------------------------------------------- */
+
     if (form.password_hash.length < 8) {
+
       setMsg({
-        texto: "La contraseña debe tener al menos 8 caracteres",
-        tipo: "error"
+        texto:
+          "La contraseña debe tener al menos 8 caracteres.",
+        tipo: "error",
       });
+
       setLoading(false);
+
       return;
     }
 
+
     try {
-      // Datos a enviar al backend
+
+      /* ------------------------------------------------------
+         DATOS PARA EL BACKEND
+         ------------------------------------------------------ */
+
       const datosEnvio = {
         nombre: form.nombre,
         apellido: form.apellido,
@@ -53,14 +98,44 @@ export default function Register() {
         id_rol: form.id_rol,
       };
 
-      const response = await UsuariosService.create(datosEnvio);
+
+      console.log(
+        "📤 Datos enviados:",
+        {
+          ...datosEnvio,
+          password_hash: "********",
+        }
+      );
+
+
+      /* ------------------------------------------------------
+         CREAR USUARIO
+         ------------------------------------------------------ */
+
+      const response =
+        await UsuariosService.create(
+          datosEnvio
+        );
+
+
+      console.log(
+        "✅ Registro exitoso:",
+        response
+      );
+
 
       setMsg({
-        texto: response.mensaje || "Registro exitoso. Ahora inicia sesión.",
-        tipo: "success"
+        texto:
+          response.mensaje ||
+          "Registro exitoso. Ahora inicia sesión.",
+        tipo: "success",
       });
 
-      // Limpiar formulario
+
+      /* ------------------------------------------------------
+         LIMPIAR FORMULARIO
+         ------------------------------------------------------ */
+
       setForm({
         nombre: "",
         apellido: "",
@@ -69,124 +144,380 @@ export default function Register() {
         id_rol: 2,
       });
 
-      // Redirigir al login después de 2 segundos
+
+      /* ------------------------------------------------------
+         REDIRECCIÓN
+         ------------------------------------------------------ */
+
       setTimeout(() => {
         navigate("/login");
       }, 2000);
 
+
     } catch (error) {
-      console.error("Error en registro:", error);
 
-      let errorMsg = "Error al registrarse";
+      console.error(
+        "❌ Error en registro:",
+        error
+      );
 
-      if (error.response?.data?.message) {
-        if (Array.isArray(error.response.data.message)) {
-          errorMsg = error.response.data.message.join(", ");
+
+      let errorMsg =
+        "Error al registrarse";
+
+
+      if (
+        error.response?.data?.message
+      ) {
+
+        if (
+          Array.isArray(
+            error.response.data.message
+          )
+        ) {
+
+          errorMsg =
+            error.response.data.message.join(
+              ", "
+            );
+
         } else {
-          errorMsg = error.response.data.message;
+
+          errorMsg =
+            error.response.data.message;
+
         }
+
       } else if (error.message) {
+
         errorMsg = error.message;
+
       }
 
-      setMsg({ texto: errorMsg, tipo: "error" });
+
+      setMsg({
+        texto: errorMsg,
+        tipo: "error",
+      });
+
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
-  return (
-    <>
-      <NavComponent />
 
-      <form onSubmit={handleSubmit} className="auth-container">
-        <div className="auth-card">
-          <h1 className="auth-title">Crear cuenta</h1>
+  return (
+
+    <div className="auth-page">
+
+      {/* =====================================================
+          PANEL IZQUIERDO
+          ===================================================== */}
+
+      <section className="auth-showcase">
+
+        {/* BRAND */}
+
+        <div className="auth-brand">
+
+          <div className="auth-brand-icon">
+            🌱
+          </div>
+
+          <div className="auth-brand-text">
+
+            <span className="auth-brand-name">
+              Gramas y Suministros
+            </span>
+
+            <span className="auth-brand-subtitle">
+              Calidad para cada espacio
+            </span>
+
+          </div>
+
+        </div>
+
+
+        {/* CONTENIDO */}
+
+        <div className="auth-showcase-content">
+
+          <h2>
+            Crea tu cuenta
+            <br />
+            y empieza a <span>explorar.</span>
+          </h2>
+
+          <p>
+            Regístrate en Gramas y Suministros
+            y descubre una forma sencilla de
+            encontrar productos para tus proyectos.
+          </p>
+
+
+          {/* BENEFICIOS */}
+
+          <div className="auth-benefits">
+
+            <span className="auth-benefit">
+              🌿 Amplio catálogo
+            </span>
+
+            <span className="auth-benefit">
+              📦 Productos disponibles
+            </span>
+
+            <span className="auth-benefit">
+              ⚡ Atención rápida
+            </span>
+
+          </div>
+
+          <button
+            type="button"
+            className="showcase-explore-button"
+            onClick={() => navigate("/")}
+          >
+            <span>🌿</span>
+
+            <span>
+              Explorar catálogo
+            </span>
+
+            <strong>→</strong>
+          </button>
+
+        </div>
+
+
+        {/* FOOTER */}
+
+        <div className="auth-showcase-footer">
+
+          <span>
+            © 2026 Gramas y Suministros
+          </span>
+
+          <span>•</span>
+
+          <span>
+            Tu espacio, nuestra calidad
+          </span>
+
+        </div>
+
+      </section>
+
+
+      {/* =====================================================
+          FORMULARIO
+          ===================================================== */}
+
+      <main className="auth-container">
+
+        <form
+          onSubmit={handleSubmit}
+          className="auth-card"
+        >
+
+          {/* TITULO */}
+
+          <h1 className="auth-title">
+            Crear cuenta 🌱
+          </h1>
+
+          <p className="auth-subtitle">
+            Completa tus datos para crear tu cuenta
+            y comenzar a utilizar la plataforma.
+          </p>
+
+
+          {/* =================================================
+              MENSAJE
+              ================================================= */}
 
           {msg.texto && (
-            <div className={`auth-message ${msg.tipo}`} style={{
-              padding: '10px',
-              marginBottom: '15px',
-              borderRadius: '5px',
-              textAlign: 'center',
-              backgroundColor: msg.tipo === 'success' ? '#d4edda' : '#f8d7da',
-              color: msg.tipo === 'success' ? '#155724' : '#721c24',
-              border: `1px solid ${msg.tipo === 'success' ? '#c3e6cb' : '#f5c6cb'}`
-            }}>
+
+            <div
+              className={`auth-message ${msg.tipo}`}
+            >
               {msg.texto}
             </div>
+
           )}
 
-          <label className="auth-label">Nombre *</label>
+
+          {/* =================================================
+              NOMBRE
+              ================================================= */}
+
+          <label className="auth-label">
+            Nombre
+            <span>(Obligatorio)</span>
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/user.webp" alt="usuario" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/user.webp"
+              alt="Usuario"
+            />
+
             <input
               className="input-field"
               type="text"
               name="nombre"
+              placeholder="Ingresa tu nombre"
               value={form.nombre}
               onChange={handleChange}
+              disabled={loading}
+              autoComplete="given-name"
               required
             />
+
           </div>
 
-          <label className="auth-label">Apellido</label>
+
+          {/* =================================================
+              APELLIDO
+              ================================================= */}
+
+          <label className="auth-label">
+            Apellido
+            <span>(Obligatorio)</span>
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/apellido.png" alt="ape" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/apellido.png"
+              alt="Apellido"
+            />
+
             <input
               className="input-field"
               type="text"
               name="apellido"
+              placeholder="Ingresa tu apellido"
               value={form.apellido}
               onChange={handleChange}
+              disabled={loading}
+              autoComplete="family-name"
+              required
             />
+
           </div>
 
-          <label className="auth-label">Correo electrónico *</label>
+
+          {/* =================================================
+              EMAIL
+              ================================================= */}
+
+          <label className="auth-label">
+            Correo electrónico
+            <span>(Obligatorio)</span>
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/email.png" alt="correo" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/email.png"
+              alt="Correo electrónico"
+            />
+
             <input
               className="input-field"
               type="email"
               name="email"
+              placeholder="ejemplo@correo.com"
               value={form.email}
               onChange={handleChange}
+              disabled={loading}
+              autoComplete="email"
               required
             />
+
           </div>
 
-          <label className="auth-label">Contraseña *</label>
+
+          {/* =================================================
+              CONTRASEÑA
+              ================================================= */}
+
+          <label className="auth-label">
+            Contraseña
+            <span>(Mínimo 8 caracteres)</span>
+          </label>
+
           <div className="input-wrapper">
-            <img src="http://localhost:3000/uploads/icons/contraseña.png" alt="cont" />
+
+            <img
+              src="http://localhost:3000/uploads/icons/contraseña.png"
+              alt="Contraseña"
+            />
+
             <input
               className="input-field"
               type="password"
               name="password"
+              placeholder="Crea una contraseña segura"
               value={form.password_hash}
               onChange={handleChange}
-              required
+              disabled={loading}
+              autoComplete="new-password"
               minLength={8}
+              required
             />
+
           </div>
+
+
+          {/* =================================================
+              BOTÓN
+              ================================================= */}
 
           <GlobalButton
             type="submit"
             disabled={loading}
             style={{
               width: "100%",
-              marginBottom: "15px",
+              marginBottom: "10px",
               opacity: loading ? 0.7 : 1,
-              cursor: loading ? "not-allowed" : "pointer"
+              cursor: loading
+                ? "not-allowed"
+                : "pointer",
             }}
           >
-            {loading ? "Registrando..." : "Registrarse"}
+            {loading
+              ? "Creando cuenta..."
+              : "Crear mi cuenta"}
           </GlobalButton>
 
-          <p className="auth-link" onClick={() => navigate("/login")}>
-            ¿Ya tienes cuenta? Inicia sesión aquí
+
+          {/* =================================================
+              LOGIN
+              ================================================= */}
+
+          <p
+            className="auth-link"
+            onClick={() =>
+              !loading &&
+              navigate("/login")
+            }
+          >
+            ¿Ya tienes una cuenta?
+            {" "}
+            Inicia sesión aquí
           </p>
-        </div>
-      </form>
-    </>
+
+        </form>
+
+      </main>
+
+    </div>
   );
 }
