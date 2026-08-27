@@ -1,5 +1,3 @@
-// test/unit/RF06-Asignacion-Roles-Usuario/asignacion-roles-usuario.spec.ts
-
 /**
  * MÓDULO: ASIGNACIÓN DE ROLES DE USUARIO
  * 
@@ -30,6 +28,7 @@ const mockUserRepository = {
   create: jest.fn(),
   save: jest.fn(),
   update: jest.fn(),
+  findOne: jest.fn(), // 👈 AGREGADO
 };
 
 // ============================================
@@ -75,7 +74,7 @@ describe('Asignación de Roles de Usuario - Casos de Prueba', () => {
 
       // Assert
       expect(result).toBeDefined();
-      expect(result.id_rol).toBe(2); // Rol de Cliente
+      expect(result.id_rol).toBe(2);
       expect(mockUserRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           id_rol: 2,
@@ -95,7 +94,7 @@ describe('Asignación de Roles de Usuario - Casos de Prueba', () => {
 
       // Assert
       expect(roles).toBeDefined();
-      expect(roles).toEqual([1]); // Únicamente Administrador
+      expect(roles).toEqual([1]);
     });
 
     it('debería validar que eliminar un usuario requiera únicamente rol de Administrador (1)', () => {
@@ -115,25 +114,43 @@ describe('Asignación de Roles de Usuario - Casos de Prueba', () => {
   describe('CP-041 - Verificar que verificar asignación de rol realizada por un administrador', () => {
     it('debería permitir cambiar el rol del usuario si la acción proviene de un administrador autorizado', async () => {
       // Arrange
+      // 👈 AGREGAR EL MOCK DE findOne
+      mockUserRepository.findOne.mockResolvedValue({
+        id_usuario: 15,
+        nombre: 'Carlos',
+        apellido: 'Lopez',
+        email: 'carlos@test.com',
+        passwordHash: 'hashed',
+        id_rol: 2,
+        estado: 'activo',
+      });
+      
       mockUserRepository.update.mockResolvedValue({ affected: 1 });
+      mockUserRepository.save.mockResolvedValue({
+        id_usuario: 15,
+        nombre: 'Carlos',
+        apellido: 'Lopez',
+        email: 'carlos@test.com',
+        passwordHash: 'hashed',
+        id_rol: 1,
+        estado: 'activo',
+      });
+
       const adminUpdateData: UpdateUsuarioDto = {
-        id_rol: 1, // Cambiando a Administrador
+        id_rol: 1,
       };
 
       // Act
       const result = await controller.actualizar(15, adminUpdateData);
 
       // Assert
-      expect(result).toEqual({
-        mensaje: 'Usuario actualizado con éxito',
-        actualizado: true,
+      expect(result).toBeDefined();
+      expect(result.actualizado).toBe(true);
+      expect(result.id_rol).toBe(1); // 👈 VERIFICAR QUE EL ROL CAMBIÓ
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        where: { id_usuario: 15 }
       });
-      expect(mockUserRepository.update).toHaveBeenCalledWith(
-        15,
-        expect.objectContaining({
-          rol: { id_rol: 1 },
-        })
-      );
+      expect(mockUserRepository.save).toHaveBeenCalled();
     });
   });
 

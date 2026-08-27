@@ -1,5 +1,3 @@
-// test/unit/RF04-Actualizar-Perfil-Usuario/actualizar-perfil-usuario.spec.ts
-
 /**
  * MÓDULO: ACTUALIZAR PERFIL DE USUARIO
  * 
@@ -30,6 +28,8 @@ import { mockUserRecord, mockUpdatedUserRecord } from './helpers/test-data';
 
 const mockUserRepository = {
   update: jest.fn(),
+  findOne: jest.fn(), // 👈 AGREGADO
+  save: jest.fn(),    // 👈 AGREGADO
 };
 
 // ============================================
@@ -67,7 +67,24 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
   describe('CP-026 - Verificar que actualización exitosa del perfil', () => {
     it('debería retornar un mensaje de éxito cuando los parámetros de actualización sean correctos', async () => {
       // Arrange
-      mockUserRepository.update.mockResolvedValue({ affected: 1 });
+      const mockUser = {
+        id_usuario: 5,
+        nombre: 'Andres Felipe',
+        apellido: 'Muñoz',
+        email: 'andres@gramas.com',
+        id_rol: 2,
+        passwordHash: 'hashed',
+        estado: 'activo',
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepository.save.mockResolvedValue({
+        ...mockUser,
+        nombre: 'Andres Modificado',
+        apellido: 'Muñoz Lombana',
+        email: 'andres.new@gramas.com',
+      });
+
       const updateDto: UpdateUsuarioDto = {
         nombre: 'Andres Modificado',
         apellido: 'Muñoz Lombana',
@@ -78,10 +95,14 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
       const result = await controller.actualizar(5, updateDto);
 
       // Assert
-      expect(result).toEqual({
-        mensaje: 'Usuario actualizado con éxito',
-        actualizado: true,
+      expect(result).toBeDefined();
+      expect(result.actualizado).toBe(true);
+      expect(result.mensaje).toBe('Usuario actualizado con éxito');
+      expect(result.nombre).toBe('Andres Modificado');
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        where: { id_usuario: 5 }
       });
+      expect(mockUserRepository.save).toHaveBeenCalled();
     });
   });
 
@@ -93,7 +114,7 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
     it('debería fallar la validación si se envía un campo obligatorio con valor vacío', async () => {
       // Arrange
       const dto = new UpdateUsuarioDto();
-      dto.nombre = ''; // nombre no puede estar vacío si se envía
+      dto.nombre = '';
 
       // Act
       const errors = await validate(dto);
@@ -130,8 +151,21 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
   describe('CP-029 - Verificar que correo electrónico duplicado', () => {
     it('debería lanzar un error de la base de datos si el correo ya está registrado por otro usuario', async () => {
       // Arrange
-      // Simulamos que la base de datos lanza un error de llave duplicada (ej. código 23505 de PostgreSQL)
-      mockUserRepository.update.mockRejectedValue(new Error('duplicate key value violates unique constraint'));
+      const mockUser = {
+        id_usuario: 5,
+        nombre: 'Andres',
+        apellido: 'Muñoz',
+        email: 'andres@gramas.com',
+        id_rol: 2,
+        passwordHash: 'hashed',
+        estado: 'activo',
+      };
+
+      // 👈 AGREGAR MOCK DE findOne (primero encuentra el usuario)
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      // Simulamos que la base de datos lanza un error de llave duplicada
+      mockUserRepository.save.mockRejectedValue(new Error('duplicate key value violates unique constraint'));
+
       const updateDto: UpdateUsuarioDto = {
         email: 'duplicado@gramas.com',
       };
@@ -150,7 +184,23 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
   describe('CP-030 - Verificar actualización en la base de datos', () => {
     it('debería ejecutar el query de actualización con el ID y valores correctos', async () => {
       // Arrange
-      mockUserRepository.update.mockResolvedValue({ affected: 1 });
+      const mockUser = {
+        id_usuario: 5,
+        nombre: 'Andres',
+        apellido: 'Muñoz',
+        email: 'andres@gramas.com',
+        id_rol: 2,
+        passwordHash: 'hashed',
+        estado: 'activo',
+      };
+
+      mockUserRepository.findOne.mockResolvedValue(mockUser);
+      mockUserRepository.save.mockResolvedValue({
+        ...mockUser,
+        nombre: 'Nuevo Nombre',
+        email: 'nuevo@correo.com',
+      });
+
       const updateDto: UpdateUsuarioDto = {
         nombre: 'Nuevo Nombre',
         email: 'nuevo@correo.com',
@@ -160,8 +210,10 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
       await controller.actualizar(5, updateDto);
 
       // Assert
-      expect(mockUserRepository.update).toHaveBeenCalledWith(
-        5,
+      expect(mockUserRepository.findOne).toHaveBeenCalledWith({
+        where: { id_usuario: 5 }
+      });
+      expect(mockUserRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           nombre: 'Nuevo Nombre',
           email: 'nuevo@correo.com',
@@ -181,8 +233,8 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
 
       // Assert
       expect(roles).toBeDefined();
-      expect(roles).toContain(2); // Cliente
-      expect(roles).toContain(1); // Administrador
+      expect(roles).toContain(2);
+      expect(roles).toContain(1);
     });
 
     it('debería estar protegida por defecto sin poseer el decorador Public', () => {
@@ -190,7 +242,7 @@ describe('Actualizar Perfil de Usuario - Casos de Prueba', () => {
       const isPublic = Reflect.getMetadata('isPublic', controller.actualizar);
 
       // Assert
-      expect(isPublic).toBeUndefined(); // Por lo tanto, requiere autenticación mediante el guard global
+      expect(isPublic).toBeUndefined();
     });
   });
 });
