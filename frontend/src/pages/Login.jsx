@@ -43,7 +43,25 @@ export default function Login() {
 
     } catch (error) {
       console.error("❌ Error completo:", error);
-      setMsg(error.message || "Error al iniciar sesión");
+      
+      // ✅ Manejar errores de cuenta desactivada/suspendida
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.message || "";
+        
+        if (errorMessage.toLowerCase().includes("desactivada")) {
+          setMsg("🔒 Tu cuenta ha sido desactivada temporalmente. Comunícate con la línea de atención al cliente para más información.");
+        } else if (errorMessage.toLowerCase().includes("suspendida")) {
+          setMsg("⛔ Tu cuenta ha sido suspendida. Por favor, contacta al administrador del sistema.");
+        } else if (errorMessage.toLowerCase().includes("credenciales")) {
+          setMsg("❌ Credenciales inválidas. Por favor, verifica tu email y contraseña.");
+        } else {
+          setMsg(errorMessage);
+        }
+      } else if (error.response?.status === 401) {
+        setMsg("❌ Credenciales inválidas. Por favor, verifica tu email y contraseña.");
+      } else {
+        setMsg(error.message || "Error al iniciar sesión");
+      }
     } finally {
       setLoading(false);
     }
@@ -102,7 +120,36 @@ export default function Login() {
             ¿No tienes cuenta? Regístrate aquí
           </p>
 
-          <p className={`auth-message ${msg.toLowerCase().includes("error") ? "error" : "success"}`}>
+          {/* ✅ Mensaje mejorado con estilos según el tipo */}
+          <p 
+            className="auth-message" 
+            style={{
+              color: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida") 
+                ? '#856404' 
+                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas") 
+                ? '#dc3545' 
+                : '#28a745',
+              backgroundColor: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida")
+                ? '#fff3cd'
+                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas")
+                ? '#f8d7da'
+                : '#d4edda',
+              padding: '12px 16px',
+              borderRadius: '8px',
+              border: '1px solid',
+              borderColor: msg.toLowerCase().includes("desactivada") || msg.toLowerCase().includes("suspendida")
+                ? '#ffc107'
+                : msg.toLowerCase().includes("error") || msg.toLowerCase().includes("inválidas")
+                ? '#f5c6cb'
+                : '#c3e6cb',
+              marginTop: '16px',
+              fontSize: '14px',
+              lineHeight: '1.5',
+              whiteSpace: 'pre-line',
+              textAlign: 'center',
+              display: msg ? 'block' : 'none'
+            }}
+          >
             {msg}
           </p>
         </div>
