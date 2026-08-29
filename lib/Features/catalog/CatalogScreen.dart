@@ -18,6 +18,7 @@ import 'package:gramas_y_suministros_movil/core/network/api_config.dart';
 import 'package:gramas_y_suministros_movil/core/network/http_cache_service.dart';
 import 'package:gramas_y_suministros_movil/Providers/cart_provider.dart';
 import 'package:gramas_y_suministros_movil/Features/cart/CartScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/catalog/ProductDetailScreen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -30,6 +31,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final List<String> categories = ['Todas', 'Deportiva', 'Residencial', 'Comercial'];
   int selectedCategory = 0;
   int selectedTabIndex = 0;
+  String searchQuery = '';
 
   final HttpCacheService _cacheService = HttpCacheService();
   List<Producto>? _products;
@@ -208,7 +210,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.52,
+        childAspectRatio: 0.46,
       ),
       itemBuilder: (context, index) {
         return _ProductCard(product: products[index]);
@@ -217,14 +219,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   List<Producto> _filterProducts(List<Producto> products) {
-    if (selectedCategory == 0) return products;
-    final String selected = categories[selectedCategory].toLowerCase();
     return products.where((product) {
-      final categoryMatch = product.categoryName?.toLowerCase().contains(selected) ?? false;
-      final titleMatch = product.title.toLowerCase().contains(selected);
-      final subtitleMatch = product.subtitle.toLowerCase().contains(selected);
-      final brandMatch = product.brand?.toLowerCase().contains(selected) ?? false;
-      return categoryMatch || titleMatch || subtitleMatch || brandMatch;
+      // Filtro por categoría
+      bool categoryMatch = true;
+      if (selectedCategory != 0) {
+        final String selected = categories[selectedCategory].toLowerCase();
+        categoryMatch = (product.categoryName?.toLowerCase().contains(selected) ?? false) ||
+            product.title.toLowerCase().contains(selected) ||
+            product.subtitle.toLowerCase().contains(selected) ||
+            (product.brand?.toLowerCase().contains(selected) ?? false);
+      }
+
+      // Filtro por texto de búsqueda
+      bool searchMatch = true;
+      if (searchQuery.trim().isNotEmpty) {
+        final String query = searchQuery.trim().toLowerCase();
+        final titleMatch = product.title.toLowerCase().contains(query);
+        final subtitleMatch = product.subtitle.toLowerCase().contains(query);
+        final descriptionMatch = product.description?.toLowerCase().contains(query) ?? false;
+        final categoryMatchStr = product.categoryName?.toLowerCase().contains(query) ?? false;
+        final brandMatchStr = product.brand?.toLowerCase().contains(query) ?? false;
+        searchMatch = titleMatch || subtitleMatch || descriptionMatch || categoryMatchStr || brandMatchStr;
+      }
+
+      return categoryMatch && searchMatch;
     }).toList();
   }
 
@@ -236,6 +254,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedTabIndex == 2 ? 3 : selectedTabIndex,
         onTap: (index) {
+          if (index == 1) {
+            // ✅ Pestaña de Nosotros
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NosotrosScreen()),
+            );
+            return;
+          }
           if (index == 2) {
             // ✅ Pestaña de Cotizaciones - pasar token
             final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -251,9 +277,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
           setState(() {
             selectedTabIndex = index > 2 ? index - 1 : index;
           });
-          if (index == 1) {
-            _loadOrders();
-          }
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
@@ -266,8 +289,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
             label: 'Catálogo',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.local_shipping_outlined),
-            label: 'Pedidos',
+            icon: Icon(Icons.info_outline),
+            label: 'Nosotros',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt_long_outlined),
@@ -293,8 +316,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
       case 0:
         return _buildCatalogView(context);
       case 1:
-        return _buildOrdersView(context);
-      case 2:
         return _buildProfileView(context);
       default:
         return _buildCatalogView(context);
@@ -425,11 +446,26 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ],
           ),
-          child: const TextField(
+          child: TextField(
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+            },
             decoration: InputDecoration(
-              contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+              contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
               hintText: 'Buscar grama o fertilizante...',
-              prefixIcon: Icon(Icons.search, color: Color(0xFF4A7C3E)),
+              prefixIcon: const Icon(Icons.search, color: Color(0xFF4A7C3E)),
+              suffixIcon: searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Color(0xFF6B7280)),
+                      onPressed: () {
+                        setState(() {
+                          searchQuery = '';
+                        });
+                      },
+                    )
+                  : null,
               border: InputBorder.none,
             ),
           ),
@@ -1129,166 +1165,217 @@ class _ProductCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 110,
-            decoration: BoxDecoration(
-              color: product.color,
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(22),
-              child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: product.imageUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (context, url) => Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            product.accentColor,
+          // Imagen con badge de Categoría flotante
+          Stack(
+            children: [
+              Container(
+                height: 115,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: product.color,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: product.imageUrl != null && product.imageUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: product.imageUrl!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          placeholder: (context, url) => Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(product.accentColor),
+                            ),
                           ),
+                          errorWidget: (context, url, error) => Center(
+                            child: Icon(Icons.grass, size: 42, color: product.accentColor),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(Icons.grass, size: 42, color: product.accentColor),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Center(
-                        child: Icon(
-                          Icons.grass,
-                          size: 42,
-                          color: product.accentColor,
-                        ),
-                      ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.grass,
-                        size: 42,
-                        color: product.accentColor,
+                ),
+              ),
+              if (product.categoryName != null && product.categoryName!.isNotEmpty)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.92),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Text(
+                      product.categoryName!,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2D5A27),
                       ),
                     ),
-            ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+
+          // Título
           Text(
             product.title,
             style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
               color: Color(0xFF1F3D24),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
-          if (product.categoryName != null && product.categoryName!.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.only(bottom: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F7E5),
-                borderRadius: BorderRadius.circular(16),
+          const SizedBox(height: 6),
+
+          // Descripción / Subtítulo
+          Expanded(
+            child: Text(
+              product.subtitle,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF6B7280),
+                height: 1.3,
               ),
-              child: Text(
-                product.categoryName!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Stock
+          Row(
+            children: [
+              const Text('📦 ', style: TextStyle(fontSize: 11)),
+              Text(
+                'Stock: ${product.stock}',
                 style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
                   color: Color(0xFF2D5A27),
                 ),
               ),
-            ),
-          Text(
-            product.subtitle,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: Color(0xFFF3F4F6)),
+          const SizedBox(height: 10),
+
+          // Precio Destacado
+          Text(
+            product.formattedPrice,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1F3D24),
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Fila de Botones Ver y Agregar
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Botón Ver
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.formattedPrice,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F3D24),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(product: product),
                       ),
-                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F7E4),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      product.unit,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
+                    child: const Center(
+                      child: Text(
+                        'Ver',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2D5A27),
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              GestureDetector(
-                onTap: () {
-                  final cartProvider = Provider.of<CartProvider>(context, listen: false);
-                  cartProvider.addProduct(product);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('✅ ${product.title} agregado a la cotización'),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: const Color(0xFF2D5A27),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      action: SnackBarAction(
-                        label: 'Ver cotización',
-                        textColor: Colors.white,
-                        onPressed: () async {
-                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                          final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
-                          if (context.mounted) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CartScreen(token: token),
-                              ),
-                            );
-                          }
-                        },
+              const SizedBox(width: 8),
+
+              // Botón Agregar
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+                    cartProvider.addProduct(product);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('✅ ${product.title} agregado a la cotización'),
+                        duration: const Duration(seconds: 2),
+                        backgroundColor: const Color(0xFF2D5A27),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        action: SnackBarAction(
+                          label: 'Ver cotización',
+                          textColor: Colors.white,
+                          onPressed: () async {
+                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                            final String? token = authProvider.usuario?.token ?? await authProvider.getSavedToken();
+                            if (context.mounted) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CartScreen(token: token),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF65C466),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Agregar',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  );
-                },
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8F7E4),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.add_shopping_cart_outlined,
-                    size: 18,
-                    color: Color(0xFF2D5A27),
                   ),
                 ),
               ),

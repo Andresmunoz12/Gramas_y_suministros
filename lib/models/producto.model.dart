@@ -13,6 +13,10 @@ class Producto {
   final String? description;
   final String? categoryName;
   final String? brand;
+  final int stock;
+  final String? material;
+  final String? peso;
+  final String? altura;
 
   const Producto({
     required this.id,
@@ -26,12 +30,17 @@ class Producto {
     this.description,
     this.categoryName,
     this.brand,
+    this.stock = 5,
+    this.material = 'Polietileno (PE)',
+    this.peso = '2.750 kg',
+    this.altura = '50.00 mm',
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) {
     final precio = json['precio'];
     final String? categoryName = json['categoria']?['nombre']?.toString() ?? json['marca']?.toString();
     final String subtitle = json['descripcion']?.toString() ?? categoryName ?? 'Grama y suministros';
+    final int stockVal = int.tryParse(json['stock']?.toString() ?? json['stock_actual']?.toString() ?? '5') ?? 5;
 
     return Producto(
       id: json['id_producto']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -44,7 +53,11 @@ class Producto {
       imageUrl: _normalizeImageUrl(json['imagen']?.toString()),
       description: json['descripcion']?.toString(),
       categoryName: categoryName,
-      brand: json['marca']?.toString(),
+      brand: json['marca']?.toString() ?? 'GreenTurf',
+      stock: stockVal,
+      material: json['material']?.toString() ?? 'Polietileno (PE)',
+      peso: json['peso']?.toString() ?? '2.750 kg',
+      altura: json['altura']?.toString() ?? '50.00 mm',
     );
   }
 

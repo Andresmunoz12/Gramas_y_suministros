@@ -6,6 +6,8 @@ import 'package:gramas_y_suministros_movil/Features/admin/ReportesScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/StockScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/UsersScreen.dart';
 import 'package:gramas_y_suministros_movil/Features/admin/GestionCotizacionesScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/ProveedoresScreen.dart';
+import 'package:gramas_y_suministros_movil/Features/admin/CategoriasScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -331,6 +333,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const UsersScreen()),
+                );
+              }),
+              _buildActionButton(context, Icons.business_rounded, 'Proveedores', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProveedoresScreen()),
+                );
+              }),
+              _buildActionButton(context, Icons.category_rounded, 'Categorías', () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriasScreen()),
                 );
               }),
               _buildActionButton(context, Icons.bar_chart, 'Reportes', () {

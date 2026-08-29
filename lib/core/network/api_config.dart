@@ -10,4 +10,5 @@ class ApiConfig {
   static const String stock = '$baseUrl/stock';
   static const String movimientos = '$baseUrl/movimientos';
   static const String cotizaciones = '$baseUrl/cotizaciones';
+  static const String proveedores = '$baseUrl/proveedores';
 }
