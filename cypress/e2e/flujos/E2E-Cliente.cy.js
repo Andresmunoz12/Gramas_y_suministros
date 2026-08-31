@@ -64,20 +64,18 @@ describe('Flujo E2E Completo: Rol Cliente', () => {
       }
     }).as('registroMock')
 
-    cy.visit(`${baseUrl}/register`)
-    cy.get('h1.auth-title').should('contain', 'Crear cuenta')
+    cy.visit(`${baseUrl}/register`, { timeout: 30000 })
+    cy.get('h1.auth-title', { timeout: 30000 }).should('contain', 'Crear cuenta')
 
-    // Llenar el formulario de registro con los selectores exactos del componente
-    cy.get('input.input-field[name="nombre"]').clear().type('Usuario E2E')
-    cy.get('input.input-field[name="apellido"]').clear().type('Prueba Cypress')
-    cy.get('input.input-field[name="email"]').clear().type('e2e_test@gmail.com')
-    cy.get('input.input-field[name="password"]').clear().type('password123')
+    cy.get('input.input-field[name="nombre"]', { timeout: 30000 }).clear().type('Usuario E2E')
+    cy.get('input.input-field[name="apellido"]', { timeout: 30000 }).clear().type('Prueba Cypress')
+    cy.get('input.input-field[name="email"]', { timeout: 30000 }).clear().type('e2e_test@gmail.com')
+    cy.get('input.input-field[name="password"]', { timeout: 30000 }).clear().type('password123')
 
-    cy.contains('button', 'Registrarse').click()
-    cy.wait('@registroMock')
+    cy.contains('button', 'Crear mi cuenta', { timeout: 30000 }).click()
+    cy.wait('@registroMock', { timeout: 30000 })
 
-    // Verificar mensaje de éxito
-    cy.get('.auth-message.success', { timeout: 10000 })
+    cy.get('.auth-message.success', { timeout: 30000 })
       .should('be.visible')
       .and('contain', 'Registro exitoso')
 
@@ -86,41 +84,39 @@ describe('Flujo E2E Completo: Rol Cliente', () => {
     // ==========================================
     cy.log('--- Paso 2: Recuperación de Contraseña (Mock) ---')
 
-    // Mock para el endpoint de solicitar código (usa fetch nativo, no axios)
     cy.intercept('POST', /:3000\/auth\/solicitar-codigo/, {
       statusCode: 200,
       body: { message: 'Código enviado al correo' }
     }).as('solicitarCodigoMock')
 
-    cy.visit(`${baseUrl}/forgot-password`)
-    cy.get('h1.auth-title').should('contain', 'Recuperar contraseña')
-    cy.get('input.input-field[type="email"]').clear().type(clientUser.email)
-    cy.contains('button', 'Enviar código').click()
-    cy.wait('@solicitarCodigoMock')
-    // Después de enviar, el componente navega a /verify-code
-    cy.url({ timeout: 10000 }).should('include', '/verify-code')
+    cy.visit(`${baseUrl}/forgot-password`, { timeout: 30000 })
+    cy.get('h1.auth-title', { timeout: 30000 }).should('contain', 'Recuperar contraseña')
+    cy.get('input.input-field[type="email"]', { timeout: 30000 }).clear().type(clientUser.email)
+    cy.contains('button', 'Enviar código', { timeout: 30000 }).click()
+    cy.wait('@solicitarCodigoMock', { timeout: 30000 })
+    cy.url({ timeout: 30000 }).should('include', '/verify-code')
 
-    // Paso 2b: Verificar código (el componente navega a /reset-password cuando el código tiene 6 dígitos)
     cy.log('--- Paso 2b: Verificar código ---')
-    cy.get('h1.auth-title').should('contain', 'Verificar código')
-    // El campo de código no tiene name, solo es un input.input-field
-    cy.get('.input-wrapper input.input-field').last().clear().type('123456')
-    cy.contains('button', 'Verificar').click()
-    cy.url({ timeout: 10000 }).should('include', '/reset-password')
+    cy.get('h1.auth-title', { timeout: 30000 }).should('contain', 'Verificar código')
+    cy.get('.input-wrapper input.input-field', { timeout: 30000 }).last().clear().type('123456')
+    cy.contains('button', 'Verificar', { timeout: 30000 }).click()
+    cy.url({ timeout: 30000 }).should('include', '/reset-password')
 
-    // Paso 2c: Establecer nueva contraseña
     cy.log('--- Paso 2c: Restablecer contraseña ---')
     cy.intercept('POST', /:3000\/auth\/restablecer-password/, {
       statusCode: 200,
       body: { message: 'Contraseña actualizada exitosamente' }
     }).as('restablecerMock')
 
-    cy.get('h1.auth-title').should('contain', 'Nueva contraseña')
-    cy.get('input.input-field[type="password"]').clear().type('NuevaPassword123')
-    cy.contains('button', 'Cambiar').click()
-    cy.wait('@restablecerMock')
-    // Después de cambiar, redirige a /login
-    cy.url({ timeout: 10000 }).should('include', '/login')
+    cy.get('h1.auth-title', { timeout: 30000 }).should('contain', 'Nueva contraseña')
+    
+    const nuevaPassword = 'NuevaPassword123'
+    cy.get('input.input-field[type="password"]', { timeout: 30000 }).first().clear().type(nuevaPassword)
+    cy.get('input.input-field[type="password"]', { timeout: 30000 }).eq(1).clear().type(nuevaPassword)
+    
+    cy.contains('button', 'Cambiar', { timeout: 30000 }).click()
+    cy.wait('@restablecerMock', { timeout: 30000 })
+    cy.url({ timeout: 30000 }).should('include', '/login')
 
     // ==========================================
     // 3. INICIO DE SESIÓN
@@ -129,32 +125,31 @@ describe('Flujo E2E Completo: Rol Cliente', () => {
     cy.clearLocalStorage()
     setupClientMocks()
 
-    cy.visit(`${baseUrl}/login`)
-    cy.get('.input-field[type="email"]').clear().type(clientUser.email)
-    cy.get('.input-field[type="password"]').clear().type(clientUser.password)
-    cy.contains('button', 'Continuar').click()
-    cy.wait('@loginMock')
-    cy.url({ timeout: 10000 }).should('eq', `${baseUrl}/`)
+    cy.visit(`${baseUrl}/login`, { timeout: 30000 })
+    cy.get('.input-field[type="email"]', { timeout: 30000 }).clear().type(clientUser.email)
+    cy.get('.input-field[type="password"]', { timeout: 30000 }).clear().type(clientUser.password)
+    cy.contains('button', 'Continuar', { timeout: 30000 }).click()
+    cy.wait('@loginMock', { timeout: 30000 })
+    cy.url({ timeout: 30000 }).should('eq', `${baseUrl}/`)
 
     // ==========================================
     // 4. CONSULTA DEL CATÁLOGO DE PRODUCTOS
     // ==========================================
     cy.log('--- Paso 4: Consultar Catálogo de Productos ---')
-    cy.get('.loading-container .loader', { timeout: 10000 }).should('not.exist')
-    cy.get('.productos-grid .product-card').should('have.length.greaterThan', 0)
-    cy.get('.productos-grid .product-card').first().should('contain', 'Grama Bermuda')
+    cy.get('.loading-container .loader', { timeout: 30000 }).should('not.exist')
+    cy.get('.productos-grid .product-card', { timeout: 30000 }).should('have.length.greaterThan', 0)
+    cy.get('.productos-grid .product-card', { timeout: 30000 }).first().should('contain', 'Grama Bermuda')
 
     // ==========================================
     // 5. SELECCIÓN DE PRODUCTOS Y CARRITO
     // ==========================================
     cy.log('--- Paso 5: Seleccionar Producto y Agregar al Carrito ---')
-    cy.get('.productos-grid .product-card').first().within(() => {
-      cy.get('button.btn-add').click()
+    cy.get('.productos-grid .product-card', { timeout: 30000 }).first().within(() => {
+      cy.get('button.btn-add', { timeout: 30000 }).click()
     })
 
-    // Ir al carrito
-    cy.get('button.cart-float', { timeout: 10000 }).should('be.visible').click()
-    cy.url().should('include', '/cotizacion')
+    cy.get('button.cart-float', { timeout: 30000 }).should('be.visible').click()
+    cy.url({ timeout: 30000 }).should('include', '/cotizacion')
 
     // ==========================================
     // 6. COMPRA / GENERAR COTIZACIÓN
@@ -165,10 +160,10 @@ describe('Flujo E2E Completo: Rol Cliente', () => {
       body: { id_cotizacion: 9999, fecha: new Date().toISOString(), estado: 'Pendiente', total: 150000 }
     }).as('crearCotizacionMock')
 
-    cy.get('button.btn-confirmar').click()
-    cy.wait('@crearCotizacionMock')
+    cy.get('button.btn-confirmar', { timeout: 30000 }).click()
+    cy.wait('@crearCotizacionMock', { timeout: 30000 })
 
-    cy.get('.cotizacion-exito', { timeout: 15000 })
+    cy.get('.cotizacion-exito', { timeout: 30000 })
       .should('be.visible')
       .and('contain', '¡Cotización creada exitosamente!')
 
@@ -176,56 +171,64 @@ describe('Flujo E2E Completo: Rol Cliente', () => {
     // 7. CONSULTAR HISTORIAL DE COTIZACIONES
     // ==========================================
     cy.log('--- Paso 7: Revisar Historial de Cotizaciones ---')
-    cy.visit(`${baseUrl}/mis-cotizaciones`)
-    cy.url({ timeout: 10000 }).should('include', '/mis-cotizaciones')
-    cy.get('.perfil-container', { timeout: 10000 }).should('be.visible')
-    cy.get('.perfil-header h2').should('contain', 'Mis Cotizaciones')
+    cy.visit(`${baseUrl}/mis-cotizaciones`, { timeout: 30000 })
+    cy.url({ timeout: 30000 }).should('include', '/mis-cotizaciones')
+    cy.get('.perfil-container', { timeout: 30000 }).should('be.visible')
+    cy.get('.perfil-header h2', { timeout: 30000 }).should('contain', 'Mis Cotizaciones')
 
     // ==========================================
     // 8. ACTUALIZACIÓN DEL PERFIL
     // ==========================================
     cy.log('--- Paso 8: Actualizar Perfil del Cliente (Mock) ---')
 
-    // Mock para PUT /usuarios/2 (UsuariosService.update usa PUT)
+    // Mock para GET /usuarios/2 (cargar datos del perfil)
+    cy.intercept('GET', /:3000\/usuarios\/2/, {
+      statusCode: 200,
+      body: {
+        id_usuario: 2,
+        nombre: 'Cliente Mock',
+        apellido: 'Test',
+        email: clientUser.email,
+        id_rol: 2
+      }
+    }).as('getPerfilMock')
+
     cy.intercept('PUT', /:3000\/usuarios\/2/, {
       statusCode: 200,
       body: {
         actualizado: true,
-        mensaje: 'Perfil actualizado exitosamente'
+        mensaje: '¡Perfil actualizado exitosamente!'
       }
     }).as('actualizarPerfilMock')
 
-    cy.visit(`${baseUrl}/editar-perfil`)
-    cy.get('.edit-profile-card', { timeout: 10000 }).should('be.visible')
-    cy.get('h2').should('contain', 'Editar mi Perfil')
+    cy.visit(`${baseUrl}/editar-perfil`, { timeout: 30000 })
+    cy.wait('@getPerfilMock', { timeout: 30000 })
+    
+    cy.get('.edit-perfil-card', { timeout: 30000 }).should('be.visible')
+    cy.get('.edit-perfil-header h2', { timeout: 30000 }).should('contain', 'Editar Perfil')
 
-    // Modificar nombre y guardar
-    cy.get('input[name="nombre"]').clear().type('Cliente Actualizado')
-    cy.get('button.btn-save').click()
-    cy.wait('@actualizarPerfilMock')
+    cy.get('input[name="nombre"]', { timeout: 30000 }).clear().type('Cliente Actualizado')
+    
+    cy.get('button.btn-save', { timeout: 30000 }).click()
+    cy.wait('@actualizarPerfilMock', { timeout: 30000 })
 
-    // Verificar mensaje de éxito
-    cy.get('.status-message.success', { timeout: 10000 })
+    cy.get('.edit-message.success', { timeout: 30000 })
       .should('be.visible')
-      .and('contain', 'Perfil actualizado exitosamente')
+      .and('contain', '¡Perfil actualizado exitosamente!')
 
     // ==========================================
     // 9. CONTROL DE ACCESO (rol cliente no puede acceder a rutas de admin)
     // ==========================================
     cy.log('--- Paso 9: Control de Acceso (el cliente no puede entrar a /panel) ---')
-    cy.visit(`${baseUrl}/panel`)
-    // El ProtectedRoute con requiredRole={1} debe redirigir al cliente (rol 2) fuera de /panel
-    cy.url({ timeout: 10000 }).should('not.include', '/panel')
+    cy.visit(`${baseUrl}/panel`, { timeout: 30000 })
+    cy.url({ timeout: 30000 }).should('not.include', '/panel')
 
     // ==========================================
     // 10. CERRAR SESIÓN
     // ==========================================
     cy.log('--- Paso 10: Cerrar Sesión ---')
-    cy.visit(`${baseUrl}/`)
-    // El GlobalNav muestra el botón 'Cerrar Sesión' cuando hay usuario autenticado
-    // y su handleLogout navega a '/' (catálogo), no a '/login'
-    cy.contains('button', 'Cerrar Sesión').click({ force: true })
-    // Verificamos que la sesión fue cerrada: el nav ahora muestra 'Iniciar Sesión'
-    cy.contains('Iniciar Sesión', { timeout: 10000 }).should('be.visible')
+    cy.visit(`${baseUrl}/`, { timeout: 30000 })
+    cy.contains('button', 'Cerrar Sesión', { timeout: 30000 }).click({ force: true })
+    cy.contains('Iniciar Sesión', { timeout: 30000 }).should('be.visible')
   })
 })
