@@ -5,7 +5,7 @@ import NavComponent from "../components/GlobalNav";
 import Footer from "../components/Footer";
 import { useAuth } from "../context/AuthContext";
 import CotizacionesService from "../api/services/cotizaciones.service";
-import "../styles/Perfil.css";
+import "../styles/MisCotizaciones.css";
 
 export default function MisCotizaciones() {
   const navigate = useNavigate();

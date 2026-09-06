@@ -1,0 +1,1021 @@
+/* =================== CONTENEDOR PRINCIPAL ========================= */
+
+.cotizaciones-page {
+  min-height: 100vh;
+  width: 100%;
+  background:
+    radial-gradient(
+      circle at 10% 10%,
+      rgba(76, 175, 80, 0.10),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(46, 125, 50, 0.08),
+      transparent 30%
+    ),
+    var(--background);
+
+  color: var(--text-main);
+}
+
+
+/* ============================================================
+   CONTENIDO
+   ============================================================ */
+
+.cotizaciones-container {
+  width: 100%;
+  max-width: 1350px;
+
+  margin: 0 auto;
+
+  padding: 45px 35px 70px;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.cotizaciones-header {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 25px;
+
+  margin-bottom: 35px;
+
+  padding: 32px 35px;
+
+  border-radius: 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.95),
+      rgba(247, 252, 247, 0.92)
+    );
+
+  border: 1px solid var(--accent-glass-border);
+
+  box-shadow:
+    0 15px 45px rgba(0, 0, 0, 0.06);
+
+  overflow: hidden;
+}
+
+
+/* Decoración del header */
+
+.cotizaciones-header::before {
+  content: "";
+
+  position: absolute;
+
+  width: 220px;
+  height: 220px;
+
+  border-radius: 50%;
+
+  background: rgba(76, 175, 80, 0.08);
+
+  right: -80px;
+  top: -100px;
+}
+
+.cotizaciones-header::after {
+  content: "";
+
+  position: absolute;
+
+  width: 120px;
+  height: 120px;
+
+  border-radius: 50%;
+
+  background: rgba(46, 125, 50, 0.05);
+
+  left: -50px;
+  bottom: -70px;
+}
+
+
+/* ============================================================
+   TITULO
+   ============================================================ */
+
+.cotizaciones-header-info {
+  position: relative;
+  z-index: 2;
+}
+
+.cotizaciones-header h2 {
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+
+  font-weight: 900;
+
+  letter-spacing: -0.8px;
+
+  color: var(--primary-green-dark);
+}
+
+.cotizaciones-header h2::first-letter {
+  font-size: 1.1em;
+}
+
+.cotizaciones-subtitle {
+  margin: 9px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.92rem;
+
+  line-height: 1.5;
+}
+
+
+/* ============================================================
+   CONTADOR
+   ============================================================ */
+
+.cotizaciones-count {
+  position: relative;
+
+  z-index: 2;
+
+  min-width: 120px;
+
+  padding: 15px 20px;
+
+  text-align: center;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary-green),
+      var(--primary-green-dark)
+    );
+
+  color: white;
+
+  box-shadow:
+    0 10px 25px rgba(46, 125, 50, 0.20);
+}
+
+.cotizaciones-count-number {
+  display: block;
+
+  font-size: 1.6rem;
+
+  font-weight: 900;
+
+  line-height: 1;
+}
+
+.cotizaciones-count-label {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 0.72rem;
+
+  opacity: 0.85;
+
+  font-weight: 600;
+}
+
+
+/* ============================================================
+   GRID
+   ============================================================ */
+
+.cotizaciones-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(350px, 1fr));
+
+  gap: 24px;
+}
+
+
+/* ============================================================
+   TARJETA
+   ============================================================ */
+
+.cotizacion-card {
+  position: relative;
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-height: 350px;
+
+  padding: 25px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.98),
+      rgba(250, 253, 250, 0.94)
+    );
+
+  border-radius: 23px;
+
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.05);
+
+  overflow: hidden;
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+
+/* Línea superior */
+
+.cotizacion-card::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 4px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--primary-green-dark),
+      var(--primary-green)
+    );
+}
+
+
+/* Decoración */
+
+.cotizacion-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 140px;
+  height: 140px;
+
+  border-radius: 50%;
+
+  background: rgba(76, 175, 80, 0.035);
+
+  right: -65px;
+  bottom: -70px;
+
+  pointer-events: none;
+}
+
+
+.cotizacion-card:hover {
+  transform: translateY(-6px);
+
+  border-color: rgba(76, 175, 80, 0.25);
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.10),
+    0 5px 15px rgba(76, 175, 80, 0.08);
+}
+
+
+/* ============================================================
+   CABECERA DE COTIZACIÓN
+   ============================================================ */
+
+.cotizacion-header {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 18px;
+}
+
+.cotizacion-id {
+  font-size: 1.05rem;
+
+  font-weight: 900;
+
+  color: var(--primary-green-dark);
+
+  letter-spacing: 0.3px;
+}
+
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+
+.cotizacion-estado {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  min-height: 30px;
+
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  color: white;
+
+  font-size: 0.72rem;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+
+/* ============================================================
+   FECHA
+   ============================================================ */
+
+.cotizacion-fecha {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding-bottom: 18px;
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+  color: var(--text-muted);
+
+  font-size: 0.78rem;
+
+  font-weight: 500;
+}
+
+
+/* ============================================================
+   RESUMEN
+   ============================================================ */
+
+.cotizacion-resumen {
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+
+  margin: 20px 0;
+}
+
+.cotizacion-productos,
+.cotizacion-total {
+  padding: 15px;
+
+  border-radius: 15px;
+
+  background: rgba(76, 175, 80, 0.055);
+
+  border: 1px solid rgba(76, 175, 80, 0.08);
+}
+
+.cotizacion-productos {
+  color: var(--text-muted);
+
+  font-size: 0.78rem;
+}
+
+.cotizacion-productos strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--text-main);
+
+  font-size: 0.72rem;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+.cotizacion-total {
+  text-align: right;
+
+  color: var(--primary-green-dark);
+
+  font-size: 1.05rem;
+
+  font-weight: 900;
+}
+
+.cotizacion-total strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: var(--text-muted);
+
+  font-size: 0.72rem;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+
+/* ============================================================
+   MÉTODOS
+   ============================================================ */
+
+.cotizacion-metodos {
+  display: flex;
+
+  flex-wrap: wrap;
+
+  gap: 8px;
+
+  margin-bottom: 12px;
+}
+
+.metodo-venta,
+.metodo-pago {
+  display: inline-flex;
+
+  align-items: center;
+
+  padding: 7px 10px;
+
+  border-radius: 9px;
+
+  background: rgba(0, 0, 0, 0.035);
+
+  color: var(--text-muted);
+
+  font-size: 0.72rem;
+
+  font-weight: 600;
+}
+
+
+/* ============================================================
+   DIRECCIÓN
+   ============================================================ */
+
+.cotizacion-direccion {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 7px;
+
+  margin-top: 4px;
+
+  padding: 11px 13px;
+
+  border-radius: 12px;
+
+  background: rgba(25, 118, 210, 0.055);
+
+  border: 1px solid rgba(25, 118, 210, 0.08);
+
+  color: #4f6475;
+
+  font-size: 0.76rem;
+
+  line-height: 1.4;
+}
+
+
+/* ============================================================
+   ACCIONES
+   ============================================================ */
+
+.cotizacion-actions {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: auto;
+
+  padding-top: 20px;
+}
+
+.cotizacion-actions button {
+  flex: 1;
+
+  min-height: 44px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  padding: 0 14px;
+
+  font-family: var(--font-main);
+
+  font-size: 0.78rem;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+
+/* PDF */
+
+.btn-ver-detalle {
+  background: #f1f5f2;
+
+  color: var(--primary-green-dark);
+
+  border: 1px solid rgba(46, 125, 50, 0.10) !important;
+}
+
+.btn-ver-detalle:hover {
+  background: #e7f2e9;
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 7px 15px rgba(46, 125, 50, 0.10);
+}
+
+
+/* Pagar */
+
+.btn-pagar {
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary-green),
+      var(--primary-green-dark)
+    );
+
+  color: white;
+
+  box-shadow:
+    0 6px 15px rgba(46, 125, 50, 0.15);
+}
+
+.btn-pagar:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 9px 20px rgba(46, 125, 50, 0.25);
+}
+
+.cotizacion-actions button:active {
+  transform: translateY(0);
+}
+
+
+/* ============================================================
+   ESTADO VACÍO
+   ============================================================ */
+
+.cotizaciones-empty {
+  position: relative;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 420px;
+
+  padding: 45px;
+
+  text-align: center;
+
+  border-radius: 25px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.96),
+      rgba(248, 252, 248, 0.94)
+    );
+
+  border: 1px solid var(--accent-glass-border);
+
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.05);
+
+  overflow: hidden;
+}
+
+.cotizaciones-empty::before {
+  content: "";
+
+  position: absolute;
+
+  width: 280px;
+  height: 280px;
+
+  border-radius: 50%;
+
+  background: rgba(76, 175, 80, 0.06);
+
+  top: -150px;
+  left: -100px;
+}
+
+.cotizaciones-empty::after {
+  content: "";
+
+  position: absolute;
+
+  width: 220px;
+  height: 220px;
+
+  border-radius: 50%;
+
+  background: rgba(46, 125, 50, 0.045);
+
+  right: -90px;
+  bottom: -120px;
+}
+
+.empty-icon {
+  position: relative;
+
+  z-index: 2;
+
+  width: 90px;
+  height: 90px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(76, 175, 80, 0.12),
+      rgba(46, 125, 50, 0.06)
+    );
+
+  border: 1px solid rgba(76, 175, 80, 0.12);
+
+  font-size: 2.4rem;
+
+  margin-bottom: 22px;
+
+  box-shadow:
+    0 10px 25px rgba(46, 125, 50, 0.08);
+}
+
+.cotizaciones-empty h3 {
+  position: relative;
+
+  z-index: 2;
+
+  margin: 0 0 10px;
+
+  color: var(--primary-green-dark);
+
+  font-size: 1.4rem;
+
+  font-weight: 900;
+}
+
+.cotizaciones-empty p {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 470px;
+
+  margin: 0 0 25px;
+
+  color: var(--text-muted);
+
+  font-size: 0.9rem;
+
+  line-height: 1.6;
+}
+
+
+/* ============================================================
+   BOTÓN PRIMARIO
+   ============================================================ */
+
+.btn-primary {
+  position: relative;
+
+  z-index: 2;
+
+  border: none;
+
+  min-height: 46px;
+
+  padding: 0 22px;
+
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary-green),
+      var(--primary-green-dark)
+    );
+
+  color: white;
+
+  font-family: var(--font-main);
+
+  font-size: 0.82rem;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 20px rgba(46, 125, 50, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 25px rgba(46, 125, 50, 0.25);
+}
+
+
+/* ============================================================
+   ERROR
+   ============================================================ */
+
+.cotizaciones-error {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  min-height: 280px;
+
+  padding: 35px;
+
+  text-align: center;
+
+  border-radius: 22px;
+
+  background: #fff8f7;
+
+  border: 1px solid #f1d0cc;
+
+  box-shadow:
+    0 10px 30px rgba(180, 35, 24, 0.05);
+}
+
+.cotizaciones-error-icon {
+  font-size: 2.2rem;
+
+  margin-bottom: 12px;
+}
+
+.cotizaciones-error p {
+  margin: 0 0 18px;
+
+  color: #9f2d24;
+
+  font-weight: 600;
+
+  font-size: 0.88rem;
+}
+
+.btn-retry {
+  min-height: 42px;
+
+  padding: 0 18px;
+
+  border-radius: 11px;
+
+  border: 1px solid #e7b5b0;
+
+  background: white;
+
+  color: #a83228;
+
+  font-family: var(--font-main);
+
+  font-size: 0.78rem;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-retry:hover {
+  background: #fff0ee;
+
+  transform: translateY(-2px);
+}
+
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.cotizaciones-loading {
+  min-height: 350px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 15px;
+}
+
+.cotizaciones-loading p {
+  margin: 0;
+
+  color: var(--text-muted);
+
+  font-size: 0.85rem;
+
+  font-weight: 600;
+}
+
+.cotizaciones-loader {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  border: 4px solid rgba(76, 175, 80, 0.15);
+
+  border-top-color: var(--primary-green);
+
+  animation: cotizaciones-spin 0.8s linear infinite;
+}
+
+@keyframes cotizaciones-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
+
+  .cotizaciones-container {
+    padding: 30px 22px 50px;
+  }
+
+  .cotizaciones-header {
+    padding: 27px;
+  }
+
+  .cotizaciones-grid {
+    grid-template-columns:
+      repeat(auto-fill, minmax(300px, 1fr));
+  }
+
+}
+
+
+/* ============================================================
+   TABLET / MÓVIL
+   ============================================================ */
+
+@media (max-width: 650px) {
+
+  .cotizaciones-container {
+    padding: 25px 16px 40px;
+  }
+
+  .cotizaciones-header {
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    padding: 25px;
+
+    margin-bottom: 25px;
+  }
+
+  .cotizaciones-count {
+    width: 100%;
+  }
+
+  .cotizaciones-grid {
+    grid-template-columns: 1fr;
+
+    gap: 18px;
+  }
+
+  .cotizacion-card {
+    padding: 21px;
+  }
+
+}
+
+
+/* ============================================================
+   MÓVILES PEQUEÑOS
+   ============================================================ */
+
+@media (max-width: 430px) {
+
+  .cotizaciones-header h2 {
+    font-size: 1.55rem;
+  }
+
+  .cotizaciones-subtitle {
+    font-size: 0.82rem;
+  }
+
+  .cotizacion-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .cotizacion-estado {
+    align-self: flex-start;
+  }
+
+  .cotizacion-resumen {
+    grid-template-columns: 1fr;
+  }
+
+  .cotizacion-total {
+    text-align: left;
+  }
+
+  .cotizacion-actions {
+    flex-direction: column;
+  }
+
+  .cotizacion-actions button {
+    width: 100%;
+  }
+
+  .cotizaciones-empty {
+    padding: 30px 20px;
+
+    min-height: 360px;
+  }
+
+}
