@@ -17,7 +17,6 @@ export default function NavComponent() {
   return (
     <header className="main-header">
       <div className="logo">
-        <img src="https://gramasysuministros-production.up.railway.app/uploads/Banner.png" />
         <h1 className="title-app">Gramas y Suministros</h1>
       </div>
 
