@@ -184,22 +184,6 @@ export default function MisCotizaciones() {
                   >
                     📄 Ver PDF
                   </button>
-                  {cotizacion.estado === "pendiente" && (
-                    <button
-                      className="btn-pagar"
-                      onClick={async () => {
-                        try {
-                          await CotizacionesService.simularPago(cotizacion.idCotizacion);
-                          alert("✅ Pago simulado exitosamente");
-                          window.location.reload();
-                        } catch (err) {
-                          alert("❌ Error al simular pago");
-                        }
-                      }}
-                    >
-                      💳 Simular pago
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
