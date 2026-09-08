@@ -54,7 +54,7 @@ const EditarProducto = () => {
                 // Si la imagen es una URL completa, usarla directamente
                 const imageUrl = producto.imagen.startsWith('http') 
                     ? producto.imagen 
-                    : `http://localhost:3000/uploads/img_products/${producto.imagen}`;
+                    : `https://gramasysuministros-production.up.railway.app/uploads/img_products/${producto.imagen}`;
                 setPreviewImage(imageUrl);
             }
         } catch (error) {

@@ -72,7 +72,7 @@ export default function Index() {
       <div className="filtros-container">
         <div className="filtros-buttons">
           <div className="search-box">
-            <img src="http://localhost:3000/uploads/icons/search.png" alt="buscar" />
+            <img src="https://gramasysuministros-production.up.railway.app/uploads/icons/search.png" alt="buscar" />
             <input
               type="text"
               placeholder="Buscar productos..."

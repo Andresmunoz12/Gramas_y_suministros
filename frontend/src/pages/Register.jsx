@@ -363,7 +363,7 @@ export default function Register() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/user.webp"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/user.webp"
               alt="Usuario"
             />
 
@@ -394,7 +394,7 @@ export default function Register() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/apellido.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/apellido.png"
               alt="Apellido"
             />
 
@@ -425,7 +425,7 @@ export default function Register() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/email.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/email.png"
               alt="Correo electrónico"
             />
 
@@ -456,7 +456,7 @@ export default function Register() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/contraseña.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/contraseña.png"
               alt="Contraseña"
             />
 

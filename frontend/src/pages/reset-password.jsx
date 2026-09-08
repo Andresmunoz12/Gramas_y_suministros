@@ -226,7 +226,7 @@ export default function ResetPassword() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/contraseña.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/contraseña.png"
               alt="Contraseña"
             />
 
@@ -260,7 +260,7 @@ export default function ResetPassword() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/contraseña.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/contraseña.png"
               alt="Confirmar contraseña"
             />
 

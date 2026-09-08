@@ -82,7 +82,7 @@ export default function ProductDetail() {
   }
 
   const imagenUrl = producto.imagen
-    ? `http://localhost:3000/uploads/img_products/${producto.imagen}`
+    ? `https://gramasysuministros-production.up.railway.app/uploads/img_products/${producto.imagen}`
     : "/placeholder-producto.png";
 
   return (

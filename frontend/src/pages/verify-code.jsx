@@ -161,7 +161,7 @@ export default function VerifyCode() {
           <div className="input-wrapper">
 
             <img
-              src="http://localhost:3000/uploads/icons/email.png"
+              src="https://gramasysuministros-production.up.railway.app/uploads/icons/email.png"
               alt="Correo electrónico"
             />
 
