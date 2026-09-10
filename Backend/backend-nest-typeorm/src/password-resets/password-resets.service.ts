@@ -307,8 +307,12 @@ export class AuthService {
 
     const from = `Gramas y Suministros <${process.env.GMAIL_USER}>`;
 
-    const subject =
-      'Tu código de recuperación - Gramas y Suministros';
+    const subject = '=?UTF-8?B?' +
+      Buffer.from(
+        'Tu Código de Verificación - Gramas y Suministros',
+        'utf-8',
+      ).toString('base64') +
+      '?=';
 
     const message = [
       `From: ${from}`,
