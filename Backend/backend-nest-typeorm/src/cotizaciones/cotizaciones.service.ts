@@ -11,6 +11,8 @@ import { CrearCotizacionDto } from './dto/crear-cotizacion.dto';
 import { usuario } from '../Usuarios/usuarios.entity';
 import PDFDocument from 'pdfkit';
 import { Response } from 'express';
+import { join } from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class CotizacionesService {
@@ -28,7 +30,6 @@ export class CotizacionesService {
   ) {}
 
   async crearCotizacion(usuarioId: number, dto: CrearCotizacionDto) {
-    // ✅ VALIDACIÓN: Verificar que hay al menos un producto
     if (!dto.items || dto.items.length === 0) {
       throw new BadRequestException('Debe seleccionar al menos un producto');
     }
@@ -57,7 +58,6 @@ export class CotizacionesService {
         throw new BadRequestException(`El producto "${producto.nombre}" está inactivo`);
       }
 
-      // ✅ Validar control de stock disponible
       const stockRegistro = await this.stockRepo.findOne({
         where: { id_producto: item.idProducto },
       });
@@ -175,7 +175,7 @@ export class CotizacionesService {
 
     console.log(`[AUDIT] Descarga de PDF de cotización #${idCotizacion} por usuario #${user.userId} (Rol: ${user.rol})`);
 
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({ margin: 0, size: 'A4' });
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
@@ -185,182 +185,409 @@ export class CotizacionesService {
 
     doc.pipe(res);
 
-    // Encabezado
+    // ========== COLORES CORPORATIVOS ==========
+    const verdePrincipal = '#2e7d32';
+    const verdeOscuro = '#1b5e20';
+    const verdeClaro = '#e8f5e9';
+    const grisOscuro = '#333333';
+    const grisClaro = '#f5f5f5';
+    const grisTexto = '#666666';
+
+    const pageWidth = 595.28; // A4
+    const pageHeight = 841.89;
+    const margin = 40;
+    const contentWidth = pageWidth - margin * 2;
+
+    // ========== ENCABEZADO CON BARRA VERDE ==========
+    doc.rect(0, 0, pageWidth, 110).fill(verdePrincipal);
+
+    // Logo (imagen desde el sistema de archivos)
+    const logoPath = join(process.cwd(), 'uploads', 'icons', 'Logo.png');
+
+    if (fs.existsSync(logoPath)) {
+      try {
+        // Recuadro blanco circular detrás del logo
+        doc.circle(margin + 35, 55, 28).fill('#ffffff');
+        doc.image(logoPath, margin + 10, 30, { width: 50, height: 50 });
+      } catch (error) {
+        console.error('Error al cargar el logo:', error);
+        // Fallback: círculo con iniciales
+        doc.circle(margin + 35, 55, 28).fill('#ffffff');
+        doc
+          .fontSize(22)
+          .font('Helvetica-Bold')
+          .fillColor(verdePrincipal)
+          .text('GY', margin + 18, 42);
+      }
+    } else {
+      // Fallback si no existe el logo
+      doc.circle(margin + 35, 55, 28).fill('#ffffff');
+      doc
+        .fontSize(22)
+        .font('Helvetica-Bold')
+        .fillColor(verdePrincipal)
+        .text('GY', margin + 18, 42);
+    }
+
+    // Nombre de la empresa
     doc
-      .fontSize(22)
+      .fontSize(20)
       .font('Helvetica-Bold')
-      .fillColor('#2e7d32')
-      .text('GRAMAS Y SUMINISTROS', { align: 'center' });
+      .fillColor('#ffffff')
+      .text('GRAMAS Y SUMINISTROS', margin + 85, 30, { width: contentWidth - 85 });
 
     doc
-      .fontSize(12)
+      .fontSize(9)
       .font('Helvetica')
-      .fillColor('#333')
-      .text('NIT: 123456789-0', { align: 'center' })
-      .text('Tel: 310 000 0000', { align: 'center' })
-      .moveDown();
+      .fillColor('#c8e6c9')
+      .text('Soluciones en césped sintético y suministros de alta calidad', margin + 85, 55, { width: contentWidth - 85 });
 
     doc
-      .strokeColor('#2e7d32')
-      .lineWidth(2)
-      .moveTo(50, doc.y)
-      .lineTo(550, doc.y)
-      .stroke()
-      .moveDown(0.5);
+      .fontSize(8)
+      .fillColor('#c8e6c9')
+      .text('NIT: 123456789-0  |  Tel: 310 000 0000  |  contacto@gramasysuministros.com', margin + 85, 72, { width: contentWidth - 85 });
 
+    doc
+      .fontSize(8)
+      .fillColor('#c8e6c9')
+      .text('Soacha, Cundinamarca, Colombia', margin + 85, 88, { width: contentWidth - 85 });
+
+    // ========== TÍTULO DEL DOCUMENTO ==========
     doc
       .fontSize(18)
       .font('Helvetica-Bold')
-      .fillColor('#2e7d32')
-      .text(`RECIBO DE COTIZACIÓN #${cotizacion.idCotizacion}`)
+      .fillColor(verdeOscuro)
+      .text(`COTIZACIÓN #${cotizacion.idCotizacion}`, margin, 140, { align: 'center', width: contentWidth });
+
+    // Línea decorativa
+    doc
+      .strokeColor(verdePrincipal)
+      .lineWidth(2)
+      .moveTo(pageWidth / 2 - 50, 165)
+      .lineTo(pageWidth / 2 + 50, 165)
+      .stroke();
+
+    // ========== INFORMACIÓN GENERAL (FECHA Y ESTADO) ==========
+    const infoY = 185;
+
+    // Recuadro de fecha
+    doc
+      .roundedRect(margin, infoY, contentWidth / 2 - 10, 50, 5)
+      .fill(grisClaro);
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisTexto)
+      .text('FECHA DE EMISIÓN', margin + 15, infoY + 12);
+
+    doc
       .fontSize(11)
       .font('Helvetica')
-      .fillColor('#333')
-      .text(`Fecha: ${cotizacion.fechaCreacion.toLocaleDateString('es-CO')}  Hora: ${cotizacion.fechaCreacion.toLocaleTimeString('es-CO')}`)
-      .moveDown(0.5);
+      .fillColor(grisOscuro)
+      .text(
+        new Date(cotizacion.fechaCreacion).toLocaleDateString('es-CO', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        margin + 15,
+        infoY + 27,
+      );
+
+    // Recuadro de estado
+    const estadoColor = cotizacion.estado === 'pagado' ? '#2e7d32' :
+                        cotizacion.estado === 'pendiente' ? '#f57c00' :
+                        cotizacion.estado === 'entregado' ? '#1976d2' : '#d32f2f';
+
+    doc
+      .roundedRect(margin + contentWidth / 2 + 10, infoY, contentWidth / 2 - 10, 50, 5)
+      .fill(estadoColor);
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor('#ffffff')
+      .text('ESTADO', margin + contentWidth / 2 + 25, infoY + 12);
+
+    doc
+      .fontSize(13)
+      .font('Helvetica-Bold')
+      .fillColor('#ffffff')
+      .text(cotizacion.estado.toUpperCase(), margin + contentWidth / 2 + 25, infoY + 27);
+
+    // ========== DATOS DEL CLIENTE ==========
+    const clienteY = infoY + 80;
 
     doc
       .fontSize(12)
       .font('Helvetica-Bold')
-      .fillColor('#2e7d32')
-      .text('DATOS DEL CLIENTE')
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor('#333');
+      .fillColor(verdeOscuro)
+      .text('INFORMACIÓN DEL CLIENTE', margin, clienteY);
 
-    const usuarioData = cotizacion.usuario;
     doc
-      .text(`Nombre: ${usuarioData.nombre} ${usuarioData.apellido || ''}`)
-      .text(`Email: ${usuarioData.email}`)
-      .moveDown();
+      .strokeColor(verdeClaro)
+      .lineWidth(1)
+      .moveTo(margin, clienteY + 18)
+      .lineTo(margin + contentWidth, clienteY + 18)
+      .stroke();
+
+    const clienteDataY = clienteY + 28;
+
+    // Columna izquierda
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisTexto)
+      .text('NOMBRE:', margin, clienteDataY);
+
+    doc
+      .fontSize(11)
+      .font('Helvetica')
+      .fillColor(grisOscuro)
+      .text(`${cotizacion.usuario.nombre} ${cotizacion.usuario.apellido || ''}`, margin, clienteDataY + 14);
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisTexto)
+      .text('CORREO ELECTRÓNICO:', margin, clienteDataY + 40);
+
+    doc
+      .fontSize(11)
+      .font('Helvetica')
+      .fillColor(grisOscuro)
+      .text(cotizacion.usuario.email, margin, clienteDataY + 54);
+
+    // Columna derecha
+    const colRightX = margin + contentWidth / 2 + 10;
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisTexto)
+      .text('MÉTODO DE VENTA:', colRightX, clienteDataY);
+
+    doc
+      .fontSize(11)
+      .font('Helvetica')
+      .fillColor(grisOscuro)
+      .text(
+        cotizacion.metodoVenta === 'fisico' ? 'Punto físico' : 'Entrega al cliente',
+        colRightX,
+        clienteDataY + 14,
+      );
+
+    doc
+      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisTexto)
+      .text('MÉTODO DE PAGO:', colRightX, clienteDataY + 40);
+
+    doc
+      .fontSize(11)
+      .font('Helvetica')
+      .fillColor(grisOscuro)
+      .text(
+        cotizacion.metodoPago === 'efectivo' ? 'Efectivo' :
+        cotizacion.metodoPago === 'tarjeta_debito' ? 'Tarjeta débito' : 'Tarjeta crédito',
+        colRightX,
+        clienteDataY + 54,
+      );
+
+    // ========== TABLA DE PRODUCTOS ==========
+    const tableY = clienteDataY + 100;
 
     doc
       .fontSize(12)
       .font('Helvetica-Bold')
-      .fillColor('#2e7d32')
-      .text('PRODUCTOS')
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor('#333');
+      .fillColor(verdeOscuro)
+      .text('DETALLE DE PRODUCTOS', margin, tableY);
 
-    const tableTop = doc.y;
-    const tableHeaders = ['Cant.', 'Producto', 'Precio', 'Subtotal'];
-    const columnWidths = [60, 220, 100, 100];
-    let xPos = 50;
+    const tableHeaderY = tableY + 22;
+    const rowHeight = 25;
+    const colWidths = [50, 250, 100, 100];
 
-    doc.font('Helvetica-Bold').fillColor('#fff');
-    doc.rect(50, tableTop, 500, 20).fill('#2e7d32');
-    doc.fillColor('#fff');
+    doc.rect(margin, tableHeaderY, contentWidth, rowHeight).fill(verdePrincipal);
 
-    xPos = 50;
-    tableHeaders.forEach((header, i) => {
-      doc.text(header, xPos + 5, tableTop + 5, {
-        width: columnWidths[i],
-        align: 'left',
+    const headers = ['CANT.', 'PRODUCTO', 'PRECIO', 'SUBTOTAL'];
+    let xPos = margin;
+
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#ffffff');
+    headers.forEach((header, i) => {
+      doc.text(header, xPos + 8, tableHeaderY + 8, {
+        width: colWidths[i] - 16,
+        align: i === 0 ? 'center' : i === 1 ? 'left' : 'right',
       });
-      xPos += columnWidths[i];
+      xPos += colWidths[i];
     });
 
-    let yPos = tableTop + 25;
-    doc.font('Helvetica').fillColor('#333');
+    let rowY = tableHeaderY + rowHeight;
+    doc.font('Helvetica').fillColor(grisOscuro);
 
-    cotizacion.detalles.forEach((detalle) => {
+    cotizacion.detalles.forEach((detalle, index) => {
       const producto = detalle.producto;
       const nombre = producto?.nombre || 'Producto eliminado';
       const precioFormateado = new Intl.NumberFormat('es-CO').format(detalle.precioUnitario);
       const subtotalFormateado = new Intl.NumberFormat('es-CO').format(detalle.subtotal);
 
-      xPos = 50;
+      if (index % 2 === 0) {
+        doc.rect(margin, rowY, contentWidth, rowHeight).fill('#f9f9f9');
+      }
+
+      doc.fillColor(grisOscuro);
+
+      xPos = margin;
       const rowData = [
         detalle.cantidad.toString(),
-        nombre.length > 20 ? nombre.substring(0, 20) + '...' : nombre,
+        nombre.length > 40 ? nombre.substring(0, 40) + '...' : nombre,
         `$${precioFormateado}`,
         `$${subtotalFormateado}`,
       ];
 
       rowData.forEach((data, i) => {
-        doc.text(data, xPos + 5, yPos, {
-          width: columnWidths[i],
-          align: 'left',
+        doc.fontSize(10).font('Helvetica').text(data, xPos + 8, rowY + 8, {
+          width: colWidths[i] - 16,
+          align: i === 0 ? 'center' : i === 1 ? 'left' : 'right',
         });
-        xPos += columnWidths[i];
+        xPos += colWidths[i];
       });
 
-      yPos += 20;
+      rowY += rowHeight;
     });
 
-    yPos += 10;
-    const totalLabel = 'Subtotal:';
-    const totalValue = `$${new Intl.NumberFormat('es-CO').format(cotizacion.subtotal)}`;
     doc
-      .font('Helvetica-Bold')
-      .fontSize(11)
-      .fillColor('#333')
-      .text(totalLabel, 350, yPos, { width: 100, align: 'right' })
-      .text(totalValue, 460, yPos, { width: 100, align: 'right' });
-
-    yPos += 20;
-    if (cotizacion.costoEnvio > 0) {
-      doc
-        .text('Envío:', 350, yPos, { width: 100, align: 'right' })
-        .text(`$${new Intl.NumberFormat('es-CO').format(cotizacion.costoEnvio)}`, 460, yPos, { width: 100, align: 'right' });
-      yPos += 20;
-    }
-
-    doc
-      .fontSize(14)
-      .font('Helvetica-Bold')
-      .fillColor('#2e7d32')
-      .text('TOTAL:', 350, yPos, { width: 100, align: 'right' })
-      .text(`$${new Intl.NumberFormat('es-CO').format(cotizacion.total)}`, 460, yPos, { width: 100, align: 'right' });
-
-    yPos += 30;
-
-    doc
-      .fontSize(10)
-      .font('Helvetica')
-      .fillColor('#333')
-      .text(`Método de venta: ${cotizacion.metodoVenta === 'fisico' ? 'Punto físico' : 'Entrega al cliente'}`)
-      .text(`Método de pago: ${cotizacion.metodoPago === 'efectivo' ? 'Efectivo' : cotizacion.metodoPago === 'tarjeta_debito' ? 'Tarjeta débito' : 'Tarjeta crédito'}`);
-
-    if (cotizacion.metodoVenta === 'envio') {
-      yPos += 15;
-      doc
-        .fontSize(10)
-        .fillColor('#f57c00')
-        .text(`Dirección de envío: ${cotizacion.direccionEnvio || 'No especificada'}`)
-        .moveDown()
-        .fillColor('#333')
-        .text('⏱️ El producto puede tardar entre 3 y 7 días en llegar.')
-        .text('📧 Te enviaremos el estado del pedido al correo electrónico.');
-    } else {
-      yPos += 15;
-      doc
-        .fontSize(10)
-        .fillColor('#2e7d32')
-        .text('📍 Lleve este recibo al punto físico de la empresa.');
-    }
-
-    yPos = doc.y + 40;
-    doc
-      .strokeColor('#2e7d32')
+      .strokeColor('#e0e0e0')
       .lineWidth(1)
-      .moveTo(50, yPos)
-      .lineTo(550, yPos)
+      .moveTo(margin, rowY)
+      .lineTo(margin + contentWidth, rowY)
       .stroke();
 
-    yPos += 10;
+    // ========== TOTALES ==========
+    const totalesY = rowY + 20;
+    const totalesX = margin + contentWidth - 200;
+
     doc
       .fontSize(10)
       .font('Helvetica')
-      .fillColor('#666')
-      .text('¡Gracias por preferirnos!', { align: 'center' });
-    
+      .fillColor(grisTexto)
+      .text('Subtotal:', totalesX, totalesY, { width: 100, align: 'right' });
+
     doc
-      .fontSize(9)
+      .font('Helvetica-Bold')
+      .fillColor(grisOscuro)
+      .text(`$${new Intl.NumberFormat('es-CO').format(cotizacion.subtotal)}`, totalesX + 100, totalesY, { width: 100, align: 'right' });
+
+    let currentY = totalesY + 20;
+    if (cotizacion.costoEnvio > 0) {
+      doc
+        .fontSize(10)
+        .font('Helvetica')
+        .fillColor(grisTexto)
+        .text('Costo de envío:', totalesX, currentY, { width: 100, align: 'right' });
+
+      doc
+        .font('Helvetica-Bold')
+        .fillColor(grisOscuro)
+        .text(`$${new Intl.NumberFormat('es-CO').format(cotizacion.costoEnvio)}`, totalesX + 100, currentY, { width: 100, align: 'right' });
+
+      currentY += 20;
+    }
+
+    doc
+      .strokeColor(verdeClaro)
+      .lineWidth(1)
+      .moveTo(totalesX, currentY)
+      .lineTo(totalesX + 200, currentY)
+      .stroke();
+
+    currentY += 10;
+
+    doc
+      .fontSize(12)
+      .font('Helvetica-Bold')
+      .fillColor(verdeOscuro)
+      .text('TOTAL:', totalesX, currentY, { width: 100, align: 'right' });
+
+    doc
+      .fontSize(16)
+      .font('Helvetica-Bold')
+      .fillColor(verdePrincipal)
+      .text(`$${new Intl.NumberFormat('es-CO').format(cotizacion.total)}`, totalesX + 100, currentY - 2, { width: 100, align: 'right' });
+
+    // ========== INFORMACIÓN DE ENVÍO ==========
+    let envioY = currentY + 50;
+
+    if (cotizacion.metodoVenta === 'envio') {
+      doc
+        .roundedRect(margin, envioY, contentWidth, 70, 5)
+        .fill('#fff3e0');
+
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor('#e65100')
+        .text('INFORMACIÓN DE ENVÍO', margin + 15, envioY + 12);
+
+      doc
+        .fontSize(9)
+        .font('Helvetica')
+        .fillColor('#bf360c')
+        .text(`Dirección: ${cotizacion.direccionEnvio || 'No especificada'}`, margin + 15, envioY + 28);
+
+      doc
+        .fontSize(9)
+        .fillColor('#bf360c')
+        .text('El producto puede tardar entre 3 y 7 días hábiles en llegar.', margin + 15, envioY + 44);
+
+      doc
+        .fontSize(9)
+        .fillColor('#bf360c')
+        .text('Te enviaremos el estado del pedido al correo electrónico registrado.', margin + 15, envioY + 56);
+    } else {
+      doc
+        .roundedRect(margin, envioY, contentWidth, 50, 5)
+        .fill(verdeClaro);
+
+      doc
+        .fontSize(10)
+        .font('Helvetica-Bold')
+        .fillColor(verdeOscuro)
+        .text('RECOGER EN PUNTO FÍSICO', margin + 15, envioY + 12);
+
+      doc
+        .fontSize(9)
+        .font('Helvetica')
+        .fillColor(verdeOscuro)
+        .text('Presenta este documento en nuestro punto de venta para reclamar tu pedido.', margin + 15, envioY + 30);
+    }
+
+    // ========== PIE DE PÁGINA ==========
+    const footerY = pageHeight - 80;
+
+    doc
+      .strokeColor(verdeClaro)
+      .lineWidth(1)
+      .moveTo(margin, footerY)
+      .lineTo(pageWidth - margin, footerY)
+      .stroke();
+
+    doc
+      .fontSize(11)
+      .font('Helvetica-Bold')
+      .fillColor(verdePrincipal)
+      .text('¡Gracias por preferirnos!', margin, footerY + 15, { align: 'center', width: contentWidth });
+
+    doc
+      .fontSize(8)
       .font('Helvetica')
-      .fillColor('#666')
-      .text('Gramas y Suministros - Calidad que transforma espacios', { align: 'center' });
+      .fillColor(grisTexto)
+      .text('Gramas y Suministros - Calidad que transforma espacios', margin, footerY + 32, { align: 'center', width: contentWidth });
+
+    doc
+      .fontSize(7)
+      .fillColor('#999999')
+      .text('Este documento es una cotización válida por 15 días a partir de la fecha de emisión.', margin, footerY + 48, { align: 'center', width: contentWidth });
 
     doc.end();
 
@@ -388,13 +615,13 @@ export class CotizacionesService {
     }
 
     if (filtros.fechaInicio) {
-      query.andWhere('cotizacion.fechaCreacion >= :fechaInicio', { 
-        fechaInicio: new Date(filtros.fechaInicio) 
+      query.andWhere('cotizacion.fechaCreacion >= :fechaInicio', {
+        fechaInicio: new Date(filtros.fechaInicio)
       });
     }
     if (filtros.fechaFin) {
-      query.andWhere('cotizacion.fechaCreacion <= :fechaFin', { 
-        fechaFin: new Date(filtros.fechaFin) 
+      query.andWhere('cotizacion.fechaCreacion <= :fechaFin', {
+        fechaFin: new Date(filtros.fechaFin)
       });
     }
 
@@ -410,7 +637,6 @@ export class CotizacionesService {
     return query.getMany();
   }
 
-  // ✅ ACTUALIZAR ESTADO CON RESTA DE STOCK
   async actualizarEstado(idCotizacion: number, estado: string) {
     const cotizacion = await this.cotizacionRepo.findOne({
       where: { idCotizacion },
@@ -426,12 +652,10 @@ export class CotizacionesService {
       throw new BadRequestException(`Estado inválido. Debe ser: ${estadosValidos.join(', ')}`);
     }
 
-    // ✅ Si se cambia a "entregado", restar stock
     if (estado === 'entregado' && cotizacion.estado !== 'entregado') {
       await this.restarStockCotizacion(cotizacion);
     }
 
-    // ✅ Si se cambia de "entregado" a otro estado, devolver stock
     if (cotizacion.estado === 'entregado' && estado !== 'entregado') {
       await this.devolverStockCotizacion(cotizacion);
     }
@@ -445,10 +669,8 @@ export class CotizacionesService {
     };
   }
 
-  // ✅ Método para restar stock (CORREGIDO)
   private async restarStockCotizacion(cotizacion: Cotizacion) {
     for (const detalle of cotizacion.detalles) {
-      // Buscar el stock del producto
       const stockRegistro = await this.stockRepo.findOne({
         where: { id_producto: detalle.idProducto },
       });
@@ -457,7 +679,6 @@ export class CotizacionesService {
         throw new NotFoundException(`Stock para producto ID ${detalle.idProducto} no encontrado`);
       }
 
-      // Verificar que hay suficiente stock
       if (stockRegistro.cantidad_actual < detalle.cantidad) {
         const producto = await this.productoRepo.findOne({
           where: { id_producto: detalle.idProducto },
@@ -467,18 +688,16 @@ export class CotizacionesService {
         );
       }
 
-      // ✅ Restar stock en la tabla stock
       await this.stockRepo
         .createQueryBuilder()
         .update(stock)
-        .set({ 
+        .set({
           cantidad_actual: () => `cantidad_actual - ${detalle.cantidad}`,
           ultima_actualizacion: () => 'CURRENT_TIMESTAMP',
         })
         .where('id_producto = :id', { id: detalle.idProducto })
         .execute();
 
-      // Registrar movimiento de salida
       await this.registrarMovimiento(
         detalle.idProducto,
         detalle.cantidad,
@@ -489,14 +708,12 @@ export class CotizacionesService {
     }
   }
 
-  // ✅ Método para devolver stock (CORREGIDO)
   private async devolverStockCotizacion(cotizacion: Cotizacion) {
     for (const detalle of cotizacion.detalles) {
-      // ✅ Devolver stock en la tabla stock
       await this.stockRepo
         .createQueryBuilder()
         .update(stock)
-        .set({ 
+        .set({
           cantidad_actual: () => `cantidad_actual + ${detalle.cantidad}`,
           ultima_actualizacion: () => 'CURRENT_TIMESTAMP',
         })
@@ -513,7 +730,6 @@ export class CotizacionesService {
     }
   }
 
-  // ✅ Método para registrar movimiento
   private async registrarMovimiento(
     idProducto: number,
     cantidad: number,
