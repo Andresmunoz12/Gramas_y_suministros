@@ -12,12 +12,12 @@ import { usuario } from '../Usuarios/usuarios.entity';
 import { PasswordReset } from './password-resets.entity';
 
 import * as bcrypt from 'bcryptjs';
-import { Resend } from 'resend';
+import { google } from 'googleapis';
 
 @Injectable()
 export class AuthService {
 
-  private readonly resend: Resend;
+  private readonly gmail;
 
   constructor(
     @InjectRepository(usuario)
@@ -27,15 +27,37 @@ export class AuthService {
     private readonly resetRepo: Repository<PasswordReset>,
   ) {
 
-    if (!process.env.RESEND_API_KEY) {
+    // =====================================================
+    // CONFIGURACIÓN DE GOOGLE OAUTH
+    // =====================================================
+
+    if (
+      !process.env.GMAIL_CLIENT_ID ||
+      !process.env.GMAIL_CLIENT_SECRET ||
+      !process.env.GMAIL_REFRESH_TOKEN ||
+      !process.env.GMAIL_USER
+    ) {
       throw new Error(
-        'RESEND_API_KEY no está configurada en las variables de entorno.',
+        'Las variables de entorno de Gmail OAuth2 no están configuradas correctamente.',
       );
     }
 
-    this.resend = new Resend(
-      process.env.RESEND_API_KEY,
+    // Cliente OAuth2
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
     );
+
+    // Refresh Token generado desde Google OAuth
+    oauth2Client.setCredentials({
+      refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+    });
+
+    // Cliente de Gmail
+    this.gmail = google.gmail({
+      version: 'v1',
+      auth: oauth2Client,
+    });
   }
 
 
@@ -280,46 +302,53 @@ export class AuthService {
 
 
     // -----------------------------------------------------
-    // 5. Enviar correo mediante Resend
+    // 5. Crear correo MIME
+    // -----------------------------------------------------
+
+    const from = `Gramas y Suministros <${process.env.GMAIL_USER}>`;
+
+    const subject =
+      'Tu código de recuperación - Gramas y Suministros';
+
+    const message = [
+      `From: ${from}`,
+      `To: ${email}`,
+      `Subject: ${subject}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
+      '',
+      html,
+    ].join('\r\n');
+
+
+    // -----------------------------------------------------
+    // 6. Codificar correo en Base64 URL Safe
+    // -----------------------------------------------------
+
+    const encodedMessage = Buffer
+      .from(message, 'utf-8')
+      .toString('base64url');
+
+
+    // -----------------------------------------------------
+    // 7. Enviar mediante Gmail API
     // -----------------------------------------------------
 
     try {
 
-      const { data, error } =
-        await this.resend.emails.send({
+      const response =
+        await this.gmail.users.messages.send({
+          userId: 'me',
 
-          from:
-            process.env.MAIL_FROM ||
-            'Gramas y Suministros <onboarding@resend.dev>',
-
-          to: [email],
-
-          subject:
-            'Tu código de recuperación - Gramas y Suministros',
-
-          html: html,
+          requestBody: {
+            raw: encodedMessage,
+          },
         });
 
 
-      // ---------------------------------------------------
-      // 6. Comprobar respuesta de Resend
-      // ---------------------------------------------------
-
-      if (error) {
-
-        console.error(
-          'Error de Resend:',
-          error,
-        );
-
-        throw new InternalServerErrorException(
-          'No se pudo enviar el correo de recuperación.',
-        );
-      }
-
-
       console.log(
-        `Correo de recuperación enviado a ${email}. ID: ${data?.id}`,
+        `Correo de recuperación enviado a ${email}. ID: ${response.data.id}`,
       );
 
 
@@ -331,8 +360,8 @@ export class AuthService {
     } catch (error) {
 
       console.error(
-        'Error enviando correo de recuperación:',
-        error,
+        'Error enviando correo mediante Gmail:',
+        error?.response?.data || error,
       );
 
       throw new InternalServerErrorException(
