@@ -12,12 +12,18 @@ import { MailerModule } from '@nestjs-modules/mailer';
     MailerModule.forRoot({
       transport: {
         host: 'smtp.gmail.com',
-        port: 465,
-        secure: true, // Port 587 uses STARTTLS
+        port: 587,                    // 👈 CAMBIO: Puerto 587 (STARTTLS)
+        secure: false,                // 👈 CAMBIO: false para 587
         auth: {
-          user: 'gramasysuministros.sas@gmail.com',
-          pass: 'ffnxtojmottsdczs', // <--- DEBES REEMPLAZAR ESTO
+          user: process.env.MAIL_USER || 'gramasysuministros.sas@gmail.com',
+          pass: process.env.MAIL_PASSWORD || 'ffnxtojmottsdczs',
         },
+        // 👇 AGREGADO: Forzar IPv4
+        family: 4,
+        // 👇 AGREGADO: Timeouts más largos
+        connectionTimeout: 30000,
+        greetingTimeout: 30000,
+        socketTimeout: 30000,
         tls: {
           rejectUnauthorized: false,
         },
