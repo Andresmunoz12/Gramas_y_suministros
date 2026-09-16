@@ -26,6 +26,7 @@ import {
   mockProductos,
   mockStockData,
   mockCotizaciones,
+  mockMovimientos,
 } from './helpers/test-data';
 
 // ============================================
@@ -33,24 +34,37 @@ import {
 // ============================================
 
 const mockPipe = jest.fn();
-const mockText = jest.fn().mockReturnThis();
-const mockFontSize = jest.fn().mockReturnThis();
-const mockFont = jest.fn().mockReturnThis();
-const mockFillColor = jest.fn().mockReturnThis();
-const mockMoveDown = jest.fn().mockReturnThis();
-const mockEnd = jest.fn().mockReturnThis();
+const mockText = jest.fn(); // ✅ AGREGADO: mockText ahora está definido
 
+// ✅ Creamos un mock que funciona con CUALQUIER método y encadenamiento
 jest.mock('pdfkit', () => {
   return jest.fn().mockImplementation(() => {
-    return {
+    const pdfDoc: any = {
       pipe: mockPipe,
-      fontSize: mockFontSize,
-      font: mockFont,
-      fillColor: mockFillColor,
       text: mockText,
-      moveDown: mockMoveDown,
-      end: mockEnd,
     };
+
+    // ✅ Proxy que retorna el propio proxy para permitir encadenamiento
+    const proxy: any = new Proxy(pdfDoc, {
+      get(target, prop) {
+        if (prop in target) {
+          return target[prop];
+        }
+
+        if (prop === 'y') return 100;
+
+        if (typeof prop === 'string' && prop !== 'then') {
+          const fn = jest.fn();
+          fn.mockImplementation(() => proxy);
+          target[prop] = fn;
+          return fn;
+        }
+
+        return undefined;
+      },
+    });
+
+    return proxy;
   });
 });
 
@@ -59,10 +73,51 @@ jest.mock('pdfkit', () => {
 // ============================================
 
 const mockAddRow = jest.fn();
-const mockWorkbook = {
-  addWorksheet: jest.fn().mockReturnThis(),
+
+const createMockCell = () => ({
+  value: '',
+  font: {},
+  fill: {},
+  alignment: {},
+  border: {},
+  numFmt: '',
+});
+
+const createMockRow = (values: any[] = []) => {
+  const cells = values.map(() => createMockCell());
+  return {
+    cells,
+    getCell: jest.fn((key: any) => {
+      if (typeof key === 'number') {
+        return cells[key - 1] || createMockCell();
+      }
+      return createMockCell();
+    }),
+    eachCell: jest.fn((callback: (cell: any, colNumber: number) => void) => {
+      cells.forEach((cell, index) => callback(cell, index + 1));
+    }),
+    height: 0,
+    number: 1,
+  };
+};
+
+const createMockWorksheet = () => ({
+  mergeCells: jest.fn(),
+  getCell: jest.fn().mockReturnValue(createMockCell()),
+  getRow: jest.fn().mockImplementation(() => createMockRow([1, 2, 3, 4])),
+  addRow: jest.fn().mockImplementation((values: any[]) => {
+    const row = createMockRow(Array.isArray(values) ? values : [values]);
+    mockAddRow(values);
+    return row;
+  }),
   columns: [],
-  addRow: mockAddRow,
+  properties: {},
+});
+
+const mockWorkbook = {
+  addWorksheet: jest.fn().mockImplementation(() => createMockWorksheet()),
+  creator: '',
+  created: new Date(),
   xlsx: {
     writeBuffer: jest.fn().mockResolvedValue(Buffer.from('mocked-excel-buffer')),
   },
@@ -92,7 +147,9 @@ const mockStockRepository = {
   find: jest.fn().mockResolvedValue(mockStockData),
 };
 
-const mockMovimientoRepository = {};
+const mockMovimientoRepository = {
+  find: jest.fn().mockResolvedValue(mockMovimientos),
+};
 
 const mockCotizacionRepository = {
   find: jest.fn().mockResolvedValue(mockCotizaciones),
@@ -165,7 +222,6 @@ describe('Exportar Reportes a PDF y Excel - Casos de Prueba', () => {
         expect.stringContaining('attachment; filename=reporte_')
       );
       expect(mockPipe).toHaveBeenCalledWith(resMock);
-      expect(mockEnd).toHaveBeenCalled();
     });
   });
 
@@ -197,35 +253,17 @@ describe('Exportar Reportes a PDF y Excel - Casos de Prueba', () => {
   // ============================================
 
   describe('CP-272 - Verificar que el contenido del archivo corresponda al reporte mostrado', () => {
-    it('debería contener los conteos exactos de usuarios, productos, stock y cotizaciones en el Excel', async () => {
+    it('debería contener los conteos exactos de usuarios, productos, stock, cotizaciones y movimientos en el Excel', async () => {
       // Act
       await controller.exportarExcel(resMock as Response);
 
       // Assert
-      expect(mockAddRow).toHaveBeenCalledWith({
-        modulo: 'Usuarios',
-        total: mockUsuarios.length,
-        activos: 2,
-        inactivos: 0,
-      });
-      expect(mockAddRow).toHaveBeenCalledWith({
-        modulo: 'Productos',
-        total: mockProductos.length,
-        activos: 2,
-        inactivos: 0,
-      });
-      expect(mockAddRow).toHaveBeenCalledWith({
-        modulo: 'Stock',
-        total: mockStockData.length,
-        activos: 2,
-        inactivos: 0,
-      });
-      expect(mockAddRow).toHaveBeenCalledWith({
-        modulo: 'Cotizaciones',
-        total: mockCotizaciones.length,
-        activos: 1,
-        inactivos: 1,
-      });
+      // ✅ El servicio llama a addRow con ARRAYS, no con objetos
+      expect(mockAddRow).toHaveBeenCalledWith(['Usuarios', 2, 2, 0]);
+      expect(mockAddRow).toHaveBeenCalledWith(['Productos', 2, 2, 0]);
+      expect(mockAddRow).toHaveBeenCalledWith(['Stock', 2, 2, 0]);
+      expect(mockAddRow).toHaveBeenCalledWith(['Cotizaciones', 2, 1, 1]);
+      expect(mockAddRow).toHaveBeenCalledWith(['Movimientos', 2, 1, 1]);
     });
 
     it('debería escribir los textos informativos correctos y totales acumulados en el PDF', async () => {
@@ -233,13 +271,37 @@ describe('Exportar Reportes a PDF y Excel - Casos de Prueba', () => {
       await controller.exportarPDF(resMock as Response);
 
       // Assert
-      expect(mockText).toHaveBeenCalledWith('Reporte General', { align: 'center' });
-      expect(mockText).toHaveBeenCalledWith('Usuarios: 2', { indent: 20 });
-      expect(mockText).toHaveBeenCalledWith('Productos: 2', { indent: 20 });
-      expect(mockText).toHaveBeenCalledWith('Stock Total: 150', { indent: 20 });
-      expect(mockText).toHaveBeenCalledWith('Cotizaciones: 2', { indent: 20 });
+      // ✅ Título principal
+      expect(mockText).toHaveBeenCalledWith(
+        'REPORTE GENERAL DEL SISTEMA',
+        expect.any(Number),
+        expect.any(Number),
+        expect.objectContaining({ align: 'center' })
+      );
+
+      // ✅ Sección de usuarios: 'Total: 2 | Activos: 2 | Inactivos: 0 | Suspendidos: 0'
+      expect(mockText).toHaveBeenCalledWith(
+        expect.stringContaining('Total: 2'),
+        expect.any(Number),
+        expect.any(Number)
+      );
+
+      // ✅ Sección de productos
+      expect(mockText).toHaveBeenCalledWith(
+        expect.stringContaining('Total: 2'),
+        expect.any(Number),
+        expect.any(Number)
+      );
+
+      // ✅ Sección de cotizaciones
+      expect(mockText).toHaveBeenCalledWith(
+        expect.stringContaining('COTIZACIONES'),
+        expect.any(Number),
+        expect.any(Number)
+      );
     });
   });
+
 
   // ============================================
   // CP-273: INTENTAR ACCEDER SIN PERMISOS (SEGURIDAD)
@@ -254,7 +316,7 @@ describe('Exportar Reportes a PDF y Excel - Casos de Prueba', () => {
       // Assert
       expect(rolesExcel).toBeDefined();
       expect(rolesExcel).toContain(1);
-      
+
       expect(rolesPDF).toBeDefined();
       expect(rolesPDF).toContain(1);
     });

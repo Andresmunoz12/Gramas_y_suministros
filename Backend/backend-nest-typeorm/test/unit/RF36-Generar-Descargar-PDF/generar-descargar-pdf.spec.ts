@@ -31,43 +31,53 @@ import {
 } from './helpers/test-data';
 
 // ============================================
-// MOCKS DE PDFKIT (DEFINIDOS ANTES DEL MÓDULO)
+// MOCKS DE PDFKIT
 // ============================================
 
 const mockPipe = jest.fn();
-const mockText = jest.fn().mockReturnThis();
-const mockFontSize = jest.fn().mockReturnThis();
-const mockFont = jest.fn().mockReturnThis();
-const mockFillColor = jest.fn().mockReturnThis();
-const mockMoveDown = jest.fn().mockReturnThis();
-const mockStrokeColor = jest.fn().mockReturnThis();
-const mockLineWidth = jest.fn().mockReturnThis();
-const mockMoveTo = jest.fn().mockReturnThis();
-const mockLineTo = jest.fn().mockReturnThis();
-const mockStroke = jest.fn().mockReturnThis();
-const mockRect = jest.fn().mockReturnThis();
-const mockFill = jest.fn().mockReturnThis();
-const mockEnd = jest.fn().mockReturnThis();
+const mockText = jest.fn();
+const mockEnd = jest.fn();
 
 jest.mock('pdfkit', () => {
   return jest.fn().mockImplementation(() => {
-    return {
-      pipe: mockPipe,
-      fontSize: mockFontSize,
-      font: mockFont,
-      fillColor: mockFillColor,
-      text: mockText,
-      moveDown: mockMoveDown,
-      strokeColor: mockStrokeColor,
-      lineWidth: mockLineWidth,
-      moveTo: mockMoveTo,
-      lineTo: mockLineTo,
-      stroke: mockStroke,
-      rect: mockRect,
-      fill: mockFill,
-      end: mockEnd,
-      y: 100,
-    };
+    const pdfDoc: any = {};
+    const methodsThatDontReturnThis = ['pipe', 'end', 'text', 'image'];
+
+    const proxy = new Proxy(pdfDoc, {
+      get(target, prop) {
+        if (prop in target) {
+          return target[prop];
+        }
+
+        if (prop === 'y') {
+          return 100;
+        }
+
+        if (typeof prop === 'string' && prop !== 'then') {
+          const fn = jest.fn();
+
+          if (methodsThatDontReturnThis.includes(prop)) {
+            if (prop === 'pipe') fn.mockImplementation(() => proxy);
+            if (prop === 'end') fn.mockImplementation(() => {});
+            if (prop === 'text') fn.mockImplementation(() => proxy);
+            if (prop === 'image') fn.mockImplementation(() => proxy);
+          } else {
+            fn.mockImplementation(() => proxy);
+          }
+
+          target[prop] = fn;
+          return fn;
+        }
+
+        return undefined;
+      },
+    });
+
+    (proxy as any).pipe = mockPipe.mockImplementation(() => proxy);
+    (proxy as any).text = mockText.mockImplementation(() => proxy);
+    (proxy as any).end = mockEnd.mockImplementation(() => {});
+
+    return proxy;
   });
 });
 
@@ -225,10 +235,57 @@ describe('Generar y Descargar Cotización en PDF - Casos de Prueba', () => {
       await controller.descargarPDF({ user: usuarioCliente }, 100, resMock as Response);
 
       // Assert
-      expect(mockText).toHaveBeenCalledWith('GRAMAS Y SUMINISTROS', expect.any(Object));
-      expect(mockText).toHaveBeenCalledWith(expect.stringContaining('RECIBO DE COTIZACIÓN #100'));
-      expect(mockText).toHaveBeenCalledWith(expect.stringContaining('Nombre: Juan Perez'));
-      expect(mockText).toHaveBeenCalledWith(expect.stringContaining('Email: juan@test.com'));
+      // ✅ Título principal
+      expect(mockText).toHaveBeenCalledWith(
+        'GRAMAS Y SUMINISTROS',
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Object),
+      );
+
+      // ✅ Recibo
+      expect(mockText).toHaveBeenCalledWith(
+        'COTIZACIÓN #100',
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Object),
+      );
+
+      // ✅ Sección cliente
+      expect(mockText).toHaveBeenCalledWith(
+        'INFORMACIÓN DEL CLIENTE',
+        expect.any(Number),
+        expect.any(Number),
+      );
+
+      // ✅ Nombre del cliente
+      expect(mockText).toHaveBeenCalledWith(
+        'Juan Perez',
+        expect.any(Number),
+        expect.any(Number),
+      );
+
+      // ✅ Email del cliente
+      expect(mockText).toHaveBeenCalledWith(
+        'juan@test.com',
+        expect.any(Number),
+        expect.any(Number),
+      );
+
+      // ✅ Sección productos
+      expect(mockText).toHaveBeenCalledWith(
+        'DETALLE DE PRODUCTOS',
+        expect.any(Number),
+        expect.any(Number),
+      );
+
+      // ✅ Nombre del producto (4 argumentos: texto, x, y, opciones)
+      expect(mockText).toHaveBeenCalledWith(
+        'Grama Premium',
+        expect.any(Number),
+        expect.any(Number),
+        expect.any(Object),
+      );
     });
   });
 
