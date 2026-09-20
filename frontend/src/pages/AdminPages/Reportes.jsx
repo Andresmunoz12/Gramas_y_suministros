@@ -468,6 +468,21 @@ export default function Reportes() {
     if (activeTab === 'stock') cargarStock();
   }, [activeTab]);
 
+  const manejarErrorAuth = (err, contexto = 'los datos') => {
+    const mensaje = err?.message || err?.error || err?.errorName || '';
+    const esUnauthorized = err?.statusCode === 401 || err?.status === 401 || /no autorizado|unauthorized/i.test(mensaje);
+
+    if (esUnauthorized) {
+      logout();
+      navigate('/login?session=expired');
+      return true;
+    }
+
+    console.error(`Error cargando ${contexto}:`, err);
+    setError(`No se pudieron cargar ${contexto}`);
+    return false;
+  };
+
   const cargarDatos = async () => {
     try {
       setLoading(true);
@@ -475,8 +490,7 @@ export default function Reportes() {
       setDashboard(data);
       setError(null);
     } catch (err) {
-      console.error("Error cargando dashboard:", err);
-      setError("No se pudieron cargar los datos");
+      if (manejarErrorAuth(err, 'los datos')) return;
     } finally {
       setLoading(false);
     }
@@ -487,7 +501,7 @@ export default function Reportes() {
       const data = await ReportesService.getResumenUsuarios({});
       setUsuarios(data);
     } catch (err) {
-      console.error("Error cargando usuarios:", err);
+      if (manejarErrorAuth(err, 'los usuarios')) return;
     }
   };
 
@@ -504,7 +518,7 @@ export default function Reportes() {
       
       setProductos(data);
     } catch (err) {
-      console.error("Error cargando productos:", err);
+      if (manejarErrorAuth(err, 'los productos')) return;
     }
   };
 
@@ -513,7 +527,7 @@ export default function Reportes() {
       const data = await ReportesService.getEstadoStock();
       setStock(data);
     } catch (err) {
-      console.error("Error cargando stock:", err);
+      if (manejarErrorAuth(err, 'el stock')) return;
     }
   };
 
