@@ -63,7 +63,8 @@ export class Cotizacion {
   @Column({ name: 'observaciones', type: 'text', nullable: true })
   observaciones: string;
 
-  @Column({ name: 'fecha_pago', type: 'datetime', nullable: true })
+  // ✅ Corregido para PostgreSQL: timestamp
+  @Column({ name: 'fecha_pago', type: 'timestamp', nullable: true })
   fechaPago: Date;
 
   @OneToMany(() => DetalleCotizacion, (detalle) => detalle.cotizacion)

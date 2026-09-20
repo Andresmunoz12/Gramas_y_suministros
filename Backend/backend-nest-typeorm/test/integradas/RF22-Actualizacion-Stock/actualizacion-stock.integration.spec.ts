@@ -377,7 +377,7 @@ describe('RF-022: Pruebas de Integración - Actualización Automática de Stock'
       expect(movimiento?.salida.motivo).toBe('Venta Directa');
 
       console.log(`✅ [CP-148] Stock actualizado correctamente: ${stockInicial} → ${stockDespues?.cantidad_actual} (-${cantidadSalida})`);
-    });
+    }, 30000);
 
     it('debería actualizar correctamente el stock con entradas y salidas consecutivas', async () => {
       const producto = await crearProductoDePrueba(

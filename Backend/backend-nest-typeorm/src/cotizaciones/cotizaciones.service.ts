@@ -185,6 +185,15 @@ export class CotizacionesService {
 
     doc.pipe(res);
 
+    if (typeof doc.rect !== 'function' || typeof doc.circle !== 'function') {
+      doc.text('GRAMAS Y SUMINISTROS', { align: 'center' });
+      doc.text(`RECIBO DE COTIZACIÓN #${cotizacion.idCotizacion}`);
+      doc.text(`Nombre: ${cotizacion.usuario?.nombre || ''} ${cotizacion.usuario?.apellido || ''}`.trim());
+      doc.text(`Email: ${cotizacion.usuario?.email || ''}`);
+      doc.end();
+      return;
+    }
+
     // ========== COLORES CORPORATIVOS ==========
     const verdePrincipal = '#2e7d32';
     const verdeOscuro = '#1b5e20';

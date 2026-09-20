@@ -17,7 +17,7 @@ import { google } from 'googleapis';
 @Injectable()
 export class AuthService {
 
-  private readonly gmail;
+  private readonly gmail: any | null;
 
   constructor(
     @InjectRepository(usuario)
@@ -37,9 +37,8 @@ export class AuthService {
       !process.env.GMAIL_REFRESH_TOKEN ||
       !process.env.GMAIL_USER
     ) {
-      throw new Error(
-        'Las variables de entorno de Gmail OAuth2 no están configuradas correctamente.',
-      );
+      this.gmail = null;
+      return;
     }
 
     // Cliente OAuth2
@@ -338,6 +337,12 @@ export class AuthService {
     // -----------------------------------------------------
     // 7. Enviar mediante Gmail API
     // -----------------------------------------------------
+
+    if (!this.gmail) {
+      throw new InternalServerErrorException(
+        'El servicio de correo no está configurado. Agrega las variables GMAIL_* para habilitar recuperación por email.',
+      );
+    }
 
     try {
 

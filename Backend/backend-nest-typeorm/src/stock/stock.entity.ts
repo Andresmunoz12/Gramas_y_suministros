@@ -4,6 +4,7 @@ import {
   Column,
   OneToOne,
   JoinColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { productos } from '../productos/productos.entity';
 
@@ -22,11 +23,10 @@ export class stock {
   @Column({ name: 'nivel_minimo', type: 'int', default: 0 })
   nivel_minimo: number;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'ultima_actualizacion',
-    type: 'datetime',
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
   })
   ultima_actualizacion: Date;
 }

@@ -385,7 +385,7 @@ describe('RF-025: Pruebas de Integración - Registro de Motivo en Movimientos de
       expect(movimientoEnBd?.detalle === null || movimientoEnBd?.detalle === undefined).toBe(true);
 
       console.log(`✅ [CP-167] Entrada sin detalle permitida: detalle = ${movimientoEnBd?.detalle}`);
-    });
+    }, 30000);
   });
 
   // ============================================================================

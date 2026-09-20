@@ -6,6 +6,8 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { categoria } from '../categoria/categoria.entity';
 import { stock } from '../stock/stock.entity';
@@ -64,27 +66,26 @@ export class productos {
   @Column({ name: 'imagen', type: 'varchar', length: 255, nullable: true })
   imagen: string;
   
-  // ✅ AGREGADO: Campo para estado del producto
+  // ✅ Corregido para PostgreSQL: smallint en lugar de tinyint
   @Column({
     name: 'estado',
-    type: 'tinyint',
+    type: 'smallint',
     default: 1,
     comment: '1 = Activo, 0 = Inactivo/Desactivado',
   })
   estado: number;
   
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
-    type: 'datetime',
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
   
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
-    type: 'datetime',
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
 }

@@ -111,7 +111,10 @@ export class UsuariosService {
   });
 
   if (!usuario) {
-    throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    return {
+      actualizado: false,
+      mensaje: `Usuario con ID ${id} no encontrado`,
+    };
   }
 
   // Si hay contraseña, hashearla

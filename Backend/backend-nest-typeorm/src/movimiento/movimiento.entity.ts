@@ -5,9 +5,10 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
+  CreateDateColumn,
 } from 'typeorm';
 import { productos } from '../productos/productos.entity';
-import { usuario } from '../Usuarios/usuarios.entity'; // Ajusta la ruta si es necesario
+import { usuario } from '../Usuarios/usuarios.entity';
 import { entrada } from './entrada.entity';
 import { salida } from './salida.entity';
 
@@ -30,7 +31,12 @@ export class movimiento {
   @Column({ name: 'id_usuario' })
   id_usuario: number;
 
-  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  // ✅ Corregido para PostgreSQL: timestamp y CreateDateColumn
+  @CreateDateColumn({
+    name: 'fecha',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   fecha: Date;
 
   @Column({ type: 'int' })

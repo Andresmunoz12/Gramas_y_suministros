@@ -5,6 +5,8 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { rol } from '../roles/roles.entity';
 
@@ -40,25 +42,24 @@ export class usuario {
   @JoinColumn({ name: 'id_rol' })
   rol: rol;
 
-  @Column({
+  @CreateDateColumn({
     name: 'created_at',
-    type: 'datetime',
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt: Date;
 
-  @Column({
+  @UpdateDateColumn({
     name: 'updated_at',
-    type: 'datetime',
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
 
   // ✅ NUEVO CAMPO
   @Column({
     name: 'ultimo_login',
-    type: 'datetime',
+    type: 'timestamp',
     nullable: true,
   })
   ultimoLogin: Date;

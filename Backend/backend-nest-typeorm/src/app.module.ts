@@ -36,22 +36,20 @@ import { CotizacionesModule } from './cotizaciones/cotizaciones.module';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
-
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      // Usar la URL directamente desde las variables de entorno
-      url: process.env.DATABASE_URL,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: true, // Crear tablas automáticamente
-      ssl: {
-        rejectUnauthorized: false,
-      },
-      extra: {
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      },
-    }),
+TypeOrmModule.forRoot({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  entities: [__dirname + '/**/*.entity{.ts,.js}'],
+  synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },  
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
+}),
     UsuariosModule,
     RolesModule,
     ProductosModule,
