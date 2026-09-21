@@ -16,7 +16,7 @@ export class PasswordReset {
   @Column({ name: 'codigo' })
   codigo: string; // Coincide con tu columna 'codigo'
 
-  @CreateDateColumn({ name: 'Tiempo' }) // Mapea la propiedad al nombre 'Tiempo' de tu SQL
+  @CreateDateColumn({ name: 'tiempo' }) // Mapea la propiedad al nombre 'Tiempo' de tu SQL
   tiempo: Date;
 
   @Column({ name: 'usado', default: 0 })
