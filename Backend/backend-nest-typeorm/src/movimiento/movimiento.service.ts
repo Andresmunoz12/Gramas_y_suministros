@@ -55,6 +55,7 @@ export class MovimientosService {
           cantidad: dto.cantidad,
           detalle: dto.detalle,
           tipo: 'entrada',
+          fecha: new Date(),
         }),
       );
 
