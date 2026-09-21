@@ -50,15 +50,17 @@ export class StockService {
   });
 
   if (!registro) {
-    // 👇 AGREGAR nivel_minimo explícitamente
+    // 👇 AGREGAR ultima_actualizacion
     registro = manager.create(stock, {
       id_producto,
       cantidad_actual: cantidad,
-      nivel_minimo: 10,  // 👈 Valor por defecto (puedes cambiarlo)
+      nivel_minimo: 10,
+      ultima_actualizacion: new Date(),  // 👈 ESTO FALTA
     });
   } else {
     registro.cantidad_actual =
       Number(registro.cantidad_actual) + Number(cantidad);
+    registro.ultima_actualizacion = new Date();  // 👈 Actualizar también
   }
   return await manager.save(registro);
 }
