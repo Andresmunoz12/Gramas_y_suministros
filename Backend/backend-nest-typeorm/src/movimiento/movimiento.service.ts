@@ -133,6 +133,7 @@ export class MovimientosService {
           cantidad: dto.cantidad,
           detalle: dto.detalle,
           tipo: 'salida',
+          fecha: new Date(),
         }),
       );
 
