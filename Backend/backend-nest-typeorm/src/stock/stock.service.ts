@@ -40,30 +40,28 @@ export class StockService {
    * ocurra al mismo tiempo que se guarda el movimiento.
    */
   async actualizarSaldo(
-    id_producto: number,
-    cantidad: number,
-    manager: EntityManager,
-  ) {
-    // Buscamos si ya existe el producto en la tabla de stock
-    let registro = await manager.findOne(stock, {
-      where: { id_producto },
-      lock: { mode: 'pessimistic_write' }, // Opcional: evita que dos procesos actualicen el mismo stock a la vez
-    });
+  id_producto: number,
+  cantidad: number,
+  manager: EntityManager,
+) {
+  let registro = await manager.findOne(stock, {
+    where: { id_producto },
+    lock: { mode: 'pessimistic_write' },
+  });
 
-    if (!registro) {
-      // Si no existe, lo creamos (ej. primera vez que entra la Grama Kukuyo)
-      registro = manager.create(stock, {
-        id_producto,
-        cantidad_actual: cantidad,
-      });
-    } else {
-      // Si ya existe, sumamos (o restamos si la cantidad es negativa)
-      // Aseguramos que la cantidad sea tratada como número
-      registro.cantidad_actual =
-        Number(registro.cantidad_actual) + Number(cantidad);
-    }
-    return await manager.save(registro);
+  if (!registro) {
+    // 👇 AGREGAR nivel_minimo explícitamente
+    registro = manager.create(stock, {
+      id_producto,
+      cantidad_actual: cantidad,
+      nivel_minimo: 10,  // 👈 Valor por defecto (puedes cambiarlo)
+    });
+  } else {
+    registro.cantidad_actual =
+      Number(registro.cantidad_actual) + Number(cantidad);
   }
+  return await manager.save(registro);
+}
 
   // Configurar el nivel mínimo de stock para un producto
   async actualizarNivelMinimo(id_producto: number, nivel_minimo: number) {
