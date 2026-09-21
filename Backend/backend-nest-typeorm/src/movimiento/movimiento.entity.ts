@@ -5,7 +5,6 @@ import {
   ManyToOne,
   JoinColumn,
   OneToOne,
-  CreateDateColumn,
 } from 'typeorm';
 import { productos } from '../productos/productos.entity';
 import { usuario } from '../Usuarios/usuarios.entity';
@@ -31,8 +30,8 @@ export class movimiento {
   @Column({ name: 'id_usuario' })
   id_usuario: number;
 
-  // ✅ Corregido para PostgreSQL: timestamp y CreateDateColumn
-  @CreateDateColumn({
+  // ✅ CAMBIO: Usar @Column en lugar de @CreateDateColumn
+  @Column({
     name: 'fecha',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
@@ -45,7 +44,7 @@ export class movimiento {
   @Column({ type: 'text', nullable: true })
   detalle: string;
 
-  @Column({ type: 'enum', enum: ['entrada', 'salida'], nullable: true })
+  @Column({ type: 'varchar', length: 20, nullable: true })
   tipo: 'entrada' | 'salida';
 
   @OneToOne(() => entrada, (entrada) => entrada.movimiento, { cascade: true })
