@@ -14,11 +14,15 @@ export class PasswordReset {
   email: string;
 
   @Column({ name: 'codigo' })
-  codigo: string; // Coincide con tu columna 'codigo'
+  codigo: string;
 
-  @CreateDateColumn({ name: 'tiempo' }) // Mapea la propiedad al nombre 'Tiempo' de tu SQL
+  @CreateDateColumn({
+    name: 'tiempo',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   tiempo: Date;
 
   @Column({ name: 'usado', default: 0 })
-  usado: number; // En MySQL tinyint(1) se maneja como number o boolean
+  usado: number;
 }
