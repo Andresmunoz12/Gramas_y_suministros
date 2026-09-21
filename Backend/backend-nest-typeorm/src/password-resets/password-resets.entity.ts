@@ -2,7 +2,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  CreateDateColumn,
 } from 'typeorm';
 
 @Entity('password_resets')
@@ -16,7 +15,8 @@ export class PasswordReset {
   @Column({ name: 'codigo' })
   codigo: string;
 
-  @CreateDateColumn({
+  // 👇 Usar @Column en lugar de @CreateDateColumn
+  @Column({
     name: 'tiempo',
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
