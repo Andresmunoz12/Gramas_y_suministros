@@ -98,6 +98,7 @@ export class AuthService {
       email: email,
       codigo: nuevoCodigo,
       usado: 0,
+      tiempo: new Date(),
     });
 
     await this.resetRepo.save(reset);
