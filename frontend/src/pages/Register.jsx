@@ -35,6 +35,14 @@ export default function Register() {
         ? "password_hash"
         : name;
 
+    // 👇 VALIDACIÓN: Solo letras para nombre y apellido
+    if (name === "nombre" || name === "apellido") {
+      const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]*$/;
+      if (!soloLetras.test(value)) {
+        return; // No actualiza si hay caracteres no permitidos
+      }
+    }
+
     setForm({
       ...form,
       [fieldName]: value,
@@ -67,19 +75,36 @@ export default function Register() {
 
 
     /* --------------------------------------------------------
-       VALIDACIÓN DE CONTRASEÑA
+       VALIDACIONES
        -------------------------------------------------------- */
 
-    if (form.password_hash.length < 8) {
+    // 👇 VALIDACIÓN EXTRA: Solo letras en nombre y apellido
+    const soloLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/;
 
+    if (!soloLetras.test(form.nombre.trim())) {
       setMsg({
-        texto:
-          "La contraseña debe tener al menos 8 caracteres.",
+        texto: "El nombre solo puede contener letras.",
         tipo: "error",
       });
-
       setLoading(false);
+      return;
+    }
 
+    if (!soloLetras.test(form.apellido.trim())) {
+      setMsg({
+        texto: "El apellido solo puede contener letras.",
+        tipo: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
+    if (form.password_hash.length < 8) {
+      setMsg({
+        texto: "La contraseña debe tener al menos 8 caracteres.",
+        tipo: "error",
+      });
+      setLoading(false);
       return;
     }
 
