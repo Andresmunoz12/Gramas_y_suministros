@@ -266,15 +266,15 @@ describe('Flujo E2E Completo: Rol Administrador', () => {
 
     cy.get('.admin-table tbody tr').first().then(($row) => {
       const idProducto = $row.find('td').eq(0).text().trim()
-      cy.request({
-        method: 'PATCH',
-        url: `${apiUrl}/stock/${idProducto}/minimo`,
-        body: { cantidad_minima: 15 },
-        failOnStatusCode: false
-      }).then(() => {
-        cy.log('PATCH stock mínimo ejecutado (Mockeado)')
+      cy.window().then((win) => {
+        return win.fetch(`${apiUrl}/stock/${idProducto}/minimo`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cantidad_minima: 15 })
+        })
       })
     })
+    cy.wait('@minimoMock')
 
     // ==========================================
     // 14. GESTIÓN DE VENTAS - CAMBIO ESTADO COTIZACIÓN
